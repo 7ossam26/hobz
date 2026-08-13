@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+coverage
+playwright-report
+test-results
+.git
+.github
+.env
+.env.local
+.env.*.local
+docs
+tests
+*.md
+!README.md
+.docker-data

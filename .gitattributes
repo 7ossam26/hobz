@@ -1,0 +1,13 @@
+# Normalise line endings so a Windows checkout does not produce CRLF diffs
+# against a Linux CI runner or the Docker build.
+* text=auto eol=lf
+
+# Shell scripts run inside Linux containers — CRLF would make them unexecutable.
+*.sh text eol=lf
+Dockerfile text eol=lf
+
+# Binary
+*.woff2 binary
+*.png binary
+*.jpg binary
+*.ico binary

@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Agency OS — local stack.
+#
+# One Postgres container hosting TWO databases:
+#   agency       — development
+#   agency_test  — the integration/e2e target (docs/TESTING.md §2)
+#
+# They are separate databases, not separate schemas, so the `_test` suffix guard
+# in tests/setup/db-guard.ts is a real boundary rather than a naming convention.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: agency-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: agency
+      POSTGRES_PASSWORD: agency
+      POSTGRES_DB: agency
+      # Deterministic collation, so ORDER BY on Arabic names does not depend on
+      # the host locale.
+      POSTGRES_INITDB_ARGS: '--encoding=UTF8 --locale=C'
+      TZ: Africa/Cairo
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Runs once, on an empty data directory, to create agency_test.
+      - ./docker/postgres/init-test-db.sh:/docker-entrypoint-initdb.d/10-init-test-db.sh:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U agency -d agency']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agency-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://agency:agency@postgres:5432/agency?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:-change-me-in-env}
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      # Exactly one instance runs jobs.
+      ENABLE_SCHEDULER: 'true'
+      NODE_ENV: production
+      TZ: Africa/Cairo
+    ports:
+      - '3000:3000'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://127.0.0.1:3000/api/health',
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  postgres-data:

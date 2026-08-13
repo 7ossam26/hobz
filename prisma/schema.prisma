@@ -1,0 +1,160 @@
+// Agency OS — Phase 0 schema.
+//
+// SCOPE GUARD: this file contains ONLY the identity/access/audit/settings core
+// (SPEC §4 "Identity & access" + §7). Work, Calendar and Money models arrive in
+// their own phases. Do not add them here ahead of schedule.
+//
+// Structural invariants this schema must keep possible (CLAUDE.md):
+//  - Money columns are always Decimal(12,2), never Float.
+//  - Soft-delete via `deletedAt` on every user-owned entity.
+//  - AuditLog is append-only: no `updatedAt`, no mutation paths in code.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// How a user is paid. Attaches to the user, never to the role (SPEC §2).
+enum PayType {
+  SALARY
+  PER_TASK
+  HYBRID
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  username           String   @unique
+  passwordHash       String
+  fullName           String
+  /// E.164, normalised to +20… on write. Never used for email/SMS — WhatsApp
+  /// deep links only (SPEC §8).
+  phone              String?
+  isWorker           Boolean  @default(false)
+  isActive           Boolean  @default(true)
+  mustChangePassword Boolean  @default(false)
+  timezone           String   @default("Africa/Cairo")
+
+  payType             PayType  @default(PER_TASK)
+  monthlySalary       Decimal? @db.Decimal(12, 2)
+  defaultTaskRate     Decimal? @db.Decimal(12, 2)
+  weeklyCapacityHours Int      @default(40)
+
+  /// Per-user penalty formula override (SPEC R2). The PenaltyProfile table
+  /// itself lands in Phase 8; this column is the seam, deliberately unconstrained.
+  penaltyProfileId String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  roles           UserRole[]
+  auditEvents     AuditLog[] @relation("AuditActor")
+  settingsTouched Setting[]  @relation("SettingUpdatedBy")
+
+  @@index([deletedAt])
+  @@index([isWorker, isActive])
+  @@map("users")
+}
+
+/// Roles are created and named in the UI. The permission *catalog* is code
+/// (SPEC §6); which permissions a role holds is data.
+model Role {
+  id          String    @id @default(cuid())
+  /// Stable machine identifier. `SUPER_ADMIN` is reserved and hardcoded.
+  nameEn      String    @unique
+  nameAr      String
+  description String?
+  isSystem    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  permissions RolePermission[]
+  users       UserRole[]
+
+  @@index([deletedAt])
+  @@map("roles")
+}
+
+/// Seeded from the code catalog in lib/rbac. Never user-editable.
+model Permission {
+  key         String @id
+  /// Domain prefix ("task", "payout") used to group the role editor UI.
+  domain      String
+  descriptionAr String
+
+  roles RolePermission[]
+
+  @@index([domain])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId        String
+  permissionKey String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionKey], references: [key], onDelete: Cascade)
+
+  @@id([roleId, permissionKey])
+  @@index([permissionKey])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+/// APPEND-ONLY. Never updated, never deleted. There is intentionally no
+/// `updatedAt` and no `deletedAt` — their absence is the schema-level statement
+/// of that invariant.
+model AuditLog {
+  id       String  @id @default(cuid())
+  /// Null only for system/scheduler actions.
+  actorId  String?
+  action   String
+  entity   String
+  entityId String
+  before   Json?
+  after    Json?
+  reason   String?
+  ip       String?
+
+  createdAt DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([actorId, createdAt])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+/// Every business number in the product lives here (CLAUDE.md invariant 4).
+/// `value` is untyped JSON at the DB level and Zod-validated in lib/settings —
+/// the catalog in code is the schema of record.
+model Setting {
+  key         String   @id
+  value       Json
+  /// Grouping key for the settings page sections (SPEC §7).
+  group       String
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+
+  updatedBy User? @relation("SettingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([group])
+  @@map("settings")
+}

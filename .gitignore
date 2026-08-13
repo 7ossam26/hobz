@@ -1,0 +1,32 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# next
+.next
+out
+next-env.d.ts
+
+# production
+build
+dist
+
+# testing
+coverage
+playwright-report
+test-results
+.playwright
+
+# env — never commit real secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# editors / os
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+
+# docker volumes
+.docker-data

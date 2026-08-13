@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+coverage
+playwright-report
+test-results
+pnpm-lock.yaml
+prisma/migrations
+public/fonts
+
+# The contract documents are authored, not generated. Prettier reflows their
+# Arabic tables for no benefit and creates review noise on every format run.
+CLAUDE.md
+docs/SPEC.md
+docs/TESTING.md
+docs/PHASES.md
