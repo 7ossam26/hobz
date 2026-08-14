@@ -8,15 +8,29 @@
  * cheaper than contending for a lock every night.
  */
 export async function register(): Promise<void> {
-  if (process.env.NEXT_RUNTIME !== 'nodejs') return
   if (process.env.ENABLE_SCHEDULER !== 'true') return
 
-  const { startScheduler } = await import('@/lib/scheduler')
+  /**
+   * The runtime check must be a *positive* condition wrapping the import, not
+   * an early `return` above it.
+   *
+   * Next compiles this file once per runtime and substitutes
+   * `process.env.NEXT_RUNTIME` as a literal in each. Written this way, the edge
+   * compilation sees `"edge" === "nodejs"` and eliminates the whole block —
+   * import included. Written as an early return, webpack still resolves the
+   * dynamic import and the edge build fails on `node-cron` reaching for `path`
+   * and `child_process`. That only started mattering once `src/middleware.ts`
+   * existed, because middleware is what makes Next produce an edge bundle at
+   * all.
+   */
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    const { startScheduler } = await import('@/lib/scheduler')
 
-  // Jobs register themselves here as phases land:
-  //   Phase 6 — calendar.recomputeElapsed  (03:00 Cairo)
-  //   Phase 7 — payout.closeCycle          (23:59 Cairo on settings.payoutCycleDay)
-  //   Phase 8 — penalty.recompute          (03:00 Cairo)
-  //   Phase 9 — notifications.dailyDigest  (08:00 Cairo)
-  startScheduler()
+    // Jobs register themselves here as phases land:
+    //   Phase 6 — calendar.recomputeElapsed  (03:00 Cairo)
+    //   Phase 7 — payout.closeCycle          (23:59 Cairo on settings.payoutCycleDay)
+    //   Phase 8 — penalty.recompute          (03:00 Cairo)
+    //   Phase 9 — notifications.dailyDigest  (08:00 Cairo)
+    startScheduler()
+  }
 }

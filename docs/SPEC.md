@@ -94,9 +94,27 @@ Role        id, nameAr, nameEn, isSystem, description
 Permission  key (e.g. 'task.assign')   ← seeded from code catalog, not user-editable
 RolePermission  roleId, permissionKey
 UserRole        userId, roleId          ← many-to-many
-AuditLog    id, actorId, action, entity, entityId, before(json), after(json),
-            reason?, ip, createdAt      ← append-only
+AuditLog    id, actorId, impersonatorId?, action, entity, entityId,
+            before(json), after(json), reason?, ip, createdAt   ← append-only
+LoginThrottle   key, failures, firstFailureAt, lastFailureAt, lockedUntil?
+                ← key is `user:<username>` or `ip:<addr>`; not an audit table
 ```
+
+**Identity decisions settled in Phase 1**
+
+- **`username` is immutable.** It is the login handle, the throttle key and the
+  name in every audit row. Renaming it would lock the person out and orphan
+  their history. Correcting one means creating a new account.
+- **`mustChangePassword` is set `true` on admin-create and admin-reset**, and
+  cleared only by the user changing their own password. It is what stops an
+  admin from holding a working credential for someone else's account past the
+  next login. The seeded `SUPER_ADMIN` is the one exception (the operator chose
+  that password deliberately).
+- **`AuditLog.impersonatorId` is a column, not a key inside `after`.** It keeps
+  the before/after diff clean and makes "everything done while impersonating"
+  an indexed query.
+- **`LoginThrottle` is mutable and deletable** — it is a counter, not a record.
+  The permanent record of a login attempt is the `AuditLog` row.
 
 ### Work
 
@@ -277,6 +295,27 @@ audit.view
 projects where the user is owner/member, or tasks where they are assignee/watcher.
 Enforcement lives in `lib/rbac` and is applied in **queries**, not in the UI.
 
+**How that sentence is read (settled in Phase 1).** Literally, and per entity:
+`scopeProjects` → owner or `ProjectMember`; `scopeTasks` → assignee or
+`TaskWatcher`. A project owner holding only `task.view.assigned` therefore does
+**not** see every task in their project — in practice such a manager holds
+`task.view.all`. Widening this is a policy change and belongs here before it
+belongs in code; restrictive is the safe direction to be wrong in.
+
+The scope helpers also carry `deletedAt: null` (invariant 8), with an explicit
+`includeDeleted` opt-in, because they are the one function every scoped read
+already has to call.
+
+**Enforcement layers, in order of authority:**
+
+1. **The query layer** — `assertCan` in `queries.ts`, `requirePermission` on
+   every action, against permissions re-read from the database. This is the
+   enforcement.
+2. **Middleware** — routes on the JWT's copy of the permission set. Runs at the
+   edge where Prisma does not, so the copy can be up to one session stale. It
+   decides where to send a browser, not what data exists.
+3. **Navigation** — cosmetic. Hiding a link is not security.
+
 ---
 
 ## 7. Settings (global only, one permission-gated page)
@@ -285,7 +324,13 @@ Penalty defaults · grace period · working days per month · weekend days ·
 holidays · leave types · payout cycle day · payment methods · notification rules
 & thresholds · performance weights · task priorities & categories · engagement
 types · project health thresholds · polling interval · status Arabic labels ·
-`penalizeRevisionLateness`.
+`penalizeRevisionLateness` · **login throttle & password policy**
+(`security.maxLoginAttempts`, `security.loginWindowMinutes`,
+`security.lockoutMinutes`, `security.minPasswordLength`).
+
+The security group is here for the same reason as everything else: during an
+incident an operator has to tighten the lockout, and during a lockout storm
+loosen it, and neither should need a redeploy.
 
 Backed by a typed `Setting` table with a cached, Zod-validated accessor
 (`getSetting('penalty.defaultGraceHours')`). **No magic numbers in code, ever.**

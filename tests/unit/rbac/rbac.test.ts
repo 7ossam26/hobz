@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { ar } from '@/i18n/ar'
-import { ForbiddenError, NotImplementedError, UnauthenticatedError } from '@/lib/errors'
+import { ForbiddenError, UnauthenticatedError } from '@/lib/errors'
 import {
   PERMISSIONS,
   SUPER_ADMIN_ROLE,
@@ -206,20 +206,12 @@ describe('lib/rbac — بناء الفاعل', () => {
   })
 })
 
-describe('lib/rbac — نطاق الرؤية (المرحلة الأولى)', () => {
-  it('يرفض العمل بدل السماح الصامت قبل التنفيذ', () => {
-    // A stub returning `{}` would silently grant every user access to every
-    // project the moment a caller wired it up. Failing loudly is the safe default.
-    expect(() => scopeProjects(nobody())).toThrow(NotImplementedError)
-    expect(() => scopeTasks(nobody())).toThrow(NotImplementedError)
-  })
-
-  it('يذكر المرحلة المسؤولة عن التنفيذ', () => {
-    try {
-      scopeProjects(nobody())
-      expect.unreachable('should have thrown')
-    } catch (error) {
-      expect((error as NotImplementedError).details?.plannedPhase).toBe('Phase 1')
-    }
+describe('lib/rbac — نطاق الرؤية', () => {
+  it('لا يعيد نطاقًا مفتوحًا لمستخدم بلا صلاحية عرض', () => {
+    // The Phase 0 stub threw rather than returning `{}`, because `{}` would
+    // silently grant every user every project. Now that it returns a fragment,
+    // the same danger is guarded by asserting the fragment matches nothing.
+    expect(scopeProjects(nobody())).toMatchObject({ id: { in: [] } })
+    expect(scopeTasks(nobody())).toMatchObject({ id: { in: [] } })
   })
 })

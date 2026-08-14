@@ -12,9 +12,16 @@ import type { Actor } from '@/lib/rbac'
 /** Verb-ish, dot-namespaced, past tense: `user.created`, `penalty.reversed`. */
 export type AuditAction = string
 
+/**
+ * Everything the writer needs from an identity. Structurally satisfied by
+ * `Actor`, but deliberately narrower so that a caller holding only a user row —
+ * the credentials provider, which has no session yet — can still write a row.
+ */
+export type AuditActorRef = Pick<Actor, 'id'> & { impersonatorId?: string }
+
 export interface AuditInput {
   /** Null for scheduler/system actions. */
-  actor: Actor | null
+  actor: AuditActorRef | null
   action: AuditAction
   entity: string
   entityId: string
@@ -48,33 +55,20 @@ export function redact(value: unknown): unknown {
  * Append one audit row. There is no update or delete counterpart, by design.
  *
  * When a SUPER_ADMIN is impersonating, the acting identity is recorded as the
- * impersonated user and the real identity is preserved in `after.__impersonator`
- * so both are visible in the diff view (SPEC Phase 1 §5).
+ * impersonated user and the real identity lands in `impersonatorId`, so the
+ * viewer can show "root acting as ahmed" and both people are answerable for the
+ * change (SPEC Phase 1 §5).
  */
 export async function recordAudit(db: Db, input: AuditInput): Promise<void> {
-  const after =
-    input.actor?.impersonatorId !== undefined
-      ? {
-          ...(typeof input.after === 'object' &&
-          input.after !== null &&
-          !Array.isArray(input.after)
-            ? (redact(input.after) as Record<string, unknown>)
-            : { value: redact(input.after) }),
-          __impersonator: input.actor.impersonatorId,
-        }
-      : redact(input.after)
-
   await db.auditLog.create({
     data: {
       actorId: input.actor?.id ?? null,
+      impersonatorId: input.actor?.impersonatorId ?? null,
       action: input.action,
       entity: input.entity,
       entityId: input.entityId,
       before: input.before === undefined ? undefined : (redact(input.before) as never),
-      after:
-        input.after === undefined && input.actor?.impersonatorId === undefined
-          ? undefined
-          : (after as never),
+      after: input.after === undefined ? undefined : (redact(input.after) as never),
       reason: input.reason ?? null,
       ip: input.ip ?? null,
     },

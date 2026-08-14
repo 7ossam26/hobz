@@ -117,7 +117,10 @@ describe('lib/audit — كتابة السجل', () => {
 
     const { data } = create.mock.calls[0]![0] as { data: Record<string, unknown> }
     expect(data.actorId).toBe('target')
-    expect(data.after).toEqual({ status: 'APPROVED', __impersonator: 'root' })
+    expect(data.impersonatorId).toBe('root')
+    // The impersonator is a column, not a key smuggled into the payload: the
+    // diff view must show the change and nothing but the change.
+    expect(data.after).toEqual({ status: 'APPROVED' })
   })
 
   it('يسجّل هوية المنتحِل حتى بدون حمولة after', async () => {
@@ -131,6 +134,38 @@ describe('lib/audit — كتابة السجل', () => {
     })
 
     const { data } = create.mock.calls[0]![0] as { data: Record<string, unknown> }
-    expect(data.after).toMatchObject({ __impersonator: 'root' })
+    expect(data.impersonatorId).toBe('root')
+    expect(data.after).toBeUndefined()
+  })
+
+  it('يترك خانة المنتحِل فارغة في الإجراءات العادية', async () => {
+    const { db, create } = fakeDb()
+
+    await recordAudit(db, {
+      actor: actingAs(['user.edit'], { id: 'u1' }),
+      action: 'user.updated',
+      entity: 'User',
+      entityId: 'u2',
+    })
+
+    const { data } = create.mock.calls[0]![0] as { data: Record<string, unknown> }
+    expect(data.impersonatorId).toBeNull()
+  })
+
+  it('يقبل مرجع فاعل مبسّطًا لا يحمل مجموعة صلاحيات', async () => {
+    // The credentials provider audits a successful sign-in before any session
+    // exists, so it holds a user row and not an Actor.
+    const { db, create } = fakeDb()
+
+    await recordAudit(db, {
+      actor: { id: 'u7' },
+      action: 'auth.signedIn',
+      entity: 'User',
+      entityId: 'u7',
+    })
+
+    const { data } = create.mock.calls[0]![0] as { data: Record<string, unknown> }
+    expect(data.actorId).toBe('u7')
+    expect(data.impersonatorId).toBeNull()
   })
 })

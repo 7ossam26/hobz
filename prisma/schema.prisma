@@ -51,9 +51,10 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  roles           UserRole[]
-  auditEvents     AuditLog[] @relation("AuditActor")
-  settingsTouched Setting[]  @relation("SettingUpdatedBy")
+  roles              UserRole[]
+  auditEvents        AuditLog[] @relation("AuditActor")
+  auditImpersonated  AuditLog[] @relation("AuditImpersonator")
+  settingsTouched    Setting[]  @relation("SettingUpdatedBy")
 
   @@index([deletedAt])
   @@index([isWorker, isActive])
@@ -124,6 +125,11 @@ model AuditLog {
   id       String  @id @default(cuid())
   /// Null only for system/scheduler actions.
   actorId  String?
+  /// The real SUPER_ADMIN behind an impersonated session (SPEC Phase 1 §5).
+  /// A column rather than a key inside `after`, for two reasons: `after` stays
+  /// a clean before/after diff, and "show me everything done while
+  /// impersonating" becomes an indexed query instead of a JSON scan.
+  impersonatorId String?
   action   String
   entity   String
   entityId String
@@ -134,12 +140,37 @@ model AuditLog {
 
   createdAt DateTime @default(now())
 
-  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actor        User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  impersonator User? @relation("AuditImpersonator", fields: [impersonatorId], references: [id], onDelete: SetNull)
 
   @@index([entity, entityId])
   @@index([actorId, createdAt])
+  @@index([impersonatorId, createdAt])
+  @@index([action, createdAt])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+/// The durable half of the login limiter (lib/auth/rate-limit).
+///
+/// Keyed by `user:<username>` or `ip:<address>` — both, so that one attacker
+/// cannot lock every account out of the product by hammering usernames, and a
+/// botnet cannot spread a run thin enough across IPs to never trip.
+///
+/// Not an audit table: rows are updated and deleted freely, and a successful
+/// login clears its own. The permanent record of a login attempt is the
+/// AuditLog row, which is append-only.
+model LoginThrottle {
+  key            String    @id
+  failures       Int       @default(0)
+  firstFailureAt DateTime  @default(now())
+  lastFailureAt  DateTime  @default(now())
+  lockedUntil    DateTime?
+
+  /// Lets a periodic sweep drop expired rows without a table scan.
+  @@index([lockedUntil])
+  @@index([lastFailureAt])
+  @@map("login_throttles")
 }
 
 /// Every business number in the product lives here (CLAUDE.md invariant 4).

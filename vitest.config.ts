@@ -3,6 +3,22 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import { defineConfig } from 'vitest/config'
 
 /**
+ * `next dev` reads `.env` for you; Vitest does not. Without this the
+ * integration project starts with no `TEST_DATABASE_URL`, and `db-guard`
+ * correctly refuses to run — which looks like a broken harness rather than the
+ * missing variable it is.
+ *
+ * `loadEnvFile` follows `--env-file` semantics: a variable already present in
+ * the environment wins, so CI's real values are never clobbered by a developer
+ * `.env` that happens to be checked out.
+ */
+try {
+  process.loadEnvFile('.env')
+} catch {
+  // No `.env` on this machine — CI supplies the variables directly.
+}
+
+/**
  * Two projects, per docs/TESTING.md §1.
  *
  *  unit        — no database, no network. Services are called with fakes.
@@ -57,14 +73,25 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       reportsDirectory: 'coverage',
-      // Scoped to code that Phase 0 actually implements. Each phase widens this
-      // list as its modules land — see docs/DECISIONS.md.
+      // Scoped to code each phase actually implements. Widened in Phase 1 with
+      // the auth, phone and navigation modules — see docs/DECISIONS.md. Files
+      // that only exist to wire Next.js together (`config.ts`, `next-auth.ts`,
+      // `throttle.ts`, `session.ts`) are excluded: they are covered by the
+      // Playwright flow, and a unit test of them would only assert that a
+      // framework was configured.
       include: [
         'src/lib/money.ts',
         'src/lib/settings/**/*.ts',
         'src/lib/rbac/**/*.ts',
         'src/lib/audit.ts',
         'src/lib/scheduler.ts',
+        'src/lib/navigation.ts',
+        'src/lib/phone.ts',
+        'src/lib/auth/password.ts',
+        'src/lib/auth/username.ts',
+        'src/lib/auth/rate-limit.ts',
+        'src/lib/auth/ip.ts',
+        'src/lib/auth/resolve.ts',
         'src/modules/**/service.ts',
         'tests/setup/db-guard.ts',
       ],
@@ -88,6 +115,32 @@ export default defineConfig({
           statements: 90,
         },
         'src/lib/settings/**/*.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        // Access control carries the same gate as money: a gap here is a gap in
+        // who can touch the money (docs/TESTING.md §3).
+        'src/lib/auth/password.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/lib/auth/rate-limit.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/lib/navigation.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/lib/phone.ts': {
           lines: 90,
           functions: 90,
           branches: 90,

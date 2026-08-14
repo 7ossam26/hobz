@@ -1,0 +1,34 @@
+# pnpm 11 reads its settings from here, not from package.json#pnpm.
+#
+# pnpm refuses to run a dependency's install scripts unless it is decided below.
+# Four of these genuinely need theirs: prisma downloads its query engine, and
+# esbuild and unrs-resolver unpack a platform-native binary. Without them,
+# `prisma generate` never runs and every Prisma import fails at type-check time.
+#
+# `sharp` is denied on purpose. Next only uses it for image optimisation, and
+# SPEC §2 bans uploads and file storage outright — there are no images to
+# optimise, so its native binaries stay unbuilt.
+allowBuilds:
+  '@prisma/client': true
+  '@prisma/engines': true
+  esbuild: true
+  prisma: true
+  unrs-resolver: true
+  sharp: false
+
+# pnpm refuses any lockfile entry published within the last day, as a defence
+# against a freshly compromised release. The guard stays on for everything —
+# with one exception.
+#
+# `baseline-browser-mapping` is a browser-support data table that browserslist
+# pulls in transitively and republishes several times a day. Its version is
+# therefore almost always inside the window, which turned the guard from "block
+# suspicious packages" into "block every command in this repo, including
+# `pnpm test`". Excluding the one package keeps the protection meaningful for
+# the other 545.
+#
+# Review note: this is a supply-chain policy relaxation. It is scoped to a
+# single data-only package with no install scripts. Remove it if that ever
+# stops being true.
+minimumReleaseAgeExclude:
+  - baseline-browser-mapping

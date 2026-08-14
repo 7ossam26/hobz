@@ -22,6 +22,7 @@ export const SETTING_GROUPS = [
   'projects',
   'labels',
   'whatsapp',
+  'security',
 ] as const
 
 export type SettingGroup = (typeof SETTING_GROUPS)[number]
@@ -160,6 +161,26 @@ export const SETTINGS_CATALOG = {
   'whatsapp.templates': define('whatsapp', z.record(z.string(), z.string().min(1)), {
     ...ar.defaults.whatsappTemplates,
   }),
+
+  // ── Login throttling & password policy ───────────────────────────────────
+  // These are thresholds, and CLAUDE.md invariant 4 makes no exception for
+  // security thresholds: an operator must be able to loosen the lockout during
+  // an incident without a redeploy. Read by lib/auth/rate-limit, never inlined.
+  /** Failed attempts inside the window before the key is locked out. */
+  'security.maxLoginAttempts': define('security', z.number().int().min(1).max(100), 5),
+  /** Failures older than this stop counting — the window is sliding, not fixed. */
+  'security.loginWindowMinutes': define(
+    'security',
+    z.number().int().min(1).max(1440),
+    15,
+  ),
+  'security.lockoutMinutes': define('security', z.number().int().min(1).max(1440), 15),
+  /**
+   * Length only. No composition rules: forcing a symbol and a digit reliably
+   * produces `Password1!` and a sticky note, which is worse than a long
+   * passphrase an operator actually remembers.
+   */
+  'security.minPasswordLength': define('security', z.number().int().min(8).max(128), 10),
 } as const
 
 export type SettingsCatalog = typeof SETTINGS_CATALOG
