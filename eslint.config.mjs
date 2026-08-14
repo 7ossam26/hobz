@@ -122,6 +122,17 @@ const config = [
     rules: { 'no-restricted-syntax': 'off' },
   },
 
+  // ── lib/search normalises Arabic *characters*, not Arabic *copy* ────────
+  // The rule above exists so that user-facing wording lives in one file and can
+  // be changed in one place. A fold table (أ→ا, ة→ه) is neither user-facing nor
+  // changeable copy: it is the alphabet. Writing it as \u escapes to satisfy the
+  // rule would make the one file where a reviewer must actually see the letters
+  // the one file where they cannot.
+  {
+    files: ['src/lib/search.ts'],
+    rules: { 'no-restricted-syntax': 'off' },
+  },
+
   // ── Services must stay framework-free and unit-testable ────────────────
   {
     files: ['src/modules/*/service.ts', 'src/lib/**/*.ts'],

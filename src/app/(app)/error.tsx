@@ -1,7 +1,10 @@
 'use client'
 
+import { CircleAlert, RotateCw } from 'lucide-react'
+import Link from 'next/link'
 import { useEffect } from 'react'
 
+import { EmptyState } from '@/components/shared/empty-state'
 import { Button } from '@/components/ui/button'
 import { ar } from '@/i18n/ar'
 
@@ -15,8 +18,12 @@ import { ar } from '@/i18n/ar'
  * the query, and its failure has to be visible.
  *
  * The message is generic on purpose. React strips server error details in
- * production, and reconstructing "you lack payout.approve" client-side would
- * mean shipping the permission map to the browser.
+ * production, and reconstructing "you lack `payout.approve`" in the browser
+ * would mean shipping the permission map to it.
+ *
+ * Two ways out, because there are two situations: `reset` re-renders the
+ * segment, which fixes a transient failure, and the dashboard link is for when
+ * it does not.
  */
 export default function AppError({
   error,
@@ -30,14 +37,21 @@ export default function AppError({
   }, [error])
 
   return (
-    <div className="flex flex-col items-start gap-4 rounded-lg border border-dashed px-6 py-14">
-      <div className="flex flex-col gap-1">
-        <p className="text-sm font-medium">{ar.errors.unexpected}</p>
-        <p className="text-muted-foreground text-sm">{ar.errors.forbidden}</p>
-      </div>
-      <Button variant="outline" size="sm" onClick={reset}>
-        {ar.common.next}
-      </Button>
-    </div>
+    <EmptyState
+      icon={<CircleAlert />}
+      title={ar.errors.unexpected}
+      description={ar.errors.forbidden}
+      action={
+        <div className="flex items-center gap-2">
+          <Button variant="default" size="sm" onClick={reset}>
+            <RotateCw />
+            {ar.common.retry}
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard">{ar.nav.dashboard}</Link>
+          </Button>
+        </div>
+      }
+    />
   )
 }

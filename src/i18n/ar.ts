@@ -71,6 +71,66 @@ export const ar = {
     updatedAt: 'آخر تحديث',
     /** U+060C, the Arabic comma. Joining with a Latin ',' looks wrong in RTL. */
     listSeparator: '، ',
+    retry: 'إعادة المحاولة',
+    refresh: 'تحديث',
+    add: 'إضافة',
+    remove: 'إزالة',
+    expand: 'توسيع',
+    collapse: 'طيّ',
+    copy: 'نسخ',
+    copied: 'تم النسخ',
+    unknown: 'غير معروف',
+    more: 'المزيد',
+    open: 'فتح',
+    select: 'اختيار',
+    dismiss: 'إخفاء',
+    undo: 'تراجع',
+    /** `{count}` is substituted at render time. */
+    andMore: 'و{count} غير ذلك',
+  },
+
+  /**
+   * Gregorian month names in Egyptian usage (SPEC §2: Gregorian calendar,
+   * Arabic months, Western numerals). Index 0 is January.
+   *
+   * Hardcoded rather than taken from `Intl`: month names are display copy and
+   * belong with the rest of it, and a fixed table renders identically on every
+   * Node build instead of depending on the bundled ICU version.
+   */
+  months: [
+    'يناير',
+    'فبراير',
+    'مارس',
+    'أبريل',
+    'مايو',
+    'يونيو',
+    'يوليو',
+    'أغسطس',
+    'سبتمبر',
+    'أكتوبر',
+    'نوفمبر',
+    'ديسمبر',
+  ],
+
+  /**
+   * Relative time. Arabic counts inflect in four bands — singular, dual,
+   * plural-of-paucity (3–10), and singular-again (11+) — so each unit carries
+   * four forms. `lib/datetime` picks between them; getting this wrong is the
+   * fastest way to make a product read as machine-translated.
+   */
+  time: {
+    now: 'الآن',
+    ago: 'منذ {value}',
+    within: 'خلال {value}',
+    and: 'و',
+    units: {
+      minute: { one: 'دقيقة', two: 'دقيقتين', few: '{n} دقائق', many: '{n} دقيقة' },
+      hour: { one: 'ساعة', two: 'ساعتين', few: '{n} ساعات', many: '{n} ساعة' },
+      day: { one: 'يوم', two: 'يومين', few: '{n} أيام', many: '{n} يومًا' },
+      week: { one: 'أسبوع', two: 'أسبوعين', few: '{n} أسابيع', many: '{n} أسبوعًا' },
+      month: { one: 'شهر', two: 'شهرين', few: '{n} أشهر', many: '{n} شهرًا' },
+      year: { one: 'سنة', two: 'سنتين', few: '{n} سنوات', many: '{n} سنة' },
+    },
   },
 
   nav: {
@@ -503,10 +563,222 @@ export const ar = {
     },
   },
 
+  /** The app shell: sidebar, header, and the controls that live in them. */
+  shell: {
+    navigation: 'التنقل',
+    toggleSidebar: 'طيّ القائمة الجانبية أو توسيعها',
+    expandSidebar: 'توسيع القائمة الجانبية',
+    collapseSidebar: 'طيّ القائمة الجانبية',
+    notifications: 'الإشعارات',
+    notificationsEmpty: 'لا توجد إشعارات',
+    notificationsHint: 'ستظهر هنا إشعارات المهام والمستحقات.',
+    /** `{count}` is substituted at render time. */
+    unreadCount: '{count} غير مقروء',
+    userMenu: 'قائمة الحساب',
+    account: 'الحساب',
+    appearance: 'المظهر والعرض',
+    openCommandPalette: 'فتح لوحة الأوامر',
+    commandShortcut: 'Ctrl + K',
+    breadcrumb: 'مسار التنقل',
+    pageActions: 'إجراءات الصفحة',
+  },
+
+  /** The Ctrl+K palette. */
+  command: {
+    title: 'لوحة الأوامر',
+    placeholder: 'ابحث عن صفحة أو مستخدم أو دور…',
+    empty: 'لا توجد نتائج',
+    emptyHint: 'جرّب اسمًا أو كلمة أقصر.',
+    searching: 'جارٍ البحث…',
+    groups: {
+      navigation: 'التنقل',
+      actions: 'إجراءات سريعة',
+      users: 'المستخدمون',
+      roles: 'الأدوار',
+      appearance: 'المظهر والعرض',
+    },
+    hints: {
+      navigate: 'للتنقل',
+      select: 'للفتح',
+      close: 'للإغلاق',
+    },
+  },
+
+  /** DataTable chrome. */
+  table: {
+    columns: 'الأعمدة',
+    columnsHint: 'اختر الأعمدة الظاهرة',
+    filters: 'التصفية',
+    clearFilters: 'مسح التصفية',
+    /** `{count}` is substituted at render time. */
+    activeFilters: '{count} تصفية نشطة',
+    sortAscending: 'ترتيب تصاعدي',
+    sortDescending: 'ترتيب تنازلي',
+    sortClear: 'إلغاء الترتيب',
+    rowsPerPage: 'صفوف لكل صفحة',
+    /** `{from}`, `{to}` and `{total}` are substituted at render time. */
+    range: 'عرض {from}–{to} من {total}',
+    /** `{page}` and `{pages}` are substituted at render time. */
+    pageOf: 'صفحة {page} من {pages}',
+    firstPage: 'الصفحة الأولى',
+    lastPage: 'الصفحة الأخيرة',
+    nextPage: 'الصفحة التالية',
+    previousPage: 'الصفحة السابقة',
+    empty: 'لا توجد صفوف',
+    emptyFiltered: 'لا توجد صفوف مطابقة للتصفية',
+    savedViews: 'العروض المحفوظة',
+    saveView: 'حفظ العرض الحالي',
+    saveViewHint: 'يحفظ التصفية والترتيب والأعمدة الظاهرة.',
+    viewName: 'اسم العرض',
+    deleteView: 'حذف العرض',
+    defaultView: 'العرض الافتراضي',
+    /** `{count}` is substituted at render time. */
+    selectedCount: 'تم تحديد {count}',
+  },
+
+  /** Destructive confirmation: the user types the name back (SPEC §9). */
+  confirm: {
+    title: 'تأكيد الإجراء',
+    irreversible: 'هذا الإجراء لا يمكن التراجع عنه.',
+    /** `{value}` is the exact text the user must type. */
+    typeToConfirm: 'اكتب «{value}» للتأكيد',
+    mismatch: 'النص غير مطابق',
+    proceed: 'نفّذ',
+  },
+
+  /** Toast conventions: one line, one fact, optionally one action. */
+  toast: {
+    dismiss: 'إخفاء الإشعار',
+    region: 'إشعارات النظام',
+  },
+
+  /** Project health (SPEC §5.7). */
+  health: {
+    GREEN: 'سليم',
+    AMBER: 'يحتاج متابعة',
+    RED: 'متعثّر',
+    override: 'تقدير يدوي',
+  },
+
+  whatsapp: {
+    open: 'مراسلة عبر واتساب',
+    /** `{name}` is substituted at render time. */
+    openWith: 'مراسلة {name} عبر واتساب',
+    noPhone: 'لا يوجد رقم موبايل مسجّل',
+  },
+
+  /** The dev-only /design-system route. Not part of the product surface. */
+  designSystem: {
+    title: 'نظام التصميم',
+    subtitle: 'كل مكوّن في المظهرين وفي الكثافتين، بمحتوى عربي حقيقي.',
+    devOnly: 'هذه الصفحة متاحة في بيئة التطوير فقط.',
+    sections: {
+      surfaces: 'الأسطح',
+      accent: 'اللون الأساسي',
+      data: 'ألوان البيانات',
+      typography: 'الخطوط والأرقام',
+      status: 'حالات المهام',
+      projectStatus: 'حالات المشاريع',
+      priority: 'الأولويات',
+      health: 'صحة المشاريع',
+      ledger: 'أنواع الحركات المالية',
+      people: 'الأشخاص',
+      money: 'المبالغ',
+      dates: 'التواريخ',
+      buttons: 'الأزرار',
+      forms: 'حقول النماذج',
+      table: 'الجداول',
+      sheet: 'اللوحات الجانبية',
+      dialogs: 'الحوارات',
+      feedback: 'الرسائل والحالات',
+      skeletons: 'هياكل التحميل',
+    },
+    labels: {
+      hue: 'اللون',
+      token: 'المتغيّر',
+      contrast: 'نسبة التباين',
+      sample: 'نموذج',
+      openSheet: 'افتح لوحة جانبية',
+      openEntitySheet: 'افتح لوحة مهمة',
+      openConfirm: 'افتح حوار تأكيد',
+      showToast: 'أظهر رسالة نجاح',
+      showErrorToast: 'أظهر رسالة خطأ',
+      density: 'الكثافة',
+      theme: 'المظهر',
+      both: 'الاثنان',
+      surfaceSunken: 'سطح غائر',
+      surfaceBase: 'سطح الصفحة',
+      surfaceRaised: 'سطح بارز',
+      surfaceInset: 'سطح داخلي',
+    },
+    /**
+     * Sample content for the gallery. Real Arabic, real names, real lengths —
+     * a design system reviewed with `Lorem ipsum` is a design system reviewed
+     * in the wrong language and the wrong text direction.
+     */
+    samples: {
+      people: [
+        {
+          fullName: 'أحمد محمود عبد الله',
+          username: 'ahmed.mahmoud',
+          phone: '+201012345678',
+        },
+        {
+          fullName: 'فاطمة الزهراء حسن',
+          username: 'fatma.hassan',
+          phone: '+201115556677',
+        },
+        { fullName: 'يحيى إبراهيم', username: 'yehia.ibrahim', phone: '+201234567890' },
+        { fullName: 'منى عبد الرحمن', username: 'mona.abdelrahman', phone: '' },
+      ],
+      projects: [
+        { code: 'ACME-01', name: 'هوية بصرية لشركة النخبة' },
+        { code: 'RETL-07', name: 'متجر إلكتروني — المرحلة الثانية' },
+        { code: 'CNTN-12', name: 'محتوى شهري للسوشيال ميديا' },
+      ],
+      tasks: [
+        'تصميم صفحة الهبوط',
+        'مراجعة نصوص الحملة الإعلانية',
+        'مونتاج الفيديو التعريفي',
+        'تسليم ملفات الهوية النهائية',
+        'إعداد تقرير الأداء الشهري',
+      ],
+      sheetTitle: 'تصميم صفحة الهبوط',
+      sheetSubtitle: 'هوية بصرية لشركة النخبة · تسليم خلال 3 أيام',
+      sheetTabs: { details: 'التفاصيل', comments: 'التعليقات', activity: 'السجل' },
+      sheetBody:
+        'كل عنصر في هذا النظام يُفتح في لوحة جانبية فوق الصفحة، لا بالانتقال إلى صفحة أخرى.',
+      confirmTitle: 'حذف المشروع',
+      confirmDescription:
+        'سيُخفى المشروع وكل مهامه من كل الشاشات. القيود المالية تبقى كما هي.',
+      toastSaved: 'تم حفظ التعديلات',
+      toastFailed: 'تعذّر عكس الخصم',
+      toastFailedDetail: 'راجع صلاحياتك ثم حاول مرة أخرى.',
+      emptyTitle: 'لا توجد مهام في هذا المشروع',
+      emptyDescription: 'أنشئ أول مهمة وأسندها إلى منفّذ لتبدأ متابعة التسليم.',
+      emptyAction: 'مهمة جديدة',
+      formLabel: 'قيمة المهمة',
+      formHint: 'المبلغ الذي يستحقه المنفّذ عند اعتماد التسليم.',
+      formError: 'المبلغ بالأرقام فقط، بحد أقصى خانتان عشريتان',
+      columnTask: 'المهمة',
+      columnProject: 'المشروع',
+      columnAssignee: 'المنفّذ',
+      columnStatus: 'الحالة',
+      columnPriority: 'الأولوية',
+      columnValue: 'القيمة',
+      columnDue: 'التسليم',
+      paragraph:
+        'نظام تشغيل داخلي لوكالة رقمية: مشاريع ومهام ومنفّذون ومواعيد تسليم وخصومات ومكافآت ومستحقات، محسوبة بالنظام لا بالاجتهاد.',
+    },
+  },
+
   a11y: {
     skipToContent: 'تخطَّ إلى المحتوى',
     toggleTheme: 'تبديل المظهر',
     openMenu: 'فتح القائمة',
+    loading: 'جارٍ التحميل',
+    /** Announced when a list of results changes under the search box. */
+    resultsUpdated: 'تم تحديث النتائج',
   },
 } as const
 

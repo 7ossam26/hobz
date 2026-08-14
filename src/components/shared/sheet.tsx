@@ -3,24 +3,41 @@
 import { X } from 'lucide-react'
 import * as React from 'react'
 
+import { useModalBehaviour } from '@/components/shared/use-modal'
 import { Button } from '@/components/ui/button'
 import { ar } from '@/i18n/ar'
 import { cn } from '@/lib/utils'
 
 /**
- * The sheet-first primitive (CLAUDE.md UI rules: "entities open in a side sheet
- * over the current page. Users should almost never navigate away to edit
- * something").
+ * `Sheet` — the overlay mechanics. `EntitySheet` (same folder) is the thing
+ * feature code actually uses; this is the layer underneath it, kept separate
+ * so that a dialog, a filter panel and an entity editor share one focus trap
+ * rather than three.
  *
- * Hand-written rather than Radix Dialog, for the same reason the button avoids
- * the umbrella package: Phase 0 measured `radix-ui` at ~77 kB of client JS,
- * which alone consumed the SPEC §9 route budget. Phase 2 owns the real
- * `EntitySheet`; this is the working subset that phase can grow into.
+ * CLAUDE.md's interaction model: "entities open in a side sheet or dialog over
+ * the current page. Users should almost never navigate away to edit
+ * something." Everything below exists to make that safe rather than merely
+ * possible.
  *
- * It slides from the inline **end** — the left edge under RTL — because the
- * sidebar occupies the start edge. `end-0` is what makes that mirror correctly
- * rather than being hardcoded to one side.
+ * Hand-written rather than Radix Dialog for the reason Phase 0 recorded:
+ * the `radix-ui` umbrella measured ~77 kB of client JS, which alone consumed
+ * the SPEC §9 route budget. The behaviours that actually matter — focus trap,
+ * focus restore, scroll lock, Escape, `aria-modal`, inert background — are
+ * about eighty lines, and they are all here.
+ *
+ * It slides from the inline **end**, which under RTL is the left edge, because
+ * the sidebar occupies the inline start. `end-0` is what makes that mirror
+ * correctly instead of being nailed to one side of the screen.
  */
+
+const SHEET_SIZES = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-xl',
+  xl: 'max-w-3xl',
+} as const
+
+export type SheetSize = keyof typeof SHEET_SIZES
 
 export interface SheetProps {
   open: boolean
@@ -30,6 +47,28 @@ export interface SheetProps {
   children: React.ReactNode
   footer?: React.ReactNode
   className?: string
+  size?: SheetSize
+  /**
+   * Rendered between the title block and the close button — chips, a status,
+   * an overflow menu.
+   */
+  headerExtra?: React.ReactNode
+  /** Replaces the whole default header. */
+  header?: React.ReactNode
+  /**
+   * A form with unsaved edits passes `false` so a stray click on the page
+   * behind cannot discard typing. Escape and the close button still work: an
+   * overlay that swallows every exit is a trap, not a safeguard.
+   */
+  closeOnOverlayClick?: boolean
+  /** Blocks Escape and the close button — for an in-flight save. */
+  busy?: boolean
+  /**
+   * Skip the default padded scroll region and render `children` straight into
+   * the panel. `EntitySheet` uses this because it owns its own tab strip and
+   * scroll container.
+   */
+  bare?: boolean
 }
 
 export function Sheet({
@@ -40,94 +79,100 @@ export function Sheet({
   children,
   footer,
   className,
+  size = 'md',
+  header,
+  headerExtra,
+  closeOnOverlayClick = true,
+  busy = false,
+  bare = false,
 }: SheetProps) {
   const panelRef = React.useRef<HTMLDivElement>(null)
   const titleId = React.useId()
+  const descriptionId = React.useId()
 
-  React.useEffect(() => {
-    if (!open) return
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose()
-      if (event.key !== 'Tab') return
-
-      // Minimal focus trap. Without it, tabbing walks out of the sheet and into
-      // the page behind it, which a screen-reader user cannot see is still there.
-      const focusable = panelRef.current?.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      )
-      if (!focusable || focusable.length === 0) return
-
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      if (!first || !last) return
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault()
-        first.focus()
-      }
-    }
-
-    document.addEventListener('keydown', onKeyDown)
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
-    // Move focus in, so the keyboard lands where the eye already is.
-    panelRef.current?.querySelector<HTMLElement>('input, select, textarea, button')?.focus()
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = previousOverflow
-    }
-  }, [open, onClose])
+  const { entered, requestClose } = useModalBehaviour({
+    open,
+    onClose,
+    panelRef,
+    closeDisabled: busy,
+  })
 
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div className="fixed inset-0 z-50 flex" data-slot="sheet">
+      {/* Decorative for assistive technology: it duplicates the close
+          button's job, and announcing two controls called "إغلاق" is noise.
+          Escape and the header button are the real exits. */}
       <button
         type="button"
-        aria-label={ar.common.close}
-        className="absolute inset-0 bg-zinc-950/40 backdrop-blur-[1px]"
-        onClick={onClose}
+        tabIndex={-1}
+        aria-hidden
+        data-slot="sheet-overlay"
+        className={cn(
+          'absolute inset-0 bg-zinc-950/40 transition-opacity duration-200',
+          entered ? 'opacity-100' : 'opacity-0',
+        )}
+        onClick={closeOnOverlayClick ? requestClose : undefined}
       />
+
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
+        data-slot="sheet-panel"
         className={cn(
-          'bg-background absolute inset-block-0 end-0 flex h-full w-full max-w-md flex-col border-s shadow-lg',
+          'bg-card shadow-overlay absolute end-0 top-0 bottom-0 flex h-full w-full flex-col border-s',
+          'transition-transform duration-200 ease-out',
+          entered ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full',
+          SHEET_SIZES[size],
           className,
         )}
       >
-        <header className="flex items-start justify-between gap-4 border-b px-5 py-4">
-          <div className="flex flex-col gap-1">
-            <h2 id={titleId} className="text-base font-semibold tracking-tight">
-              {title}
-            </h2>
-            {description ? (
-              <p className="text-muted-foreground text-sm">{description}</p>
-            ) : null}
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={onClose}
-            aria-label={ar.common.close}
-          >
-            <X />
-          </Button>
-        </header>
+        {header ?? (
+          <header className="flex items-start justify-between gap-4 border-b px-5 py-4">
+            <div className="flex min-w-0 flex-col gap-1">
+              <h2
+                id={titleId}
+                className="truncate text-base font-semibold tracking-tight"
+              >
+                {title}
+              </h2>
+              {description ? (
+                <p id={descriptionId} className="text-fg-muted text-sm">
+                  {description}
+                </p>
+              ) : null}
+            </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+            <div className="flex shrink-0 items-center gap-1">
+              {headerExtra}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                disabled={busy}
+                onClick={requestClose}
+                aria-label={ar.common.close}
+              >
+                <X />
+              </Button>
+            </div>
+          </header>
+        )}
+
+        {bare ? (
+          children
+        ) : (
+          <div data-modal-body className="flex-1 overflow-y-auto px-5 py-4">
+            {children}
+          </div>
+        )}
 
         {footer ? (
-          <footer className="flex items-center justify-end gap-2 border-t px-5 py-4">
+          <footer className="bg-card flex items-center justify-end gap-2 border-t px-5 py-4">
             {footer}
           </footer>
         ) : null}

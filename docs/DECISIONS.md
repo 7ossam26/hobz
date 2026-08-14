@@ -373,3 +373,168 @@ no actor, no reason, no IP and no payload.
 - **The users page fetches every user's detail up front** to populate the edit
   sheet without a client waterfall. Correct at ~100 users and wrong at 10 000;
   Phase 2's `EntitySheet` should fetch on open.
+
+---
+
+## Phase 2 — Design System & App Shell
+
+**Date:** 2026-08-14 · **Model:** Opus 5
+
+### Built
+
+- **The token layer** in `src/app/globals.css` (Tailwind v4 has no JS config —
+  `@theme` is the config): a four-step zinc surface ramp per theme, a full
+  violet accent ramp, ten data hues with four roles each, restrained
+  radius/elevation scales, and a density scale driven by `data-density` on
+  `<html>`.
+- **`lib/palette`** — the dictionary that turns a datum into a hue. Task status,
+  project status, priority, health, ledger type, plus a stable FNV-1a hash for
+  identity colours (project, category, avatar).
+- **The app shell**: RTL-correct collapsible sidebar (icon-only collapsed, and
+  always icon-only below `md`), sticky header with a route-derived breadcrumb, a
+  portal slot for the page's primary action, a notification bell placeholder,
+  and an account menu carrying the theme and density toggles.
+- **`Ctrl+K` command palette** in Arabic — navigation, appearance actions and
+  entity search, ranked through `lib/search`.
+- **`lib/search`** — Arabic normalisation (alef/hamza/ya/ta-marbuta folds,
+  diacritics, tatweel, Arabic-Indic digits, Latin case and accents) plus a
+  five-band relevance score and a stable ranker.
+- **`lib/datetime`** — Cairo wall-clock rendering, Gregorian dates with Arabic
+  month names from `i18n/ar`, and relative time with correct Arabic
+  singular/dual/paucal/plural inflection.
+- **The component library**: `EntitySheet` (over `Sheet`, `Dialog`, `Popover`
+  and a shared modal-behaviour hook), `DataTable` (server-driven paging,
+  sorting, faceted filters, saved views, column visibility, sticky header,
+  virtualisation over 100 rows), `StatusChip`, `PriorityFlag`, `HealthBadge`,
+  `UserChip` with the WhatsApp deep link, `MoneyText`, `DateText`,
+  `RelativeTime`, `EmptyState`, skeletons, `ConfirmDialog` with typed
+  confirmation and mandatory reason, toasts, and `FormField` bound to Zod.
+- **`/design-system`** (dev-only), rendering the whole library in either theme
+  and either density, side by side, with real Arabic content.
+- **Loading / error / not-found boundaries** for the app segment.
+- **203 new tests** — 746 unit tests in total, all passing.
+
+### Decisions worth recording
+
+- **Colour is bound, never chosen.** A component says `data-hue="emerald"` and
+  reads `--hue-*`. Two consequences, both intended: painting anything requires
+  first naming what it means, and eleven hues cost one set of utility classes
+  instead of eleven. There is no `color` prop anywhere in the library.
+- **The contrast claim is a test.** `tests/unit/design/palette-contrast.test.ts`
+  parses the stylesheet — not a TypeScript copy of it — and measures 58
+  pairings. The palette was *solved for* rather than eyeballed: a search found
+  the lightest text lightness per hue that still clears 4.7:1 against its own
+  chip tint, which is the darkest ground that text ever sits on.
+- **Ten hues, none of them violet.** The accent occupies 275–300°; the data hues
+  sit at 25/55/85/128/162/195/232/264/322/355°. A test asserts both the distance
+  from the accent and at least 15° between neighbours.
+- **`BACKLOG`, `LOW` and `DRAFT` are deliberately neutral.** On a list where most
+  rows are LOW, colouring LOW colours everything, which is the same as colouring
+  nothing.
+- **Theme, density and sidebar state are cookies.** Settings are global
+  (SPEC §7) and these are personal; a `User.theme` column would cost a
+  migration, a write per toggle, and a round trip before the screen could
+  change. The server reads them while rendering `<html>`, so there is no flash
+  and no client JS on first paint. The cost — per browser, not per account — is
+  written into SPEC §9 rather than left implicit.
+- **Table state lives in the URL, saved views in `localStorage`.** The table is
+  server-driven, so its state is a query input and has to survive a request. A
+  saved view is only a shortcut to a URL the user could have bookmarked, which
+  is why losing one is an inconvenience rather than data loss.
+- **The command palette fetches the whole directory once.** SPEC §2 caps the
+  product at ~100 users. Sending 100 names to the browser once is smaller than
+  either a normalised shadow column per searchable field or a full scan per
+  keystroke — and Arabic folding cannot happen inside a `WHERE` clause without
+  one of those.
+- **Everything is still hand-written.** No Radix beyond `react-slot`, no
+  virtualiser dependency. The focus trap, scroll lock, popover, tabs and row
+  windowing come to roughly 300 lines together, and the route budget is 180 kB.
+- **The header's page action is a portal.** A layout cannot read its child page's
+  props, and the header has to survive `loading.tsx` and `error.tsx`. The cost is
+  one frame of hydration for a button, on routes that are all dynamic anyway.
+- **A modal focuses the first control in its *body*.** The first focusable
+  element in DOM order is the close button, and landing a keyboard user on
+  "close" is the opposite of why the sheet opened.
+- **`lib/search.ts` is exempted from the no-Arabic-literals rule.** That rule
+  exists so user-facing wording lives in one file. A fold table (أ→ا, ة→ه) is the
+  alphabet, not copy, and writing it as `\u` escapes would make the one file
+  where a reviewer must see the letters the one file where they cannot.
+
+### Surprises
+
+- **The overlay was announcing a second "إغلاق".** Both the backdrop button and
+  the header close button carried the same accessible name, so a screen-reader
+  user heard two identical controls. Found by a component test that could not
+  disambiguate them either. The backdrop is now `aria-hidden` with
+  `tabIndex={-1}`; Escape and the header button are the real exits.
+- **Testing Library's auto-cleanup never ran.** `vitest.config.ts` sets
+  `globals: false`, and Testing Library installs its `afterEach(cleanup)` only
+  when it finds a global `afterEach`. Renders were stacking up in one document
+  and `getByText` failed with "found multiple elements" in whichever test
+  happened to be second. Fixed once, in `tests/helpers/render.tsx`.
+- **`inset-block-0` and `inset-inline-0` are not Tailwind classes.** Phase 1's
+  `Sheet` had been carrying `inset-block-0` since it was written. It did nothing,
+  and an `h-full` was quietly holding the panel together.
+- **Two sources of truth for column visibility is one too many.** The first cut
+  had `defaultHidden` on the column *and* `hidden` in the URL, which made a
+  default-hidden column impossible to switch back on. `hidden` is now the whole
+  truth, and the page seeds it with `defaultHiddenColumns(columns)`.
+- **The search debounce fired twice per query.** The effect depended on the
+  `onSearch` callback, which the parent rebuilds on every render — including the
+  pending re-render that the previous search had just caused. It is held in a ref
+  now.
+
+### Route JS (SPEC §9 budget: < 180 kB gzip)
+
+Measured from `next build`. The reported figures are gzipped, verified against
+the emitted chunks: 54.2 kB reported vs 53.0 kB measured for the React chunk.
+
+| Route              | First Load JS | Headroom |
+| ------------------ | ------------- | -------- |
+| `/dashboard`       | 103 kB        | 77 kB    |
+| `/login`           | 124 kB        | 56 kB    |
+| `/change-password` | 124 kB        | 56 kB    |
+| `/audit`           | 124 kB        | 56 kB    |
+| `/roles`           | 146 kB        | 34 kB    |
+| `/users`           | 148 kB        | 32 kB    |
+| `/design-system`   | 155 kB        | dev-only |
+
+The shared baseline is 103 kB, of which 54.2 kB is React itself. The shell —
+sidebar, breadcrumb, palette, popovers, toasts, preferences — adds about 21 kB to
+the routes that render it.
+
+### Deferred (with owners)
+
+| Deferred                                                                 | Phase |
+| ------------------------------------------------------------------------ | ----- |
+| Notifications behind the bell (events, preferences, 30s polling)         | 9     |
+| Deep-linking the palette into an entity's sheet (`?open=<id>`)           | 3     |
+| Arabic status labels read from Settings rather than `ar.enums`           | 12    |
+| Users and roles screens rebuilt on `DataTable` + `EntitySheet`           | 3     |
+| Server-side pagination UI for the users list (inherited from Phase 1)    | 3     |
+| Row selection and bulk actions in `DataTable`                            | 5     |
+| Optimistic updates (the toast conventions and provider are already here) | 3     |
+
+### Known limitations
+
+- **The integration suite and the combined coverage gate did not run.** The test
+  database is unreachable on this machine — `prisma migrate deploy` fails inside
+  `tests/setup/global-setup.ts` — which is the same environment gap Phase 1
+  recorded. The unit project passes in full: 36 files, 746 tests. Every file this
+  phase added to the coverage list is at or above its 90% gate: `search` 100%,
+  `datetime` 100%, `preferences` 100%, `palette` 100%, `data-table/state` 98%.
+  Phase 2's additions raised unit-only global coverage from 63.05% to 69.88%; the
+  70% global gate is written for the combined run, where `modules/*/service.ts`
+  is covered by the integration project.
+- **The users, roles and audit screens still use Phase 1's markup.** They compile
+  and behave exactly as before — `Sheet` kept its API — but they do not yet use
+  `DataTable` or `EntitySheet`. Rebuilding them belongs with the phase that
+  touches their data.
+- **Toasts render against the global theme, not a preview panel's.** They are
+  portalled to `<body>`, so on `/design-system` a toast fired from the dark panel
+  appears in whatever theme the app is actually in. Correct everywhere that is
+  not a side-by-side gallery.
+- **`RelativeTime` renders the absolute date on the server** and becomes relative
+  after mount. That is deliberate — it is what avoids a hydration mismatch and
+  what keeps a long-open dashboard honest — but it does mean the first paint
+  shows a timestamp rather than "منذ دقيقتين".

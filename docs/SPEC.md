@@ -397,6 +397,51 @@ LCP < 1.8s on 4G · route JS < 180KB gzip · zero client-side data waterfalls ·
 Server Components by default · every list paginated & indexed · virtualize any
 list over 100 rows · no chart library on the initial dashboard bundle.
 
+### How this is implemented (settled in Phase 2)
+
+**Tokens live in `src/app/globals.css`, not in a `tailwind.config`.** Tailwind v4
+has no JS config; `@theme` *is* the config. Three groups, and the separation is
+load-bearing: a **surface** ramp (zinc, chrome only, never a hue), one **accent**
+ramp (violet, actions and focus only), and ten **data** hues. The data hues avoid
+the 275–300° band the accent occupies, so a status chip can never be mistaken for
+a button.
+
+**Colour is bound to data, not chosen.** A component declares *which datum* it is
+showing — `data-hue="emerald"` — and reads `--hue-surface` / `--hue-text` /
+`--hue-line` / `--hue-solid`. There is no `color` prop anywhere in the component
+library. `src/lib/palette.ts` is the dictionary (status → hue, priority → hue,
+ledger type → hue, and a stable hash for project/category/avatar identity); a
+value with no entry there renders neutral, which is the correct outcome for
+decoration.
+
+**Contrast is asserted, not claimed.** `tests/unit/design/palette-contrast.test.ts`
+parses `globals.css` and measures every pairing the components produce: text ≥
+4.5:1 on its chip tint *and* on all three neutral surfaces, solid marks ≥ 3:1,
+button and active-nav pairings ≥ 4.5:1, in both themes. Retuning a colour to look
+nicer now costs a failing test rather than a silent regression.
+
+**Density is a CSS-variable scale**, set as `data-density` on `<html>`. Row
+height, cell padding, control height, gaps and text size all derive from it, so a
+new component is dense-correct without taking a prop.
+
+**Theme, density and sidebar state are cookies, not Settings and not columns.**
+Settings are global (§7) and these are personal; nothing about a payout changes
+because someone prefers compact rows. The server reads the cookies while
+rendering `<html>`, so the first paint is already correct — no flash, no
+correcting `useEffect`, no client JS on first paint. The trade, named
+deliberately: the preference is per browser, so a second machine starts at the
+default.
+
+**Table state lives in the URL.** Page, sort, facets, search and column
+visibility are inputs to a Prisma query that runs in a Server Component, so they
+must survive a request. A filtered list is therefore linkable and the back button
+steps through filter changes. **Saved views** are named shortcuts to such a URL,
+stored per browser in `localStorage` — losing one is an inconvenience, not data
+loss.
+
+**`/design-system` is development-only** and 404s in production. It is not
+permission-gated, because a permission would imply somebody could be granted it.
+
 ---
 
 ## 10. Import

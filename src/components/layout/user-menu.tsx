@@ -2,56 +2,83 @@
 
 import { KeyRound, LogOut } from 'lucide-react'
 import Link from 'next/link'
-import { useTransition } from 'react'
+import * as React from 'react'
 
-import { Button } from '@/components/ui/button'
+import { Avatar } from '@/components/data/user-chip'
+import { AppearanceControls } from '@/components/layout/appearance-toggles'
+import {
+  Popover,
+  PopoverItem,
+  PopoverLabel,
+  PopoverSeparator,
+} from '@/components/shared/popover'
 import { ar } from '@/i18n/ar'
 import { logoutAction } from '@/modules/auth/actions'
 
 /**
- * Identity and the two things you can do with it. Deliberately not a dropdown:
- * two links do not justify a popover's client JS, and Phase 2 owns the real
- * user menu.
+ * Identity, the two things you can do with it, and the appearance controls.
+ *
+ * Theme and density live here rather than in the header strip because they are
+ * settings a person changes twice a year. Two permanent icon buttons in the
+ * header would spend prime real estate on that, next to a notification bell
+ * people actually use.
  */
 export function UserMenu({
-  fullName,
-  username,
+  user,
 }: {
-  fullName: string
-  username: string
+  user: { id: string; fullName: string; username: string }
 }) {
-  const [pending, startTransition] = useTransition()
+  const [pending, startTransition] = React.useTransition()
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex flex-col items-end leading-tight">
-        <span className="text-sm font-medium">{fullName}</span>
-        <span className="text-muted-foreground text-xs" dir="ltr">
-          {username}
-        </span>
+    <Popover
+      align="end"
+      label={ar.shell.userMenu}
+      className="w-64"
+      trigger={({ toggle, ...triggerProps }) => (
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={ar.shell.userMenu}
+          className="hover:bg-accent flex items-center gap-2 rounded-md p-1 transition-colors focus-visible:outline-none"
+          {...triggerProps}
+        >
+          <Avatar user={user} size="sm" />
+          <span className="hidden text-sm font-medium sm:inline">{user.fullName}</span>
+        </button>
+      )}
+    >
+      <div className="flex items-center gap-2 px-2 py-2">
+        <Avatar user={user} size="md" />
+        <div className="flex min-w-0 flex-col leading-tight">
+          <span className="truncate text-sm font-medium">{user.fullName}</span>
+          <span className="text-fg-subtle truncate text-xs" dir="ltr">
+            {user.username}
+          </span>
+        </div>
       </div>
 
-      <Button asChild variant="ghost" size="icon-sm" title={ar.auth.changePassword}>
-        <Link href="/change-password" aria-label={ar.auth.changePassword}>
-          <KeyRound />
-        </Link>
-      </Button>
+      <PopoverSeparator />
 
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
+      <PopoverLabel>{ar.shell.appearance}</PopoverLabel>
+      <AppearanceControls />
+
+      <PopoverSeparator />
+
+      <PopoverItem asChild>
+        <Link href="/change-password">
+          <KeyRound className="size-4 shrink-0" aria-hidden />
+          {ar.auth.changePassword}
+        </Link>
+      </PopoverItem>
+
+      <PopoverItem
         disabled={pending}
-        aria-label={ar.auth.signOut}
-        title={ar.auth.signOut}
-        onClick={() => {
-          startTransition(async () => {
-            await logoutAction()
-          })
-        }}
+        onClick={() => startTransition(async () => void (await logoutAction()))}
       >
-        <LogOut />
-      </Button>
-    </div>
+        <LogOut className="size-4 shrink-0" aria-hidden />
+        {ar.auth.signOut}
+      </PopoverItem>
+    </Popover>
   )
 }

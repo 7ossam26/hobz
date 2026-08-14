@@ -94,6 +94,16 @@ export default defineConfig({
         'src/lib/auth/resolve.ts',
         'src/modules/**/service.ts',
         'tests/setup/db-guard.ts',
+        // Phase 2. `search` and `datetime` carry the 90% gate below for the
+        // same reason `money` does: they are the two places where a silent
+        // wrong answer looks like a correct one. A name that cannot be found
+        // reads as "that person is not in the system", and a date rendered in
+        // the wrong timezone reads as a different deadline.
+        'src/lib/search.ts',
+        'src/lib/datetime.ts',
+        'src/lib/palette.ts',
+        'src/lib/preferences.ts',
+        'src/components/shared/data-table/state.ts',
       ],
       thresholds: {
         // Global gate (docs/TESTING.md §3).
@@ -141,6 +151,30 @@ export default defineConfig({
           statements: 90,
         },
         'src/lib/phone.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/lib/search.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/lib/datetime.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/lib/preferences.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/components/shared/data-table/state.ts': {
           lines: 90,
           functions: 90,
           branches: 90,

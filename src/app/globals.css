@@ -82,79 +82,382 @@
   unicode-range: U+0000-00FF, U+2000-206F, U+2122, U+2212, U+FEFF, U+FFFD;
 }
 
-/* ── Design tokens ────────────────────────────────────────────────────────
-   Phase 0 ships only the chrome: a zinc surface scale that is never pure
-   white or pure black, and one violet accent. The 10-hue semantic data
-   palette is Phase 2's job — deliberately absent so that "colour encodes
-   data" cannot be violated by a decorative colour that already exists. */
+/* ═══════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Tailwind v4 has no `tailwind.config.js`; the theme *is* this file, via
+   `@theme`. That is why the "design tokens in Tailwind config" the phase brief
+   asks for live here.
+
+   THE RULE (SPEC §9): colour encodes data, chrome stays quiet.
+
+   Three groups, and the separation between them is load-bearing:
+
+     1. SURFACE  — a zinc ramp, never pure #fff / #000. Chrome only. Carries no
+                   meaning, and nothing in this group is allowed a hue.
+     2. ACCENT   — one violet ramp. Actions and focus. Never used to classify a
+                   row, a status, or a number.
+     3. DATA     — ten hues. Every saturated colour on screen comes from here,
+                   and every one of them names a fact: a status, a priority, a
+                   health, a category, a project, a ledger type.
+
+   The data hues deliberately avoid the 275–300° band the accent occupies, so a
+   status chip can never be mistaken for a button.
+
+   All values are OKLCH: perceptually uniform lightness, which is what makes a
+   fixed L across ten hues actually *look* like one row of chips rather than a
+   ransom note. Every text pairing below was solved for — not eyeballed — and
+   is re-verified from this stylesheet by
+   `tests/unit/design/palette-contrast.test.ts`. Change a number here and that
+   test tells you what it costs.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --radius: 0.5rem;
+  /* ── Surface ramp (light) ────────────────────────────────────────────────
+     `sunken` < `base` < `raised`. Table headers and wells sit below the page;
+     cards, sheets and popovers sit above it. Pure white is banned, so `raised`
+     stops at L 0.993 — visibly paper rather than screen. */
+  --surface-sunken: oklch(0.957 0.004 286);
+  --surface-base: oklch(0.976 0.002 286);
+  --surface-raised: oklch(0.993 0.001 286);
+  --surface-inset: oklch(0.936 0.005 286);
 
-  --background: oklch(0.985 0.001 286);
-  --foreground: oklch(0.21 0.006 286);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.006 286);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.006 286);
+  /* Text. `subtle` is AA-large only (3.4:1) and is for timestamps and counts —
+     never for anything a decision depends on. */
+  --fg: oklch(0.21 0.006 286);
+  --fg-muted: oklch(0.52 0.014 286);
+  --fg-subtle: oklch(0.62 0.012 286);
 
-  --primary: oklch(0.541 0.229 288);
-  --primary-foreground: oklch(0.985 0.001 286);
+  --line: oklch(0.9 0.004 286);
+  --line-strong: oklch(0.84 0.006 286);
 
-  --secondary: oklch(0.967 0.001 286);
-  --secondary-foreground: oklch(0.21 0.006 286);
-  --muted: oklch(0.967 0.001 286);
-  --muted-foreground: oklch(0.552 0.014 286);
-  --accent: oklch(0.967 0.001 286);
-  --accent-foreground: oklch(0.21 0.006 286);
+  /* ── Accent: violet (light) ────────────────────────────────────────────── */
+  --violet-50: oklch(0.977 0.014 286);
+  --violet-100: oklch(0.946 0.033 286);
+  --violet-200: oklch(0.902 0.063 287);
+  --violet-300: oklch(0.827 0.108 288);
+  --violet-400: oklch(0.714 0.166 288);
+  --violet-500: oklch(0.606 0.213 289);
+  --violet-600: oklch(0.541 0.229 288);
+  --violet-700: oklch(0.487 0.217 288);
+  --violet-800: oklch(0.418 0.181 288);
+  --violet-900: oklch(0.36 0.144 288);
+  --violet-950: oklch(0.257 0.1 288);
 
-  --destructive: oklch(0.577 0.245 27);
-  --destructive-foreground: oklch(0.985 0.001 286);
+  --accent-solid: var(--violet-600);
+  --accent-solid-hover: var(--violet-700);
+  --accent-on-solid: oklch(0.99 0.005 286);
+  --accent-soft: var(--violet-100);
+  --accent-on-soft: var(--violet-800);
+  --accent-line: var(--violet-300);
+  --accent-ring: var(--violet-600);
 
-  --border: oklch(0.92 0.004 286);
-  --input: oklch(0.92 0.004 286);
-  --ring: oklch(0.541 0.229 288);
+  /* ── Data palette (light) ───────────────────────────────────────────────
+     Per hue: `surface` (chip tint) · `text` (≥4.7:1 on that tint and on every
+     neutral surface) · `line` (chip border) · `solid` (dots, flags, bars —
+     ≥3:1 as a non-text graphic). */
+  --data-neutral-surface: oklch(0.936 0.004 286);
+  --data-neutral-text: oklch(0.44 0.012 286);
+  --data-neutral-line: oklch(0.87 0.005 286);
+  --data-neutral-solid: oklch(0.6 0.014 286);
 
-  /* Density scale, driven from a single variable so the Phase 2 toggle is one
-     class on <html> rather than a per-component prop. */
-  --density-row-height: 2.5rem;
+  --data-red-surface: oklch(0.945 0.027 25);
+  --data-red-text: oklch(0.54 0.189 25);
+  --data-red-line: oklch(0.87 0.069 25);
+  --data-red-solid: oklch(0.6 0.239 25);
+
+  --data-orange-surface: oklch(0.945 0.032 55);
+  --data-orange-text: oklch(0.528 0.131 55);
+  --data-orange-line: oklch(0.87 0.081 55);
+  --data-orange-solid: oklch(0.6 0.149 55);
+
+  --data-amber-surface: oklch(0.945 0.049 85);
+  --data-amber-text: oklch(0.521 0.107 85);
+  --data-amber-line: oklch(0.87 0.089 85);
+  --data-amber-solid: oklch(0.6 0.123 85);
+
+  --data-lime-surface: oklch(0.945 0.049 128);
+  --data-lime-text: oklch(0.512 0.134 128);
+  --data-lime-line: oklch(0.87 0.089 128);
+  --data-lime-solid: oklch(0.6 0.157 128);
+
+  --data-emerald-surface: oklch(0.945 0.049 162);
+  --data-emerald-text: oklch(0.51 0.112 162);
+  --data-emerald-line: oklch(0.87 0.089 162);
+  --data-emerald-solid: oklch(0.6 0.131 162);
+
+  --data-teal-surface: oklch(0.945 0.049 195);
+  --data-teal-text: oklch(0.513 0.087 195);
+  --data-teal-line: oklch(0.87 0.089 195);
+  --data-teal-solid: oklch(0.6 0.102 195);
+
+  --data-sky-surface: oklch(0.945 0.032 232);
+  --data-sky-text: oklch(0.515 0.105 232);
+  --data-sky-line: oklch(0.87 0.077 232);
+  --data-sky-solid: oklch(0.6 0.122 232);
+
+  --data-blue-surface: oklch(0.945 0.026 264);
+  --data-blue-text: oklch(0.528 0.189 264);
+  --data-blue-line: oklch(0.87 0.063 264);
+  --data-blue-solid: oklch(0.6 0.216 264);
+
+  --data-fuchsia-surface: oklch(0.945 0.044 322);
+  --data-fuchsia-text: oklch(0.54 0.189 322);
+  --data-fuchsia-line: oklch(0.87 0.089 322);
+  --data-fuchsia-solid: oklch(0.6 0.239 322);
+
+  --data-pink-surface: oklch(0.945 0.03 355);
+  --data-pink-text: oklch(0.541 0.189 355);
+  --data-pink-line: oklch(0.87 0.078 355);
+  --data-pink-solid: oklch(0.6 0.239 355);
+
+  /* Destructive is red-the-consequence, not red-the-datum. Kept separate from
+     `--data-red-*` so that recolouring "BLOCKED" can never recolour "Delete". */
+  --danger-solid: oklch(0.55 0.21 25);
+  --danger-on-solid: oklch(0.99 0.005 286);
+  --danger-soft: oklch(0.945 0.027 25);
+  --danger-text: oklch(0.54 0.189 25);
+
+  /* ── shadcn/ui compatibility layer ─────────────────────────────────────
+     The registry's component classes are written against these names. Mapping
+     rather than duplicating means the ramp above stays the single source. */
+  --background: var(--surface-base);
+  --foreground: var(--fg);
+  --card: var(--surface-raised);
+  --card-foreground: var(--fg);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--fg);
+  --primary: var(--accent-solid);
+  --primary-foreground: var(--accent-on-solid);
+  --secondary: var(--surface-sunken);
+  --secondary-foreground: var(--fg);
+  --muted: var(--surface-sunken);
+  --muted-foreground: var(--fg-muted);
+  --accent: var(--surface-sunken);
+  --accent-foreground: var(--fg);
+  --destructive: var(--danger-solid);
+  --destructive-foreground: var(--danger-on-solid);
+  --border: var(--line);
+  --input: var(--line-strong);
+  --ring: var(--accent-ring);
+
+  /* ── Radius. Restrained: 4 → 12px, with 16px reserved for sheets and
+     dialogs. `rounded-3xl` is banned by SPEC §9 and there is no token for it. */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius: var(--radius-md);
+
+  /* ── Elevation. Three steps, and only the overlay step is allowed two
+     layers — SPEC §9 bans drop-shadow stacks. Depth in this product comes from
+     the surface ramp and a border, not from blur. */
+  --elevation-flat: 0 0 0 0 transparent;
+  --elevation-raised: 0 1px 2px 0 oklch(0.21 0.006 286 / 0.06);
+  --elevation-overlay:
+    0 1px 2px 0 oklch(0.21 0.006 286 / 0.08),
+    0 12px 32px -12px oklch(0.21 0.006 286 / 0.22);
+
+  /* ── Density. One variable per measurement, set on <html data-density>.
+     Components read the variable; nothing takes a `density` prop, so a new
+     component is dense-correct by construction. */
+  --density-row-h: 2.75rem;
+  --density-cell-py: 0.5rem;
+  --density-cell-px: 0.75rem;
+  --density-control-h: 2.25rem;
   --density-gap: 0.75rem;
+  --density-stack: 1.5rem;
+  --density-text: 0.875rem;
+
+  /* ── Shell geometry. Shared by the sidebar, the sticky header and the
+     command palette's offset, so they cannot drift apart. */
+  --shell-header-h: 3.25rem;
+  --shell-sidebar-w: 15rem;
+  --shell-sidebar-w-collapsed: 3.5rem;
 }
 
-.density-compact {
-  --density-row-height: 2rem;
+[data-density='compact'] {
+  --density-row-h: 2.125rem;
+  --density-cell-py: 0.25rem;
+  --density-cell-px: 0.625rem;
+  --density-control-h: 2rem;
   --density-gap: 0.5rem;
+  --density-stack: 1rem;
+  --density-text: 0.8125rem;
 }
 
 .dark {
-  --background: oklch(0.16 0.004 286);
-  --foreground: oklch(0.95 0.001 286);
-  --card: oklch(0.21 0.006 286);
-  --card-foreground: oklch(0.95 0.001 286);
-  --popover: oklch(0.21 0.006 286);
-  --popover-foreground: oklch(0.95 0.001 286);
+  /* Surfaces lift as they come forward, exactly as in light — the ramp is
+     inverted, not re-invented. Pure black is banned: `sunken` stops at L 0.145,
+     which keeps large dark areas from looking like a hole in the screen. */
+  --surface-sunken: oklch(0.145 0.004 286);
+  --surface-base: oklch(0.178 0.004 286);
+  --surface-raised: oklch(0.216 0.005 286);
+  --surface-inset: oklch(0.243 0.006 286);
 
-  --primary: oklch(0.68 0.19 289);
-  --primary-foreground: oklch(0.16 0.004 286);
+  --fg: oklch(0.96 0.001 286);
+  --fg-muted: oklch(0.72 0.013 286);
+  --fg-subtle: oklch(0.6 0.012 286);
 
-  --secondary: oklch(0.27 0.006 286);
-  --secondary-foreground: oklch(0.95 0.001 286);
-  --muted: oklch(0.27 0.006 286);
-  --muted-foreground: oklch(0.712 0.013 286);
-  --accent: oklch(0.27 0.006 286);
-  --accent-foreground: oklch(0.95 0.001 286);
+  --line: oklch(0.285 0.006 286);
+  --line-strong: oklch(0.37 0.008 286);
 
-  --destructive: oklch(0.65 0.2 25);
-  --destructive-foreground: oklch(0.95 0.001 286);
+  --accent-solid: oklch(0.7 0.18 288);
+  --accent-solid-hover: oklch(0.75 0.16 288);
+  --accent-on-solid: oklch(0.16 0.01 286);
+  --accent-soft: oklch(0.29 0.075 288);
+  --accent-on-soft: oklch(0.85 0.09 288);
+  --accent-line: oklch(0.42 0.13 288);
+  --accent-ring: oklch(0.7 0.18 288);
 
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.68 0.19 289);
+  --data-neutral-surface: oklch(0.268 0.005 286);
+  --data-neutral-text: oklch(0.76 0.011 286);
+  --data-neutral-line: oklch(0.38 0.007 286);
+  --data-neutral-solid: oklch(0.68 0.013 286);
+
+  --data-red-surface: oklch(0.268 0.059 25);
+  --data-red-text: oklch(0.668 0.189 25);
+  --data-red-line: oklch(0.38 0.089 25);
+  --data-red-solid: oklch(0.68 0.208 25);
+
+  --data-orange-surface: oklch(0.268 0.059 55);
+  --data-orange-text: oklch(0.661 0.164 55);
+  --data-orange-line: oklch(0.38 0.089 55);
+  --data-orange-solid: oklch(0.68 0.168 55);
+
+  --data-amber-surface: oklch(0.268 0.056 85);
+  --data-amber-text: oklch(0.653 0.134 85);
+  --data-amber-line: oklch(0.38 0.078 85);
+  --data-amber-solid: oklch(0.68 0.139 85);
+
+  --data-lime-surface: oklch(0.268 0.059 128);
+  --data-lime-text: oklch(0.643 0.168 128);
+  --data-lime-line: oklch(0.38 0.089 128);
+  --data-lime-solid: oklch(0.68 0.178 128);
+
+  --data-emerald-surface: oklch(0.268 0.059 162);
+  --data-emerald-text: oklch(0.64 0.14 162);
+  --data-emerald-line: oklch(0.38 0.084 162);
+  --data-emerald-solid: oklch(0.68 0.149 162);
+
+  --data-teal-surface: oklch(0.268 0.047 195);
+  --data-teal-text: oklch(0.643 0.109 195);
+  --data-teal-line: oklch(0.38 0.065 195);
+  --data-teal-solid: oklch(0.68 0.116 195);
+
+  --data-sky-surface: oklch(0.268 0.056 232);
+  --data-sky-text: oklch(0.647 0.132 232);
+  --data-sky-line: oklch(0.38 0.078 232);
+  --data-sky-solid: oklch(0.68 0.138 232);
+
+  --data-blue-surface: oklch(0.268 0.059 264);
+  --data-blue-text: oklch(0.656 0.182 264);
+  --data-blue-line: oklch(0.38 0.089 264);
+  --data-blue-solid: oklch(0.68 0.168 264);
+
+  --data-fuchsia-surface: oklch(0.268 0.059 322);
+  --data-fuchsia-text: oklch(0.669 0.189 322);
+  --data-fuchsia-line: oklch(0.38 0.089 322);
+  --data-fuchsia-solid: oklch(0.68 0.239 322);
+
+  --data-pink-surface: oklch(0.268 0.059 355);
+  --data-pink-text: oklch(0.67 0.189 355);
+  --data-pink-line: oklch(0.38 0.089 355);
+  --data-pink-solid: oklch(0.68 0.239 355);
+
+  --danger-solid: oklch(0.7 0.19 25);
+  --danger-on-solid: oklch(0.16 0.01 286);
+  --danger-soft: oklch(0.268 0.059 25);
+  --danger-text: oklch(0.668 0.189 25);
+
+  /* On a dark ground a drop shadow is nearly invisible and a border does the
+     work instead — so elevation gets darker, not softer. */
+  --elevation-raised: 0 1px 2px 0 oklch(0 0 0 / 0.32);
+  --elevation-overlay:
+    0 1px 2px 0 oklch(0 0 0 / 0.4), 0 12px 32px -12px oklch(0 0 0 / 0.6);
+}
+
+/* ── Hue binding ──────────────────────────────────────────────────────────
+   A component never names a colour. It declares *which datum* it is showing —
+   `data-hue="emerald"` — and reads `--hue-*`. Two consequences, both wanted:
+   one set of utility classes covers all eleven hues (no 11× class explosion in
+   the bundle), and painting anything requires first saying what it means. */
+[data-hue] {
+  --hue-surface: var(--data-neutral-surface);
+  --hue-text: var(--data-neutral-text);
+  --hue-line: var(--data-neutral-line);
+  --hue-solid: var(--data-neutral-solid);
+}
+[data-hue='red'] {
+  --hue-surface: var(--data-red-surface);
+  --hue-text: var(--data-red-text);
+  --hue-line: var(--data-red-line);
+  --hue-solid: var(--data-red-solid);
+}
+[data-hue='orange'] {
+  --hue-surface: var(--data-orange-surface);
+  --hue-text: var(--data-orange-text);
+  --hue-line: var(--data-orange-line);
+  --hue-solid: var(--data-orange-solid);
+}
+[data-hue='amber'] {
+  --hue-surface: var(--data-amber-surface);
+  --hue-text: var(--data-amber-text);
+  --hue-line: var(--data-amber-line);
+  --hue-solid: var(--data-amber-solid);
+}
+[data-hue='lime'] {
+  --hue-surface: var(--data-lime-surface);
+  --hue-text: var(--data-lime-text);
+  --hue-line: var(--data-lime-line);
+  --hue-solid: var(--data-lime-solid);
+}
+[data-hue='emerald'] {
+  --hue-surface: var(--data-emerald-surface);
+  --hue-text: var(--data-emerald-text);
+  --hue-line: var(--data-emerald-line);
+  --hue-solid: var(--data-emerald-solid);
+}
+[data-hue='teal'] {
+  --hue-surface: var(--data-teal-surface);
+  --hue-text: var(--data-teal-text);
+  --hue-line: var(--data-teal-line);
+  --hue-solid: var(--data-teal-solid);
+}
+[data-hue='sky'] {
+  --hue-surface: var(--data-sky-surface);
+  --hue-text: var(--data-sky-text);
+  --hue-line: var(--data-sky-line);
+  --hue-solid: var(--data-sky-solid);
+}
+[data-hue='blue'] {
+  --hue-surface: var(--data-blue-surface);
+  --hue-text: var(--data-blue-text);
+  --hue-line: var(--data-blue-line);
+  --hue-solid: var(--data-blue-solid);
+}
+[data-hue='fuchsia'] {
+  --hue-surface: var(--data-fuchsia-surface);
+  --hue-text: var(--data-fuchsia-text);
+  --hue-line: var(--data-fuchsia-line);
+  --hue-solid: var(--data-fuchsia-solid);
+}
+[data-hue='pink'] {
+  --hue-surface: var(--data-pink-surface);
+  --hue-text: var(--data-pink-text);
+  --hue-line: var(--data-pink-line);
+  --hue-solid: var(--data-pink-solid);
 }
 
 @theme inline {
   --font-sans: 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', 'Courier New', monospace;
+
+  /* 4px base. Deliberately not extended: a restrained scale is one where the
+     answer to "what spacing?" is always a multiple of four. */
+  --spacing: 0.25rem;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -176,9 +479,56 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-base: var(--surface-base);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-inset: var(--surface-inset);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-accent-solid: var(--accent-solid);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-on-soft: var(--accent-on-soft);
+  --color-accent-line: var(--accent-line);
+
+  --color-hue-surface: var(--hue-surface);
+  --color-hue-text: var(--hue-text);
+  --color-hue-line: var(--hue-line);
+  --color-hue-solid: var(--hue-solid);
+
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --shadow-xs: var(--elevation-raised);
+  --shadow-sm: var(--elevation-raised);
+  --shadow-overlay: var(--elevation-overlay);
+}
+
+/* ── Density utilities. Named so a component says what it is, not how tall. */
+@utility density-row {
+  block-size: var(--density-row-h);
+}
+@utility density-cell {
+  padding-block: var(--density-cell-py);
+  padding-inline: var(--density-cell-px);
+}
+@utility density-gap {
+  gap: var(--density-gap);
+}
+@utility density-stack {
+  gap: var(--density-stack);
+}
+@utility density-text {
+  font-size: var(--density-text);
+}
+@utility density-control {
+  block-size: var(--density-control-h);
 }
 
 @layer base {
@@ -202,10 +552,23 @@
     font-feature-settings: 'tnum';
   }
 
-  /* Numerals are Western everywhere, including inside Arabic text. */
+  /* Numerals are Western everywhere, including inside Arabic text. An isolated
+     LTR run is what stops "1,250.00-" appearing where "-1,250.00" was meant. */
   .numeric-latn {
     font-variant-numeric: tabular-nums;
     unicode-bidi: isolate;
     direction: ltr;
+  }
+
+  /* Respect the OS setting. Every transition in this app is decoration. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
