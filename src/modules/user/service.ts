@@ -158,6 +158,41 @@ async function assertRolesExist(db: Db, roleIds: readonly string[]): Promise<voi
   }
 }
 
+/**
+ * Only a SUPER_ADMIN may grant or revoke the SUPER_ADMIN role.
+ *
+ * Without this, `user.edit` is transitively the power to hold every permission
+ * in the catalog: assigning roles is part of editing a user, and one of the
+ * assignable roles implicitly holds everything (SPEC §2). An editor could
+ * promote themselves, or — just as bad — demote every administrator and take
+ * over a product with nobody left who can undo it.
+ *
+ * Deliberately narrow. It fires only when the SUPER_ADMIN membership actually
+ * changes, so ordinary role edits by an ordinary editor are untouched.
+ */
+async function assertMayChangeSuperAdminRole(
+  db: Db,
+  actor: Actor,
+  before: readonly string[],
+  after: readonly string[],
+): Promise<void> {
+  const superRole = await db.role.findUnique({
+    where: { nameEn: SUPER_ADMIN_ROLE },
+    select: { id: true },
+  })
+  // Nothing to protect until the role is seeded.
+  if (!superRole) return
+
+  const had = before.includes(superRole.id)
+  const wants = after.includes(superRole.id)
+  if (had === wants) return
+  if (actor.isSuperAdmin) return
+
+  throw new DomainError('users.superAdminRoleRestricted', {
+    nameEn: SUPER_ADMIN_ROLE,
+  })
+}
+
 export async function createUser(
   db: Db,
   args: UserMutationArgs & { input: CreateUserInput; policy: PasswordPolicy },
@@ -184,6 +219,7 @@ export async function createUser(
   }
 
   await assertRolesExist(db, input.roles)
+  await assertMayChangeSuperAdminRole(db, args.actor, [], input.roles)
 
   const user = await db.user.create({
     data: {
@@ -246,6 +282,8 @@ export async function updateUser(
   const beforeRoles = before.roles.map((r) => r.role.id).sort()
   const afterRoles = [...input.roles].sort()
   const rolesChanged = beforeRoles.join(',') !== afterRoles.join(',')
+
+  await assertMayChangeSuperAdminRole(db, args.actor, beforeRoles, afterRoles)
 
   await db.user.update({
     where: { id: before.id },

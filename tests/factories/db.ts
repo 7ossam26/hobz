@@ -129,7 +129,11 @@ export async function createUser(
       mustChangePassword: options.mustChangePassword ?? false,
       payType: options.payType ?? 'PER_TASK',
       monthlySalary: options.monthlySalary ?? null,
-      defaultTaskRate: options.defaultTaskRate ?? '500.00',
+      // `=== undefined`, not `??`. A test that explicitly asks for a worker
+      // with NO task rate is testing the null path, and `?? '500.00'` would
+      // silently hand it a rate and make the test prove nothing.
+      defaultTaskRate:
+        options.defaultTaskRate === undefined ? '500.00' : options.defaultTaskRate,
       weeklyCapacityHours: options.weeklyCapacityHours ?? 40,
       deletedAt: options.deletedAt ?? null,
       roles: { create: (options.roleIds ?? []).map((roleId) => ({ roleId })) },

@@ -288,6 +288,56 @@ migration had been generated with `migrate diff` and never applied; it applies
 cleanly. The integration harness (migrate + truncate + reset) had never executed;
 it does, 115 tests' worth.
 
+### The edge-case sweep (docs/TESTING.md §4, axes 4, 11, 12)
+
+Run as a second pass. **216 further tests**, taking the suite from 440 to 666
+and coverage from 97.9% to **99.2%**. Written directly rather than by subagents:
+the first attempt at spawning them exhausted the session before any produced
+output, and the value here was in knowing precisely what the first pass already
+covered — three parallel agents would mostly have rediscovered it.
+
+**Axis 4 (permissions).** A full matrix over `PERMISSIONS`, parameterised so it
+cannot go stale: every key is default-deny, granting one key grants exactly that
+key, and twenty neighbouring pairs (`penalty.create` → `penalty.reverse`,
+`payout.approve` → `payout.markPaid`, `view.assigned` → `view.all`) stay
+separate. Then the cases only a database can express — permission revoked
+mid-session, role removed, union across two roles — and the impersonation
+boundary: an impersonated actor gets the *target's* permissions, cannot nest,
+and holding `user.impersonate` without being SUPER_ADMIN is refused.
+
+**Axis 11 (soft-delete).** Extended past the first pass into the counts derived
+from deleted rows, which is where the bug was.
+
+**Axis 12 (empty/null).** The axis names "no assignee, no due date, empty cycle"
+— none of which have a table yet — so it was translated to what Phase 1 owns: a
+brand-new user with nothing filled in, every optional field blank, whitespace-only
+strings at every schema boundary, empty result sets and out-of-range pagination
+against a genuinely empty database, and the audit row the scheduler writes with
+no actor, no reason, no IP and no payload.
+
+**Three more real defects, all found by the tests before the fix:**
+
+1. **Role member counts included soft-deleted users.** `deleteRole` refuses
+   while the count is above zero, so deleting a departed employee permanently
+   stranded the role they held — undeletable, with the screen unable to explain
+   why, because the holder it was protecting is invisible everywhere else. Now a
+   filtered relation count. Deactivated-but-not-deleted users still count, which
+   is correct: that account still exists and can be switched back on.
+
+2. **`user.edit` was a privilege-escalation path.** Assigning roles is part of
+   editing a user, and one assignable role holds every permission implicitly
+   (SPEC §2) — so an editor could promote themselves to SUPER_ADMIN, or demote
+   every administrator and take over a product with nobody left able to undo it.
+   `assertMayChangeSuperAdminRole` now requires the actor to *be* a SUPER_ADMIN
+   to grant or revoke that one role. Deliberately narrow: it fires only when the
+   SUPER_ADMIN membership actually changes, so ordinary role edits are untouched.
+
+3. **A test factory footgun.** `createUser` used `options.defaultTaskRate ??
+   '500.00'`, so a test asking for a worker with explicitly *no* rate silently
+   got one and proved nothing. `=== undefined` now distinguishes "not specified"
+   from "specified as null" — the same distinction the `phone` option already
+   made.
+
 ### Deferred (with owners)
 
 | Deferred                                                                     | Phase |

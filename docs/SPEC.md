@@ -115,6 +115,14 @@ LoginThrottle   key, failures, firstFailureAt, lastFailureAt, lockedUntil?
   an indexed query.
 - **`LoginThrottle` is mutable and deletable** — it is a counter, not a record.
   The permanent record of a login attempt is the `AuditLog` row.
+- **Only a SUPER_ADMIN may grant or revoke the `SUPER_ADMIN` role.** Assigning
+  roles is part of `user.edit`, and one assignable role holds every permission
+  implicitly — so without this, `user.edit` is transitively every permission in
+  the catalog. The restriction is narrow: it applies to that one role, and only
+  when the membership actually changes.
+- **Role member counts exclude soft-deleted users.** A role is undeletable while
+  it has members, so counting departed employees would strand it permanently.
+  Deactivated users still count — that account exists and can be reactivated.
 
 ### Work
 

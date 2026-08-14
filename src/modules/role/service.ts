@@ -29,6 +29,19 @@ import type { PermissionGroupDto, RoleDetailDto, RoleSummaryDto } from './types'
  * stale.
  */
 
+/**
+ * Member counts exclude soft-deleted users.
+ *
+ * Not cosmetic: `deleteRole` refuses while the count is above zero, so counting
+ * a departed employee's row makes their role permanently undeletable — and the
+ * screen cannot explain why, because the holder it is protecting is invisible
+ * everywhere else (CLAUDE.md invariant 8).
+ *
+ * Deactivated-but-not-deleted users still count. That account exists, still
+ * holds the role, and can be switched back on.
+ */
+const ACTIVE_MEMBERS = { where: { user: { deletedAt: null } } } as const
+
 /** The one role the UI may not touch. Enforced here, not only in the component. */
 function assertMutable(role: { nameEn: string; isSystem: boolean }): void {
   if (role.nameEn === SUPER_ADMIN_ROLE || role.isSystem) {
@@ -54,7 +67,7 @@ export async function listRoles(db: Db): Promise<RoleSummaryDto[]> {
       nameEn: true,
       description: true,
       isSystem: true,
-      _count: { select: { permissions: true, users: true } },
+      _count: { select: { permissions: true, users: ACTIVE_MEMBERS } },
     },
   })
 
@@ -79,7 +92,7 @@ export async function getRole(db: Db, id: string): Promise<RoleDetailDto> {
       description: true,
       isSystem: true,
       permissions: { select: { permissionKey: true } },
-      _count: { select: { users: true } },
+      _count: { select: { users: ACTIVE_MEMBERS } },
     },
   })
   if (!row) throw new NotFoundError('Role', id)
@@ -277,7 +290,7 @@ export async function deleteRole(
       nameAr: true,
       nameEn: true,
       isSystem: true,
-      _count: { select: { users: true } },
+      _count: { select: { users: ACTIVE_MEMBERS } },
     },
   })
   if (!role) throw new NotFoundError('Role', args.id)

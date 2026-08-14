@@ -183,6 +183,7 @@ export const ar = {
     openTasksLabel: 'المهام المفتوحة',
     cannotDeactivateSelf: 'لا يمكنك تعطيل حسابك الشخصي',
     cannotDeactivateLastSuperAdmin: 'لا يمكن تعطيل آخر مدير نظام',
+    superAdminRoleRestricted: 'منح دور مدير النظام أو نزعه متاح لمدير النظام وحده',
   },
 
   roles: {
