@@ -512,6 +512,87 @@ export const ar = {
       hint: 'زمن العمل يستبعد العطلات الأسبوعية والأجازات الرسمية وإجازات المنفّذ المعتمدة.',
     },
 
+    /** Phase 5 — the three interchangeable task views. */
+    views: {
+      board: 'لوحة',
+      list: 'قائمة',
+      calendar: 'تقويم',
+    },
+
+    overdue: 'متأخرة',
+    unassigned: 'بدون منفّذ',
+    searchPlaceholder: 'ابحث في عناوين المهام…',
+
+    facets: {
+      project: 'المشروع',
+      assignee: 'المنفّذ',
+      status: 'الحالة',
+      priority: 'الأولوية',
+      category: 'التصنيف',
+      overdueOnly: 'المتأخرة فقط',
+      dueThisWeek: 'مستحقة هذا الأسبوع',
+    },
+
+    board: {
+      addTask: 'إضافة مهمة',
+      emptyColumn: 'لا توجد مهام',
+      /** `{count}` is substituted at render time. */
+      moreCards: 'و{count} مهمة أخرى',
+      illegalDrop: 'لا يمكن نقل المهمة إلى هذه الحالة مباشرة',
+      dropHint: 'أفلت هنا لنقل المهمة',
+    },
+
+    list: {
+      bulkAssign: 'إسناد جماعي',
+      bulkPriority: 'تغيير الأولوية',
+      bulkDueDate: 'تغيير موعد التسليم',
+      /** `{count}` is substituted at render time. */
+      bulkApplied: 'تم تحديث {count} مهمة',
+      /** `{count}` is substituted at render time. */
+      bulkPartial: 'تم تحديث {count} وتعذّر تحديث الباقي',
+      bulkFailed: 'تعذّر تنفيذ الإجراء الجماعي',
+      selectRow: 'تحديد المهمة',
+      selectAllPage: 'تحديد كل مهام هذه الصفحة',
+    },
+
+    calendarView: {
+      month: 'شهر',
+      week: 'أسبوع',
+      today: 'اليوم',
+      previousPeriod: 'الفترة السابقة',
+      nextPeriod: 'الفترة التالية',
+      /** `{count}` is substituted at render time. */
+      moreOnDay: 'و{count} أخرى',
+      empty: 'لا توجد مهام مستحقة في هذه الفترة',
+    },
+
+    quickCreate: {
+      title: 'مهمة سريعة',
+      submit: 'إنشاء',
+      selectProject: 'اختر المشروع',
+      selectCategory: 'اختر التصنيف',
+    },
+
+    detail: {
+      tabs: {
+        details: 'التفاصيل',
+        dependencies: 'الاعتماديات',
+        comments: 'التعليقات',
+        activity: 'السجل',
+      },
+    },
+
+    watcherPicker: {
+      title: 'إضافة متابع',
+      placeholder: 'اختر مستخدمًا',
+      empty: 'لا يوجد مستخدمون آخرون لإضافتهم',
+    },
+
+    dependencyPicker: {
+      placeholder: 'اختر مهمة',
+      empty: 'لا توجد مهام أخرى في هذا المشروع',
+    },
+
     errors: {
       /** `{from}`/`{to}` are substituted at render time. */
       illegalTransition: 'لا يمكن نقل المهمة من "{from}" إلى "{to}"',

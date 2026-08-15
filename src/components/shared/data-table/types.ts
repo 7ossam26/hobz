@@ -16,7 +16,13 @@ export type SortDirection = 'asc' | 'desc'
 export interface ColumnDef<Row> {
   /** Stable key. Appears in the URL as the sort target, so it must not drift. */
   id: string
-  header: string
+  /**
+   * A plain string in every column but one: the Phase 5 task list's selection
+   * column needs a header checkbox ("select all on this page") rather than a
+   * label. `React.ReactNode` is a superset of `string`, so this widening is
+   * source-compatible with every existing column definition in the app.
+   */
+  header: React.ReactNode
   cell: (row: Row) => React.ReactNode
   /** Sorting is executed by the server; this only draws the control. */
   sortable?: boolean

@@ -41,6 +41,12 @@ export const NAV_ITEMS: readonly NavItem[] = [
     permissions: ['project.view.all', 'project.view.assigned'],
   },
   {
+    href: '/tasks',
+    labelKey: 'tasks',
+    icon: 'list-todo',
+    permissions: ['task.view.all', 'task.view.assigned'],
+  },
+  {
     href: '/clients',
     labelKey: 'clients',
     icon: 'building-2',
@@ -92,6 +98,7 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<{
   permissions: readonly Permission[]
 }> = [
   { prefix: '/projects', permissions: ['project.view.all', 'project.view.assigned'] },
+  { prefix: '/tasks', permissions: ['task.view.all', 'task.view.assigned'] },
   { prefix: '/clients', permissions: ['client.view'] },
   { prefix: '/users', permissions: ['user.view'] },
   { prefix: '/roles', permissions: ['role.view'] },

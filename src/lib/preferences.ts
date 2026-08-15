@@ -25,6 +25,16 @@
 export const THEME_COOKIE = 'agency_theme'
 export const DENSITY_COOKIE = 'agency_density'
 export const SIDEBAR_COOKIE = 'agency_sidebar'
+/**
+ * Phase 5: which of the task views (board/list/calendar) a person last used.
+ *
+ * Following the same cookie precedent as theme/density/sidebar above, and for
+ * the same reason: it is not business data (nothing about a task changes
+ * because someone prefers the board), there is no per-user preference table in
+ * the schema, and the trade named above — per browser, not per account — is
+ * the correct side of it for a view toggle. See docs/DECISIONS.md (Phase 5).
+ */
+export const TASK_VIEW_COOKIE = 'agency_task_view'
 
 /** One year. A preference the user set is not a session. */
 export const PREFERENCE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365
@@ -32,10 +42,12 @@ export const PREFERENCE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365
 export const THEMES = ['light', 'dark'] as const
 export const DENSITIES = ['comfortable', 'compact'] as const
 export const SIDEBAR_STATES = ['expanded', 'collapsed'] as const
+export const TASK_VIEWS = ['board', 'list', 'calendar'] as const
 
 export type Theme = (typeof THEMES)[number]
 export type Density = (typeof DENSITIES)[number]
 export type SidebarState = (typeof SIDEBAR_STATES)[number]
+export type TaskView = (typeof TASK_VIEWS)[number]
 
 export interface ShellPreferences {
   theme: Theme
@@ -68,6 +80,9 @@ export const parseDensity = (raw: string | null | undefined): Density =>
 
 export const parseSidebar = (raw: string | null | undefined): SidebarState =>
   parseOneOf(SIDEBAR_STATES, DEFAULT_PREFERENCES.sidebar, raw)
+
+export const parseTaskView = (raw: string | null | undefined): TaskView =>
+  parseOneOf(TASK_VIEWS, 'board', raw)
 
 /**
  * Build the preference set from whatever cookie source the caller has —

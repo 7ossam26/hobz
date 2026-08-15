@@ -359,6 +359,16 @@ export async function listTasks(db: Db, args: ListTasksArgs): Promise<TaskPageDt
   if (filters.overdueOnly) {
     conditions.push({ dueDate: { lt: now }, status: { notIn: [...DELIVERED_STATUSES] } })
   }
+  // Phase 5 list facet. Mirrors `overdueOnly` exactly: a delivered task's due
+  // date no longer describes work still owed, so it is excluded here for the
+  // same reason `isOverdue` excludes it above.
+  if (filters.dueThisWeek) {
+    const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+    conditions.push({
+      dueDate: { gte: now, lte: weekFromNow },
+      status: { notIn: [...DELIVERED_STATUSES] },
+    })
+  }
 
   const where: WhereFragment = { AND: conditions }
   const orderBy = taskOrderBy(filters.sort, filters.dir)

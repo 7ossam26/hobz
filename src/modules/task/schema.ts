@@ -207,9 +207,38 @@ export const listTasksSchema = z.object({
   assigneeId: z.array(z.string()).optional(),
   /** Tasks past `dueDate` and not yet delivered. */
   overdueOnly: z.boolean().optional(),
+  /** Due within the next 7 days and not yet delivered (Phase 5 list facet). */
+  dueThisWeek: z.boolean().optional(),
   sort: z.string().optional(),
   dir: z.enum(['asc', 'desc']).optional(),
   page: z.number().int().min(1).default(1),
-  pageSize: z.number().int().min(1).max(100).default(25),
+  /**
+   * The list view never asks past 100 (`PAGE_SIZES`, `components/shared/
+   * data-table/state.ts`) — the 1000 ceiling exists only for the Phase 5
+   * board and calendar reads, which fetch the whole scoped-and-filtered set
+   * once and group it in memory (`modules/task/queries.ts`), the same
+   * "fetch small, group in the app" trade `listProjects`'s Arabic search
+   * branch already makes at this SPEC §2 scale.
+   */
+  pageSize: z.number().int().min(1).max(1000).default(25),
 })
 export type ListTasksInput = z.infer<typeof listTasksSchema>
+
+/** Phase 5 — bulk actions from the list view's row-selection toolbar. */
+export const bulkAssignTasksSchema = z.object({
+  taskIds: z.array(z.string().min(1)).min(1),
+  assigneeId: z.string().trim().min(1, ar.tasks.errors.assigneeRequired),
+})
+export type BulkAssignTasksInput = z.infer<typeof bulkAssignTasksSchema>
+
+export const bulkSetPrioritySchema = z.object({
+  taskIds: z.array(z.string().min(1)).min(1),
+  priority: prioritySchema,
+})
+export type BulkSetPriorityInput = z.infer<typeof bulkSetPrioritySchema>
+
+export const bulkSetDueDateSchema = z.object({
+  taskIds: z.array(z.string().min(1)).min(1),
+  dueDate: dateInput,
+})
+export type BulkSetDueDateInput = z.infer<typeof bulkSetDueDateSchema>

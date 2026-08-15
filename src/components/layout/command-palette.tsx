@@ -3,9 +3,11 @@
 import {
   Building2,
   FolderKanban,
+  ListTodo,
   Loader2,
   Moon,
   PanelRight,
+  Plus,
   Rows2,
   Rows3,
   ScrollText,
@@ -122,6 +124,7 @@ interface CommandItem {
 const NAV_ICONS: Record<string, LucideIcon> = {
   'layout-dashboard': PanelRight,
   'folder-kanban': FolderKanban,
+  'list-todo': ListTodo,
   'building-2': Building2,
   users: Users,
   shield: Shield,
@@ -178,6 +181,23 @@ function CommandPaletteDialog({
       run: () => router.push(item.href),
     }))
 
+    // Quick-create task (Phase 5). Gated on the same nav visibility as the
+    // /tasks route itself (task.view.*) — the page re-checks `task.create`
+    // before honouring the deep link, so an actor who can see tasks but not
+    // create them lands on the board with the dialog silently withheld
+    // rather than a client-only permission decision here.
+    const quickActions: CommandItem[] = navItems.some((item) => item.href === '/tasks')
+      ? [
+          {
+            id: 'action:new-task',
+            group: ar.command.groups.actions,
+            label: ar.tasks.create,
+            icon: Plus,
+            run: () => router.push('/tasks?new=1'),
+          },
+        ]
+      : []
+
     const appearance: CommandItem[] = [
       {
         id: 'action:theme',
@@ -230,7 +250,7 @@ function CommandPaletteDialog({
       })),
     ]
 
-    return [...navigation, ...appearance, ...entities]
+    return [...navigation, ...quickActions, ...appearance, ...entities]
   }, [navItems, router, preferences, directory])
 
   const results = React.useMemo(

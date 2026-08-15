@@ -6,6 +6,7 @@ import {
   ChevronRight,
   FolderKanban,
   LayoutDashboard,
+  ListTodo,
   ScrollText,
   Settings,
   Shield,
@@ -47,6 +48,7 @@ import { cn } from '@/lib/utils'
 const ICONS: Record<string, LucideIcon> = {
   'layout-dashboard': LayoutDashboard,
   'folder-kanban': FolderKanban,
+  'list-todo': ListTodo,
   'building-2': Building2,
   users: Users,
   shield: Shield,
