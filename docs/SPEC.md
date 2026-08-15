@@ -203,17 +203,58 @@ LedgerEntry  id, userId, cycleId?, type, amount(signed Decimal 12,2),
              type ∈ EARNING | SALARY | PENALTY | BONUS | ADVANCE
                      | ADJUSTMENT | PAYOUT | REVERSAL
 
-PayoutCycle  id, periodStart, periodEnd, status(OPEN|CLOSED|PAID), closedAt
-Payout       id, userId, cycleId, gross, penalties, bonuses, advances, net,
+PayoutCycle  id, periodStart, periodEnd, status(OPEN|CLOSED|PAID), closedAt,
+             closedById?
+Payout       id, userId, cycleId, carriedForward, gross, penalties, bonuses,
+             advances, adjustments, net,
              status(DRAFT|APPROVED|PAID), paidAmount, method, reference, note,
-             approvedById, paidAt
+             approvedById, approvedAt, paidById, paidAt
 PenaltyProfile id, name, mode, value, graceHours, isDefault
              mode ∈ FIXED_PER_DAY | PCT_TASK_VALUE_PER_DAY
                     | PCT_DAILY_RATE_PER_DAY | FIXED_ONCE | PCT_TASK_VALUE_ONCE
-PaymentMethod  id, nameAr, isActive        ← Instapay, Vodafone Cash, bank, cash…
+PaymentMethod  ← NOT a table. See below.
 ```
 
 **Balance is always `SUM(amount)`.** There is no mutable balance column anywhere.
+
+**Money decisions settled in Phase 7**
+
+- **Append-only is enforced by the database**, not only by review. Two `BEFORE`
+  triggers on `ledger_entries` reject `UPDATE` and `DELETE` outright, and their
+  message names the `REVERSAL` that is the correct instrument instead. Three
+  partial unique indexes carry the rest of the arithmetic: one `EARNING` per
+  task, one `SALARY` per (worker, cycle), one `OPEN` cycle at a time. None of
+  the four can be expressed in Prisma's schema language — they live in
+  `20260818000000_money_ledger_payouts` and are listed at the bottom of
+  `schema.prisma` so a future `migrate dev` does not quietly drop them.
+- **The sign lives in the amount.** Credits to the منفّذ are positive, debits
+  negative, fixed per type in `modules/ledger/sign.ts` and validated on the one
+  write path. There is no `direction` column, because a second representation of
+  the sign is a second thing that can disagree with the first — and every query
+  that adds money up would then need to know which types to subtract.
+- **Zero-amount entries are refused.** A movement that moves nothing is not a
+  movement; approving a task worth `0.00` writes an audit row explaining that
+  nobody was paid, rather than a row of noise on the منفّذ's statement.
+- **`PaymentMethod` is not a table**, resolving the contradiction between this
+  listing and §7. §7 settled that `payout.paymentMethods` is "the one remaining
+  plain list of Arabic strings, and correctly so — nothing stores a reference to
+  it", and that stays true: `Payout.method` is a **snapshot of the label chosen
+  at payment time**, not a foreign key. A payment record must keep saying
+  "فودافون كاش" after the operator renames the entry.
+- **Three columns added to the `Payout` listing**, each so the figure reconciles
+  on screen rather than only inside the service: `carriedForward` (the balance
+  brought in — SPEC §5.4 promises this carry-forward and this is where it
+  becomes visible), `adjustments` (signed; they move `net`, so a breakdown that
+  omitted them would not add up), and the `approvedAt`/`paidById` counterparts
+  of the `approvedById`/`paidAt` already listed. The identity the service
+  maintains and the tests assert:
+
+  `net = max(0, carriedForward + gross − penalties + bonuses − advances + adjustments)`
+
+- **`LedgerEntry.cycleId` is attribution, not arithmetic.** It is stamped from
+  the open cycle at insert. The money is computed from the balance, so an entry
+  landing on the far side of a cycle boundary changes which statement it is
+  *listed* on and never how much anybody is paid.
 
 ### Enums
 
@@ -394,6 +435,57 @@ dailyRate(user) = monthlySalary ÷ settings.workingDaysPerMonth
   reference, date, and supports **partial payment** (remainder stays outstanding).
 - Advances are recorded whenever, and settle automatically at cycle close because
   balance is a sum.
+
+**How the close is read (settled in Phase 7, `modules/payout/service.ts`)**
+
+- **`net` is the balance at the moment of close, minus what earlier payouts
+  still claim, floored at zero.** "SUM of all unpaid entries in period" and "the
+  balance" agree exactly whenever the previous cycle was paid in full, and where
+  they differ the balance is the correct one. Reading it this way is what makes
+  three separate promises need no code at all: the payout that never goes
+  negative (§5.4), the advance that settles itself, and the partial payment
+  whose remainder stays outstanding. A per-period net would need bespoke
+  carry-forward logic for each, and a bug in any one of them loses somebody's
+  money quietly.
+- **The claims subtraction is not optional.** A payout that is drafted or
+  approved and not yet paid still leaves its money in the balance, so without
+  it the next close would draft the same money a second time — the ordinary
+  case of a disputed month or an absent finance user, not an exotic one. Every
+  outstanding payout together therefore claims **at most** the منفّذ's balance,
+  which is the invariant that makes both screens' totals true.
+- **A deduction recorded after a close never shrinks an approved payout.** §5.4
+  says the surplus carries to the *next* cycle, and Phase 8's engine writes
+  penalties after a close routinely. The payment path validates against the
+  payout's own remainder, never against the live balance.
+- **A payment appends a negative `PAYOUT` entry**, attributed to the cycle it
+  settles. So the remainder is not a column: it is simply still in the balance,
+  and it turns up in the next cycle by itself. `SUM(PAYOUT entries)` for a
+  (منفّذ, cycle) always equals `−paidAmount`.
+- **Closing is refused three ways**, because closing opens the next cycle
+  immediately and a second close would settle a zero-length one: `already-closed`,
+  `not-started` (the cycle's `periodStart` has not passed), and `not-due` (it has
+  not reached `periodEnd` and the caller did not ask for an early close). The
+  scheduler never asks, so the unattended path cannot make that mistake at all;
+  the early close is the permissioned decision this section already describes.
+- **`periodEnd` is the plan and `closedAt` is the fact**, and they are not
+  collapsed. The next cycle starts at the fact, so no instant belongs to two
+  cycles; the plan survives so that a cycle closed late still knows which month
+  it was *for*. Overwriting the plan costs a salaried منفّذ a whole month's pay
+  the first time a close runs late — the accrual's month test is anchored on
+  `min(closedAt, periodEnd)` for exactly that reason.
+- **Salary is at most one entry per cycle *and* per Cairo month.** The per-cycle
+  rule is what this section says; the per-month rule is what "monthly salary"
+  means, and it is the one that holds when an operator deliberately closes twice
+  in August. The first is a unique index, the second a guard in the accrual.
+- **Approved leave is paid in full, and the absence of proration is the
+  feature.** Nothing in the accrual reads the calendar or asks `modules/leave`
+  anything, and a test asserts it — so the first person to reach for
+  `workingDaysBetween` there is contradicted by a failing test rather than by a
+  comment.
+- **A worker is paid what they are owed even with no movements this cycle.** The
+  close drafts a payout for anyone with entries in the cycle *or* a non-zero
+  balance, so a carried debt stays visible every month instead of only in the
+  month it was incurred.
 
 ### 5.6 Performance score (0–100, weights in Settings)
 

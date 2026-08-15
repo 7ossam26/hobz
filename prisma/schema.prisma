@@ -5,8 +5,8 @@
 // Project, ProjectMember, Milestone, ProjectTemplate. Phase 4 added the Task
 // domain: Task, TaskWatcher, TaskDependency, TaskComment, TaskActivity.
 // Phase 6 adds the Calendar slice — Holiday, Leave — plus ExtensionRequest and
-// the task columns the nightly lateness job writes. Money models still arrive
-// in their own phase — do not add them here ahead of schedule.
+// the task columns the nightly lateness job writes. Phase 7 adds the Money
+// slice: LedgerEntry, PayoutCycle, Payout.
 //
 // Structural invariants this schema must keep possible (CLAUDE.md):
 //  - Money columns are always Decimal(12,2), never Float.
@@ -14,6 +14,8 @@
 //    of junction tables the SPEC §4 listing itself omits it from
 //    (ProjectMember here, matching UserRole/RolePermission from Phase 0).
 //  - AuditLog is append-only: no `updatedAt`, no mutation paths in code.
+//  - LedgerEntry is append-only *and enforced by the database* — see the
+//    "Objects this schema cannot express" note at the bottom of this file.
 
 generator client {
   provider = "prisma-client-js"
@@ -76,6 +78,13 @@ model User {
   leaveDecided       Leave[]            @relation("LeaveDecidedBy")
   extensionsRequested ExtensionRequest[] @relation("ExtensionRequestedBy")
   extensionsDecided   ExtensionRequest[] @relation("ExtensionDecidedBy")
+
+  ledgerEntries        LedgerEntry[] @relation("LedgerSubject")
+  ledgerEntriesCreated LedgerEntry[] @relation("LedgerCreatedBy")
+  payouts              Payout[]      @relation("PayoutSubject")
+  payoutsApproved      Payout[]      @relation("PayoutApprovedBy")
+  payoutsPaid          Payout[]      @relation("PayoutPaidBy")
+  cyclesClosed         PayoutCycle[] @relation("PayoutCycleClosedBy")
 
   @@index([deletedAt])
   @@index([isWorker, isActive])
@@ -545,6 +554,7 @@ model Task {
   comments     TaskComment[]
   activity     TaskActivity[]
   extensions   ExtensionRequest[]
+  ledgerEntries LedgerEntry[]
   /// Tasks this one waits on, and the ones waiting on it.
   dependencies TaskDependency[] @relation("TaskDependent")
   dependents   TaskDependency[] @relation("TaskDependedOn")
@@ -812,3 +822,266 @@ model ExtensionRequest {
   @@index([requestedById])
   @@map("extension_requests")
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Money — Phase 7 slice (SPEC §4 "Money — immutable ledger", §5.5).
+//
+// This is the financial core, and it is built on one sentence from SPEC §4:
+//
+//     **Balance is always `SUM(amount)`.** There is no mutable balance column
+//     anywhere.
+//
+// Everything below follows from taking that literally. A worker's balance is a
+// single indexed aggregate over `ledger_entries`; a payout is what that
+// aggregate said at the moment a cycle closed; a partial payment is a negative
+// `PAYOUT` entry, so the remainder is still outstanding without anybody
+// computing a remainder. Advances, carry-forward debt and part-payments need no
+// special-case code at all — they are already arithmetic on one column.
+// ─────────────────────────────────────────────────────────────────────────
+
+/// SPEC §4, verbatim:
+/// `EARNING | SALARY | PENALTY | BONUS | ADVANCE | ADJUSTMENT | PAYOUT | REVERSAL`.
+///
+/// The sign of `LedgerEntry.amount` is fixed per type and enforced in
+/// `modules/ledger/service.ts` (`assertSignForType`): credits to the منفّذ are
+/// positive, debits negative. That rule is what lets every balance, payout and
+/// statement in the product be a `SUM` with no per-type branching.
+enum LedgerEntryType {
+  EARNING
+  SALARY
+  PENALTY
+  BONUS
+  ADVANCE
+  ADJUSTMENT
+  PAYOUT
+  REVERSAL
+}
+
+/// SPEC §4: `PayoutCycle … status(OPEN|CLOSED|PAID)`.
+/// `PAID` is reached automatically when every payout the cycle generated is
+/// itself `PAID` — a derived state stored so "which cycles are still owed" is
+/// an indexed query rather than a per-cycle sub-aggregate.
+enum PayoutCycleStatus {
+  OPEN
+  CLOSED
+  PAID
+}
+
+/// SPEC §4: `Payout … status(DRAFT|APPROVED|PAID)`, SPEC §5.5 for the edges.
+enum PayoutStatus {
+  DRAFT
+  APPROVED
+  PAID
+}
+
+/// **INSERT ONLY.** Never updated, never deleted — in code *and* in the
+/// database (see the trigger note at the bottom of this file). Corrections are
+/// `REVERSAL` rows, which is why there is no `updatedAt` and no `deletedAt`
+/// here, exactly as on `AuditLog`.
+///
+/// `amount` is signed. There is no separate debit/credit column and no
+/// `direction` enum: a second representation of the sign is a second thing that
+/// can disagree with the first, and every query in this product would then have
+/// to remember which one to trust.
+model LedgerEntry {
+  id     String @id @default(cuid())
+  /// The منفّذ this movement belongs to. Not the actor — see `createdById`.
+  userId String
+
+  /// The cycle this movement is *attributed* to, stamped from the open cycle at
+  /// insert (`modules/payout/service.ts` → `ensureOpenCycle`). It is
+  /// attribution for the statement, not the basis of the payout arithmetic:
+  /// SPEC §4 says balance is a sum, so `net` is computed from the balance and
+  /// cannot be wrong even if an entry lands on the far side of a cycle
+  /// boundary. Nullable per the SPEC §4 listing, which is also what lets a
+  /// future import land history that predates any cycle.
+  cycleId String?
+
+  type   LedgerEntryType
+  amount Decimal         @db.Decimal(12, 2)
+
+  /// Set on `EARNING` (which task was approved) and on the `PENALTY` rows
+  /// Phase 8 writes. Never a foreign key the money depends on — a soft-deleted
+  /// task must not make an earning disappear.
+  taskId String?
+
+  /// Arabic prose the منفّذ reads on their مستحقاتي page. Required, per the
+  /// SPEC §4 listing (no `?`, unlike `taskId?` beside it): an entry that cannot
+  /// explain itself is exactly what this product exists to abolish.
+  note String
+
+  /// True when a job or an event wrote this, false when a human did. Drives the
+  /// "automatic" column on the statement, and Phase 8's "exactly one *active
+  /// auto* PENALTY entry per task" (SPEC §5.4).
+  isAutoGenerated Boolean @default(false)
+
+  /// The entry this one reverses. `@unique`, which makes "reverse twice" fail
+  /// at the database rather than at whichever code path forgot to check
+  /// (docs/TESTING.md §4 axis 7).
+  reversesEntryId String? @unique
+
+  /// Null for scheduler/system writes, matching `AuditLog.actorId`.
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  user       User         @relation("LedgerSubject", fields: [userId], references: [id], onDelete: Restrict)
+  cycle      PayoutCycle? @relation(fields: [cycleId], references: [id], onDelete: Restrict)
+  task       Task?        @relation(fields: [taskId], references: [id], onDelete: Restrict)
+  createdBy  User?        @relation("LedgerCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  reverses   LedgerEntry? @relation("LedgerReversal", fields: [reversesEntryId], references: [id], onDelete: Restrict)
+  reversedBy LedgerEntry? @relation("LedgerReversal")
+
+  /// Every referential action above is `Restrict`, including on the two
+  /// optional relations where Prisma would default to `SetNull`. `SetNull`
+  /// issues an `UPDATE` against this table, which the append-only trigger
+  /// rejects — so the default would turn "delete this user" into a confusing
+  /// trigger error instead of the honest foreign-key error it is. Nothing here
+  /// is hard-deleted in practice: users, tasks and projects are soft-deleted.
+  ///
+  /// `[userId, createdAt]` is *the* balance index — `SUM(amount)` for one
+  /// person, optionally as of an instant, in one indexed pass.
+  @@index([userId, createdAt])
+  @@index([userId, cycleId])
+  @@index([cycleId, type])
+  @@index([taskId])
+  @@index([type, createdAt])
+  @@index([createdById])
+  @@map("ledger_entries")
+}
+
+/// SPEC §4: `PayoutCycle id, periodStart, periodEnd, status, closedAt`.
+///
+/// Cycles are contiguous and non-overlapping: a new cycle opens at the previous
+/// one's `periodEnd`, so every instant of the agency's history belongs to
+/// exactly one cycle. At most one may be `OPEN` at a time, enforced by a
+/// partial unique index (see the note at the bottom of this file).
+model PayoutCycle {
+  id          String            @id @default(cuid())
+  periodStart DateTime
+  /// The planned close instant — 23:59 Cairo on `settings.payout.cycleDay`.
+  /// An early close (SPEC §5.5: "also closeable early by permission") moves it
+  /// to the actual close instant, so the stored period never claims to cover
+  /// time the cycle did not.
+  periodEnd   DateTime
+  status      PayoutCycleStatus @default(OPEN)
+  closedAt    DateTime?
+  /// Null when the scheduler closed it, set when a human closed it early.
+  closedById  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  closedBy User?         @relation("PayoutCycleClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
+  entries  LedgerEntry[]
+  payouts  Payout[]
+
+  @@index([status, periodStart])
+  @@index([periodEnd])
+  @@map("payout_cycles")
+}
+
+/// SPEC §4: `Payout id, userId, cycleId, gross, penalties, bonuses, advances,
+/// net, status, paidAmount, method, reference, note, approvedById, paidAt`.
+///
+/// Three columns are added to that listing, and each exists to make the figure
+/// reconcile on screen rather than only in the service that computed it:
+///
+///  - **`carriedForward`** — the balance the منفّذ brought into this cycle.
+///    Without it, a worker whose deductions exceeded their earnings last month
+///    sees a smaller `net` than `gross − penalties + bonuses − advances` and
+///    has no way to see why. SPEC §5.4 promises exactly this carry-forward;
+///    this is where it becomes visible.
+///  - **`adjustments`** — the signed sum of `ADJUSTMENT` rows (SPEC M4's
+///    "pay the previous assignee?"). They move `net`, so a breakdown that
+///    omitted them would not add up.
+///  - **`approvedAt` / `paidById`** — the counterparts of the `approvedById` /
+///    `paidAt` the SPEC listing already has. Recording who approved but not
+///    when, and when it was paid but not by whom, is half an answer to the only
+///    question anybody asks of a payment record.
+///
+/// The identity the service maintains, and `tests/integration/payout` asserts:
+///
+///     net = max(0, carriedForward + gross − penalties + bonuses − advances + adjustments)
+///
+/// `net` is never negative (SPEC §5.4). The surplus is not stored — it is
+/// simply the balance, which stays negative and becomes the next cycle's
+/// `carriedForward`.
+model Payout {
+  id      String @id @default(cuid())
+  userId  String
+  cycleId String
+
+  /// Signed. Negative when the منفّذ owed the agency at the cycle's start.
+  carriedForward Decimal @default(0) @db.Decimal(12, 2)
+  /// `EARNING + SALARY` for this cycle (SPEC §5.5).
+  gross          Decimal @default(0) @db.Decimal(12, 2)
+  /// Magnitudes, not signs: the ledger rows are negative, these columns are
+  /// what a statement prints next to the word "خصم".
+  penalties      Decimal @default(0) @db.Decimal(12, 2)
+  bonuses        Decimal @default(0) @db.Decimal(12, 2)
+  advances       Decimal @default(0) @db.Decimal(12, 2)
+  /// Signed — an adjustment can credit or debit.
+  adjustments    Decimal @default(0) @db.Decimal(12, 2)
+  net            Decimal @default(0) @db.Decimal(12, 2)
+
+  status PayoutStatus @default(DRAFT)
+
+  /// Accumulates across partial payments; never exceeds `net` (SPEC §5.5).
+  /// A mutable column, and legitimately so — `Payout` is a working document,
+  /// not the ledger. Each payment also appends a negative `PAYOUT` entry, and
+  /// that entry is the permanent record.
+  paidAmount Decimal @default(0) @db.Decimal(12, 2)
+
+  /// A snapshot of the Arabic label chosen from Settings `payout.paymentMethods`
+  /// at the moment of payment, not a reference to it. SPEC §7 settled that the
+  /// list is "the one remaining plain list of Arabic strings, and correctly so —
+  /// nothing stores a reference to it"; a payment record must keep saying
+  /// "فودافون كاش" even after the operator renames the entry.
+  method    String?
+  reference String?
+  note      String?
+
+  approvedById String?
+  approvedAt   DateTime?
+  paidById     String?
+  paidAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User        @relation("PayoutSubject", fields: [userId], references: [id], onDelete: Restrict)
+  cycle      PayoutCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  approvedBy User?       @relation("PayoutApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  paidBy     User?       @relation("PayoutPaidBy", fields: [paidById], references: [id], onDelete: SetNull)
+
+  /// One payout per person per cycle. This is the database half of "two
+  /// concurrent closes produce one payout per worker" — the advisory lock is
+  /// the first half, and a unique index is what makes the guarantee survive a
+  /// lock that was never taken (docs/TESTING.md §4 axis 6).
+  @@unique([userId, cycleId])
+  @@index([cycleId, status])
+  @@index([userId, status])
+  @@map("payouts")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Objects this schema cannot express, created by raw SQL in
+// `prisma/migrations/20260818000000_money_ledger_payouts/migration.sql`.
+//
+// **Preserve them.** Prisma's schema language has no syntax for a trigger or a
+// partial index, so `prisma migrate dev` will propose dropping these the next
+// time it diffs. They are load-bearing:
+//
+//  1. `ledger_entries_append_only()` + two `BEFORE UPDATE / BEFORE DELETE`
+//     triggers. CLAUDE.md invariant 1 in the one place it cannot be argued
+//     with. Row-level triggers do not fire on `TRUNCATE`, so
+//     `tests/setup/reset.ts` still works.
+//  2. `ledger_entries_one_earning_per_task` — UNIQUE (taskId) WHERE
+//     type = 'EARNING'. "Approving twice must not double-pay", enforced where
+//     two concurrent approvals cannot both win.
+//  3. `ledger_entries_one_salary_per_cycle` — UNIQUE (userId, cycleId) WHERE
+//     type = 'SALARY'. SPEC §5.5's "one SALARY entry per salaried worker per
+//     cycle", which is also what makes the accrual job idempotent.
+//  4. `payout_cycles_single_open` — UNIQUE ((status)) WHERE status = 'OPEN'.
+//     Two open cycles would mean two answers to "which cycle is this entry in".
+// ─────────────────────────────────────────────────────────────────────────

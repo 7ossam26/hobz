@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  Banknote,
   Building2,
   FolderKanban,
   ListTodo,
@@ -17,6 +18,7 @@ import {
   Sun,
   User,
   Users,
+  Wallet,
   type LucideIcon,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -130,6 +132,8 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   shield: Shield,
   settings: Settings,
   'scroll-text': ScrollText,
+  wallet: Wallet,
+  banknote: Banknote,
 }
 
 function CommandPaletteDialog({

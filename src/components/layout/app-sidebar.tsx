@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  Banknote,
   Building2,
   ChevronLeft,
   ChevronRight,
@@ -11,6 +12,7 @@ import {
   Settings,
   Shield,
   Users,
+  Wallet,
   type LucideIcon,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -54,6 +56,8 @@ const ICONS: Record<string, LucideIcon> = {
   shield: Shield,
   settings: Settings,
   'scroll-text': ScrollText,
+  wallet: Wallet,
+  banknote: Banknote,
 }
 
 export function AppSidebar({ items }: { items: NavItem[] }) {

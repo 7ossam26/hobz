@@ -52,6 +52,23 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: 'building-2',
     permissions: ['client.view'],
   },
+  /**
+   * SPEC §2's B6-vs-J3 decision: worker earnings are **not** on the worker
+   * dashboard, but on their own page. This is that page, and `ledger.view.own`
+   * is what puts it in somebody's sidebar.
+   */
+  {
+    href: '/my-earnings',
+    labelKey: 'myEarnings',
+    icon: 'wallet',
+    permissions: ['ledger.view.own'],
+  },
+  {
+    href: '/payouts',
+    labelKey: 'payouts',
+    icon: 'banknote',
+    permissions: ['payout.view'],
+  },
   {
     href: '/users',
     labelKey: 'users',
@@ -100,6 +117,8 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<{
   { prefix: '/projects', permissions: ['project.view.all', 'project.view.assigned'] },
   { prefix: '/tasks', permissions: ['task.view.all', 'task.view.assigned'] },
   { prefix: '/clients', permissions: ['client.view'] },
+  { prefix: '/my-earnings', permissions: ['ledger.view.own', 'ledger.view.all'] },
+  { prefix: '/payouts', permissions: ['payout.view'] },
   { prefix: '/users', permissions: ['user.view'] },
   { prefix: '/roles', permissions: ['role.view'] },
   { prefix: '/settings', permissions: ['settings.view'] },

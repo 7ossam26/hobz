@@ -150,6 +150,22 @@ export default defineConfig({
         'src/modules/lateness/ports.ts',
         'src/modules/calendar/job.ts',
         'src/modules/leave/lookup.ts',
+        // Phase 7. docs/TESTING.md §3 names `modules/payout` and `modules/ledger`
+        // in the 90% group alongside money, rbac, calendar and penalty — this is
+        // the phase where that gate starts applying to something real. The files
+        // outside `service.ts` are listed so their coverage is measured honestly
+        // rather than quietly excluded for living next door to it; `sign.ts`,
+        // `pay-profile.ts` and `period.ts` carry the elevated gate below because
+        // each is a place where a silent wrong answer looks exactly like a right
+        // one — a mis-signed entry, a salary divided by the wrong number, a cycle
+        // that ends on the wrong night.
+        'src/modules/ledger/sign.ts',
+        'src/modules/ledger/pay-profile.ts',
+        'src/modules/ledger/earnings.ts',
+        'src/modules/ledger/port.ts',
+        'src/modules/payout/period.ts',
+        'src/modules/payout/cycle.ts',
+        'src/modules/payout/job.ts',
       ],
       thresholds: {
         // Global gate (docs/TESTING.md §3).
@@ -288,6 +304,44 @@ export default defineConfig({
         // Which stretches of a task were BLOCKED is subtracted straight from a
         // deduction (SPEC §5.3), so it carries the financial gate too.
         'src/modules/lateness/blocked.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        // Phase 7 — docs/TESTING.md §3's `modules/payout` and `modules/ledger`.
+        // This is the financial core; nothing here gets the global 70%.
+        'src/modules/ledger/service.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/modules/ledger/sign.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/modules/ledger/pay-profile.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/modules/payout/service.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/modules/payout/period.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/modules/payout/cycle.ts': {
           lines: 90,
           functions: 90,
           branches: 90,

@@ -1707,3 +1707,282 @@ the stuck part. The task sheet shows both figures with the difference named.
   would have buried the Phase 6 diff. Phase 12 already owns a codebase-wide
   audit sweep; this belongs in it, together with adding `format:check` to
   whatever CI runs `typecheck` and `lint`.
+
+---
+
+## Phase 7 — Ledger, Pay Profiles & Payout Cycles
+
+### Built
+
+- **`LedgerEntry`, append-only and enforced by the database.** Two `BEFORE`
+  triggers reject `UPDATE` and `DELETE` on `ledger_entries`, with a message that
+  names the `REVERSAL` a caller should have written instead. Three partial
+  unique indexes carry business rules the schema language cannot express: one
+  `EARNING` per task, one `SALARY` per (worker, cycle), one `OPEN` cycle at a
+  time. Migration `20260818000000_money_ledger_payouts`.
+- **`modules/ledger`** — `appendEntry` as the single write path (sign rule,
+  audit row and cycle stamp in one place), `balanceFor`/`balancesFor` as indexed
+  aggregates, `reverseEntry`, `recordAdvance`, `recordAdjustment`, `recordBonus`,
+  the statement reads, plus `sign.ts` (direction per type), `pay-profile.ts`
+  (`dailyRate`, `isSalaried`, `effectiveTaskRate`) and `earnings.ts` (the
+  `TaskApproved` / `TaskCancelled` subscriber Phase 4 was emitting into a void).
+- **`modules/payout`** — `closeCycle` (accrue → close → draft → open next),
+  `approvePayout`, `markPayoutPaid` with partial payment, `cycle.ts`
+  (`ensureOpenCycle`), `period.ts` (`cycleEndAfter`, 23:59 Cairo), and `job.ts`
+  (the nightly job, registered from `src/instrumentation.ts`).
+- **`modules/ledger/port.ts`** fills Phase 4's `noopLedgerPort`, so SPEC M4's
+  "pay the previous assignee?" answer now reaches a real `ADJUSTMENT`. The
+  interface is unchanged, which is what the Phase 4 stub was worth.
+- **Two screens.** `مستحقاتي` (`/my-earnings`, gated on `ledger.view.own`, per
+  SPEC §2's B6-vs-J3 decision — deliberately not on the dashboard) and
+  `/payouts` for the finance side. The second is not among the phase brief's
+  deliverables, but the lifecycle it describes has to be reachable by a human
+  for any of it to be real, and docs/TESTING.md §6 flow 5 walks exactly it.
+- Schema: `LedgerEntry`, `PayoutCycle`, `Payout`, three enums, and the
+  `payType`/`monthlySalary`/`defaultTaskRate` columns that have been sitting on
+  `User` since Phase 0 finally acquiring the domain functions that read them.
+
+### Decisions worth recording
+
+- **`net` is the balance at close *minus what earlier payouts still claim*,
+  floored at zero — not a per-period sum.**
+  SPEC §5.5 says `net = SUM(all unpaid ledger entries in period)`, and the two
+  readings agree exactly whenever the previous cycle was paid in full. Where
+  they differ the balance is the correct one, and choosing it is what makes
+  three of the brief's requirements need *no code*: the payout that never goes
+  negative, the advance that "settles automatically at month-end because balance
+  is a sum — do not write special-case deduction code", and the partial payment
+  whose remainder stays outstanding. Under a per-period net each of those would
+  have needed its own carry-forward path, and a bug in any one loses money
+  quietly. Recorded in SPEC §5.5. The claims subtraction was not in the first
+  cut and had to be: without it an approved-but-unpaid payout leaves its money
+  in the balance and the next close drafts it again, so two statements promise
+  the same 1000 (see the sweep below).
+- **A payment is a negative `PAYOUT` entry**, attributed to the cycle it settles
+  rather than to the open one. So the closed statement shows that it was paid,
+  instead of next month showing a deduction nobody recognises — and it yields a
+  checkable invariant: `SUM(PAYOUT entries)` for a (منفّذ, cycle) equals
+  `−paidAmount` exactly.
+- **`carriedForward` and `adjustments` added to the `Payout` listing.** Without
+  the first, a worker whose deductions exceeded their earnings last month sees a
+  smaller `net` than the four columns explain and has no way to see why — and
+  SPEC §5.4 promises exactly that carry-forward. Without the second, a manual
+  `ADJUSTMENT` moves `net` invisibly. Both are what make the statement close
+  arithmetically, which is the one thing this product exists to do.
+- **`PaymentMethod` is not a table**, resolving a contradiction between SPEC §4
+  (which lists it as a model) and §7 (which settled in Phase 6 that
+  `payout.paymentMethods` is a plain Settings list because "nothing stores a
+  reference to it"). §7 wins, and stays true: `Payout.method` stores a
+  *snapshot* of the label chosen at payment time. Renaming a method in Settings
+  must not rewrite what a payment record says happened.
+- **The sign lives in the amount, and zero is refused.** Fixed per type,
+  validated on the one write path. A `direction` column would be a second
+  representation that can disagree with the first, and every balance query would
+  then need to know which types to subtract. Zero is refused because a movement
+  that moves nothing is not a movement — approving a task worth `0.00` writes an
+  audit row saying so rather than a meaningless statement line.
+- **Reversal is refused once the entry's cycle has been paid** (docs/TESTING.md
+  §4 axis 7), but allowed while the cycle is merely closed. The second half
+  matters as much as the first: SPEC §5.4's penalty recomputation is
+  "insert `REVERSAL` + insert new `PENALTY`", and it has to keep working across
+  a cycle boundary. The reversal lands in the *open* cycle, so a statement the
+  منفّذ has already read never changes. The instrument for correcting a paid
+  cycle is an `ADJUSTMENT`, which shows up as its own movement.
+- **Closing is refused three ways, and the scheduler can only ever hit one.**
+  `already-closed`, `not-started` (`periodStart` has not passed) and `not-due`
+  (`periodEnd` has not passed and the caller did not ask for an early close).
+  This came out of a failing test rather than from foresight — see Surprises.
+- **Salary is one entry per cycle *and* at most one per Cairo month**, where
+  the month is anchored on `min(closedAt, periodEnd)`. SPEC §5.5 says per cycle,
+  and the default cycle is a month; the month rule is what "monthly salary"
+  means and it is the one that holds when an operator deliberately closes twice
+  in August. The anchor is the fiddly half and each term earns its place:
+  `closedAt` alone puts a late-closed August into September and costs September's
+  salary; `periodEnd` alone puts a cycle opened and closed on the same night into
+  next month and costs that one instead. Two nets under the same number: a unique
+  index and a guard in the accrual.
+- **Approved leave is paid in full, and the absence of proration is the
+  feature.** Nothing in the accrual reads the calendar. A test asserts the full
+  amount for a worker on eleven days of approved leave, so the first person to
+  reach for `workingDaysBetween` there meets a failing test rather than a
+  comment.
+- **`LedgerEntry.cycleId` is attribution, not arithmetic.** Stamped from the
+  open cycle at insert. The money comes from the balance, so an entry landing on
+  the far side of a boundary changes which statement lists it and never how much
+  anybody is paid. That is what makes the boundary race harmless rather than
+  something to lock against.
+- **`ensureOpenCycle` lives in `modules/payout/cycle.ts`, not in `service.ts`.**
+  The ledger asks "which cycle is open" on every write and the payout service
+  writes ledger entries; one of the two directions had to be the thin one. A
+  file with no `modules/ledger` import is cheaper and more honest than inventing
+  a port to pretend the dependency is not there.
+- **The first cycle reaches backwards.** Its `periodStart` is the oldest ledger
+  entry rather than `now`, because the alternative is a cycle that begins after
+  money it is about to pay out already moved.
+- **`recordAdjustmentAction` is gated on `penalty.create`.** SPEC §6 has no
+  `adjustment.*` key and inventing one would be inventing a permission — the
+  same reasoning §6 already records for the three Phase-6 reads. `penalty.create`
+  is the narrowest existing key that already means "may move money against a
+  منفّذ by hand".
+- **Approve, cancel and reassign now run inside a transaction.** They were
+  single-client calls in Phase 4, which was fine while no money followed. It no
+  longer is: a task that is approved while its `EARNING` failed to write is the
+  one state this module must not be able to produce.
+
+### Surprises
+
+- **The half-open balance window silently cost every salaried worker their
+  salary.** `balanceFor` uses `createdAt < at`, which is right for a reader and
+  wrong for the close: the close *writes* the `SALARY` entry at exactly
+  `closedAt`, so the payout it then computed excluded the largest number on it.
+  Caught by the HYBRID test asserting `gross` 8900 and `net` 8900 — the gross
+  was right and the net was 900, which is exactly the shape of a boundary bug.
+  The cycle's own window is closed at the top; the reader's stays half-open.
+- **The advisory lock does not stop a *second* close, only a simultaneous one.**
+  Three parallel `closeCycleUnderLock` calls produced two salaries: with a
+  connection pool smaller than the fan-out, the second caller queued rather than
+  being rejected, then closed the brand-new cycle the first had just opened —
+  a zero-length cycle, and a second month of pay. The lock was doing its job;
+  the missing guard was that a cycle which has not run cannot be closed. Worth
+  recording because the test that caught it was written for a different reason.
+- **Test fixtures had a hidden dependency on the wall clock.** The factory
+  attaches an entry to the cycle its `createdAt` falls in — as production does —
+  so entries stamped "now" and closes stamped `2026-08-28` agreed only while the
+  real date was before the 28th. The suite would have started failing on the
+  29th of a month. Every Phase 7 fixture now carries an explicit Cairo
+  timestamp, which docs/TESTING.md §5 had already asked for in so many words.
+- **A scope that was right for one page was wrong for the other.**
+  `getLedgerPage` widens to the whole agency for a `ledger.view.all` holder,
+  which is correct for a finance screen — and it was what مستحقاتي called. A
+  manager who also held that key would have opened *their own* earnings page and
+  found everybody's money on it. Found by re-reading the query layer rather than
+  by a failing test, which is the uncomfortable part: every existing test passed,
+  because they were all written from the منفّذ's side. `getMyLedgerPage` now
+  ignores the scope and always pins to the caller, and
+  `tests/integration/ledger/permissions.test.ts` holds the line.
+
+### The edge-case sweep (docs/TESTING.md §4, axes 5, 6, 7, 8, 12)
+
+Five subagents, one axis each, one file each, plus an adversarial audit of the
+money core. The money suite finished at 236 tests over 14 files; the whole suite
+at 2,154 across 123, with every gate in `vitest.config.ts` met — including the
+90% the testing contract puts on `modules/ledger` and `modules/payout`.
+
+- **Axis 5 — idempotency** (`payout/idempotency.test.ts`, 10). Close run 1×/3×/10×
+  compared by whole-table snapshot rather than by counts; the earnings subscriber
+  replayed ten times; the scheduled handler on a night that is not the cycle day;
+  and the case that is *not* idempotent by design — a second payment — asserted
+  through its guard instead.
+- **Axis 6 — concurrency** (`payout/concurrency.test.ts`, 14). Two approvals of
+  one task, a close racing a ledger write, two approvals of one payout, two
+  payments of one payout, three simultaneous first-ever writes.
+- **Axis 7 — reversal** (`ledger/reversal.test.ts`, 22). Every reversible type
+  round-tripped against a non-round opening balance; reversal into the open cycle
+  while the closed statement stays byte-identical; the paid-cycle refusal proved
+  to be per-worker rather than per-cycle; twice-reversal refused in code *and* by
+  the unique index.
+- **Axis 8 — money** (`ledger/money-edges.test.ts`, 20). `0.005` rejected rather
+  than rounded; `MONEY_MAX` through the whole chain; 700 entries of `0.07`
+  asserted equal in Decimal and *unequal* in float; `333.33 + 333.33 + 333.34`;
+  a penalty exactly equal to earnings producing `0.00` and not `-0.00`.
+- **Axis 12 — empty/null** (`ledger/empty-values.test.ts`, 19). A brand-new
+  user, a salaried worker with no salary and with a zero salary, an empty cycle,
+  a soft-deleted worker holding a balance, and the two audit rows that explain
+  an approval which paid nobody.
+
+**What it found.** Six defects, all fixed in this phase, four of them things the
+happy-path suite could never have caught:
+
+1. **Two payouts claiming the same money** (confirmed by the audit against a live
+   database). An approved-but-unpaid August payout leaves its money in the
+   balance, so September's close drafted it again: `sum(net) = 2000` against a
+   balance of `1000`. Fixed in `draftPayouts` by subtracting what earlier DRAFT
+   and APPROVED payouts still claim. The first attempt at this was a ceiling in
+   `markPayoutPaid` against the live balance — which the audit then showed makes
+   an approved payout **unpayable** the moment a penalty lands after the close,
+   contradicting SPEC §5.4. The ceiling is gone; the arithmetic is fixed where it
+   was wrong.
+2. **Two concurrent payments of one payout both disbursed.** Both read
+   `paidAmount = 0`, both passed every check, both appended. Fixed with a
+   compare-and-swap on `(id, status, paidAmount)`, with the ledger entry written
+   only after the claim succeeds — so the losing caller writes nothing at all.
+3. **Two concurrent approvals both succeeded**, overwriting who approved and
+   double-writing the audit row. Same fix, on `(id, status)`.
+4. **A late close cost every salaried worker a month's pay.** Covered in
+   Surprises above.
+5. **`penalty.create` could credit money.** `ADJUSTMENT` is signed, so the key
+   documented as "may deduct by hand" also paid anyone anything. A positive
+   adjustment now additionally requires `bonus.create`.
+6. **Two smaller ones:** `getLedgerSummaryFor` returned own-data without any
+   ledger permission (latent — nothing calls it yet), and `listCycles` totalled
+   payouts of soft-deleted users that `listPayouts` correctly hides, so a cycle
+   total added up to more than the rows on screen.
+
+Two agent-written expectations were wrong rather than the code, and were
+corrected rather than loosened: both assumed one payout where the fixture had two
+workers.
+
+**Left standing, deliberately:** an entry committing during a close can be
+attributed to the closing cycle while falling outside its balance window, which
+shifts one row between `carriedForward` and the breakdown. `net` is unaffected
+and no money moves, because attribution is not arithmetic here (SPEC §4).
+
+### Performance
+
+- Production build clean. `/my-earnings` 150 kB and `/payouts` 174 kB First Load
+  JS, against the SPEC §9 budget of 180 kB. `/payouts` has about the same ~6 kB
+  of headroom `/tasks` does; both are on the list for Phase 12's audit sweep.
+  Every money figure is computed server-side — the two pages ship no arithmetic,
+  only rendering.
+
+### Deferred (with owners)
+
+- **Bonuses have a service and no screen.** `recordBonus` and
+  `recordBonusAction` exist because the payout arithmetic needs `BONUS` and
+  because the key is in SPEC §6, but SPEC §2 makes bonuses "manual only, with
+  free-text reason" and Phase 8 owns that UI alongside penalties. Same for the
+  سلفة and تسوية dialogs: the actions and their Zod schemas are here and tested;
+  the buttons belong on the user sheet Phase 8 is already opening.
+- **`PenaltyProfile` is still not a table** and `User.penaltyProfileId` is still
+  an unconstrained seam. Phase 8's, unchanged.
+- **No payout export.** `report.export` is Phase 10's key and this phase did not
+  reach for it.
+- **A superseded payout cannot be closed off.** `PayoutStatus` has no VOID, so a
+  DRAFT payout that a later cycle has made redundant (net `0.00`, nothing to
+  pay) is settled by paying zero. That works and reads oddly. Whoever adds a
+  fourth status owns migrating the three that exist.
+
+### Known limitations
+
+- **A cancellation cannot claw back money already paid out.** `reverseEntry`
+  refuses once the cycle's payout is PAID (docs/TESTING.md §4 axis 7), so
+  cancelling a task whose earning was paid last month records a
+  `ledger.reversalBlocked` audit row and leaves the correction to a human
+  `ADJUSTMENT`. That is the right default — an automatic clawback of money
+  somebody has already spent is a business decision, not a job's — but it means
+  the audit log is the only place that flags it. A notification belongs to
+  Phase 9.
+- **A wrong entry on a departed منفّذ cannot be corrected.** `appendEntry`
+  refuses to write for a soft-deleted user (invariant 8), and `reverseEntry` and
+  `recordAdjustment` both go through it. So a mistaken penalty on somebody who
+  has since left is visible — `draftPayouts` audits `payout.skippedDeletedUser`
+  for exactly such balances — and unfixable in-system. Reactivating the account
+  is the only route. Raised by the axis-7 sweep; left as it is because the
+  alternative is a write path that ignores soft-delete, and that is a bigger
+  hole than the one it closes.
+- **Two closes in one month are the operator's decision.** The guards stop the
+  accidental repeat (`not-started`, `not-due`, and the scheduler never asking
+  for an early close), and the month anchor stops the second salary. What is
+  left is a deliberate second early close, which drafts a second cycle. It
+  cannot double-pay — claims are subtracted — but it does leave a cycle in the
+  list that a reader has to interpret.
+- **An entry committing during a close may be attributed to the cycle that is
+  closing while falling outside its balance window.** `net` is unaffected and
+  nothing is lost; the difference lands in `carriedForward`, so one row can be
+  listed under a cycle whose breakdown does not include it. Attribution is not
+  arithmetic here (SPEC §4), and locking every ledger write against the close
+  would be a heavy price for a display nuance.
+- **`prisma migrate dev` will offer to drop the trigger and the three partial
+  indexes.** They cannot be expressed in the schema language, so they live in
+  the migration and are listed in a comment block at the bottom of
+  `schema.prisma`. Anyone regenerating a migration must keep them.

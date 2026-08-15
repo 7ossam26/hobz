@@ -9,6 +9,8 @@ import { calendarFor } from '@/lib/calendar'
 import { prisma } from '@/lib/db'
 import { getSetting } from '@/lib/settings'
 import { prismaLeaveLookup } from '@/modules/leave/lookup'
+import { ledgerTaskEvents } from '@/modules/ledger/earnings'
+import { prismaLedgerPort } from '@/modules/ledger/port'
 
 import {
   getTaskActivity,
@@ -140,12 +142,19 @@ export const assignTaskAction = requirePermission(
   permissionForTransition('ASSIGNED'),
   async (actor, raw: unknown): Promise<TaskAssignmentResultDto> => {
     const input = assignTaskSchema.parse(raw)
-    const result = await assignTask(prisma, {
-      actor,
-      input,
-      leave: prismaLeaveLookup,
-      ip: await ip(),
-    })
+    const clientIp = await ip()
+    // One transaction, because SPEC M4's "pay the previous assignee?" answer now
+    // reaches a real ledger: the reassignment and the ADJUSTMENT it authorises
+    // must commit together or not at all.
+    const result = await prisma.$transaction((tx) =>
+      assignTask(tx, {
+        actor,
+        input,
+        leave: prismaLeaveLookup,
+        ledger: prismaLedgerPort,
+        ...(clientIp ? { ip: clientIp } : {}),
+      }),
+    )
     revalidateTask(result.task.id, result.task.projectId)
     return result
   },
@@ -238,8 +247,20 @@ export const approveTaskAction = requirePermission(
   permissionForTransition('APPROVED'),
   async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
     const input = approveTaskSchema.parse(raw)
-    const result = await approveTask(prisma, { actor, input, ip: await ip() })
+    const clientIp = await ip()
+    // SPEC §5.1: approval is the one event that creates money. The task update
+    // and the EARNING it triggers share a transaction, so there is no window in
+    // which a task is approved and nobody was paid for it.
+    const result = await prisma.$transaction((tx) =>
+      approveTask(tx, {
+        actor,
+        input,
+        events: ledgerTaskEvents,
+        ...(clientIp ? { ip: clientIp } : {}),
+      }),
+    )
     revalidateTask(result.task.id, result.task.projectId)
+    revalidatePath('/my-earnings')
     return result
   },
 )
@@ -296,8 +317,19 @@ export const cancelTaskAction = requirePermission(
   permissionForTransition('CANCELLED'),
   async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
     const input = cancelTaskSchema.parse(raw)
-    const result = await cancelTask(prisma, { actor, input, ip: await ip() })
+    const clientIp = await ip()
+    // SPEC §5.1 lets APPROVED → CANCELLED happen, so a cancellation can land
+    // after the money did and owes a REVERSAL. Same transaction, same reason.
+    const result = await prisma.$transaction((tx) =>
+      cancelTask(tx, {
+        actor,
+        input,
+        events: ledgerTaskEvents,
+        ...(clientIp ? { ip: clientIp } : {}),
+      }),
+    )
     revalidateTask(result.task.id, result.task.projectId)
+    revalidatePath('/my-earnings')
     return result
   },
 )
