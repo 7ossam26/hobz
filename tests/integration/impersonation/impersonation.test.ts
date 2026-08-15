@@ -151,7 +151,10 @@ describe('العرض كمستخدم آخر — الهويتان في كل سجل
 
   it('يربط السجل بالمنتحِل عبر العلاقة فيظهر اسمه في العارض', async () => {
     await seedPermissionCatalog(db)
-    const admin = await createSuperAdmin(db, { username: 'root', fullName: 'مدير النظام' })
+    const admin = await createSuperAdmin(db, {
+      username: 'root',
+      fullName: 'مدير النظام',
+    })
     const worker = await createUser(db, { username: 'worker' })
 
     const impersonating = (await resolveActor(db, worker.id, {

@@ -139,6 +139,7 @@ Task        id, projectId, milestoneId?, title, description?,
             dueDate, originalDueDate,
             assignedAt, startedAt, submittedAt, approvedAt,
             elapsedMinutesRaw, elapsedMinutesWorking,  ← denormalized, job-updated
+            overdueWorkingDays, escalationLevel, escalatedAt?,  ← same (Phase 6)
             delayReason?, delayAttribution?,
             qualityRating?,                            ← 1–5, set on approval (§5.6)
             deletedAt
@@ -155,9 +156,43 @@ ProjectTemplate  id, name, payload(json)              ← spawns milestones+task
 
 ```
 WorkCalendar   weekendDays[] (default [FRI,SAT]), workdayStart, workdayEnd
-Holiday        id, date, nameAr
-Leave          id, userId, startDate, endDate, type, status, note
+               ← NOT a table. See below.
+Holiday        id, date, nameAr, isRecurring
+Leave          id, userId, startDate, endDate, typeId, status, note,
+               requestedById, decidedById?, decidedAt?, decisionNote?
 ```
+
+**Calendar decisions settled in Phase 6**
+
+- **`WorkCalendar` is a value object, not a model.** Weekend days, workday
+  bounds and working-days-per-month are already Settings keys (`calendar.*`,
+  §7), and invariant 7 says every business number comes from `lib/settings`. A
+  one-row table holding the same four values would be a second authority, and
+  the first time the two disagreed the penalty engine would pick one without
+  anyone knowing which. `lib/calendar` materialises the Settings group into the
+  shape this listing describes.
+- **Holiday and Leave dates are `DATE` columns, not timestamps.** "7 يناير is a
+  holiday" is true for the whole Cairo day; storing 00:00Z would make that
+  statement depend on which side of midnight the reader sits.
+- **`Holiday.isRecurring`** marks the fixed-Gregorian days (7 January, 25
+  April, 1 May). The Islamic holidays move and are entered per year. A
+  recurring row's stored year is its first occurrence; only month/day match.
+- **`Holiday` has no `deletedAt`** — like `Milestone`. A soft-deleted holiday
+  that one query forgot to filter would keep being a day off, which is the
+  failure soft-delete exists to prevent, inverted.
+- **`Leave.typeId`** is a stable id from Settings `calendar.leaveTypes`, not the
+  Arabic label — the same split §7 settled for `tasks.categories`. Migrated in
+  place by `20260817000000_calendar_leave_extension`.
+- **`LeaveStatus` is `PENDING | APPROVED | REJECTED`.** No CANCELLED: a request
+  withdrawn before a decision is rejected by whoever handles it, and a fourth
+  value would be a second way to say "this leave does not apply" that every
+  lateness query has to remember to exclude.
+- **Only APPROVED leave reaches the calendar.** A pending request changes
+  nobody's deduction until somebody with `leave.manage` says so.
+- **`requestedById` is separate from `userId`** because a manager can *record*
+  leave for a منفّذ rather than receive a request from them — the difference
+  between "أحمد asked for Thursday off" and "أحمد was out sick and المدير
+  logged it".
 
 ### Money — immutable ledger
 
@@ -189,6 +224,9 @@ TaskStatus     BACKLOG ASSIGNED IN_PROGRESS SUBMITTED IN_REVIEW
 Priority       LOW MEDIUM HIGH URGENT
 EngagementType FIXED_PRICE RETAINER MILESTONE_BASED HOURLY   ← chosen per project
 DelayAttribution WORKER CLIENT INTERNAL DEPENDENCY
+LeaveStatus      PENDING APPROVED REJECTED                   ← Phase 6
+ExtensionStatus  PENDING APPROVED REJECTED
+EscalationLevel  NONE PM ADMIN                               ← §8 thresholds
 ```
 
 ---
@@ -256,6 +294,47 @@ any(non-final) → CANCELLED
 - An **approved extension** moves `dueDate`, keeps `originalDueDate`, and voids/recomputes any penalty accrued past the new date.
 - Approved leave never generates lateness.
 
+**How that formula is read (settled in Phase 6, `modules/lateness/service.ts`)**
+
+- **A working day counts when its own Cairo start falls in the half-open
+  `[dueDate + grace, measuredAt)` range.** Everything the SPEC asks for falls
+  out of that one rule with no special cases: due-and-submitted at the same
+  instant is 0, one minute late is still 0, and each further midnight crossed
+  into a working day adds exactly one. §5.2's T2 edge case is the same rule
+  seen from the other side — moving a submission anywhere inside a weekend, a
+  holiday or approved leave changes nothing, because those days contribute no
+  boundary.
+- **Grace is a duration, not working days.** 24 hours of grace on a Thursday
+  deadline expires on the Friday even though Friday is not a working day; the
+  working-day filter applies to what comes *after* the grace, not to the grace.
+- **What stops the clock is delivery, not review.** `measuredAt` is
+  `min(now, submittedAt)` exactly while the task is *delivered* — SUBMITTED,
+  IN_REVIEW, APPROVED, DONE — and `now` otherwise. This is the same set
+  `modules/task` computes its `isOverdue` flag from, deliberately: a task
+  flagged overdue in the list and showing zero in the penalty breakdown would
+  be a support ticket every week.
+- **`REVISION_REQUESTED` restarts the clock** against the new due date (T4).
+  The previous `submittedAt` is the *last* delivery, not a delivery of this
+  revision, so freezing on it would make every revision costless. Falling out
+  of the delivered set handles that with no special case.
+- **`CANCELLED` is always zero.** A cancelled task is not late; it is gone.
+- **`min(now, submittedAt)` is taken literally.** Clock skew between two
+  containers must never manufacture days of lateness.
+- **`BLOCKED` does not pause the clock.** §5.4 computes from `lateWorkingDays`
+  and the profile, "nothing else", and §4 says `delayAttribution` is recorded
+  for reporting and explicitly does not feed the penalty engine. Pausing on
+  BLOCKED would be a new rule — a defensible and arguably fairer one when the
+  block is the agency's fault — and it belongs here before it belongs in code.
+  **Open question flagged in docs/DECISIONS.md (Phase 6) for the operator.**
+
+**Extension requests (Phase 6).** The assignee raises one with a mandatory
+reason; `task.extend` decides it. `oldDueDate` is the optimistic-concurrency
+check: if the deadline moved between request and decision (a revision, another
+extension), the request is stale and is refused rather than silently
+overwriting the newer decision. A task that has already been delivered cannot
+be extended — moving a line the منفّذ has already crossed is not an extension,
+it is a retroactive pardon, and this product calls those reversals (§5.4).
+
 ### 5.4 Penalty engine
 
 Runs daily (03:00 Cairo) and on every task status change.
@@ -305,8 +384,16 @@ Visible to the worker. Penalties/bonuses do **not** feed the score (money only, 
 
 ### 5.7 Project health (RAG)
 
-`RED` if any: overdue tasks > threshold, project past `dueDate`, blocked > N days.
+`RED` if any: overdue tasks > threshold, project past `dueDate`, blocked > N days,
+**or any task escalated to admin level** (§8, added in Phase 6).
 `AMBER` if approaching. Manual override with mandatory reason.
+
+**Why escalation is a signal and not an override (settled in Phase 6).** The
+phase brief says admin-level escalation "forces project health RED".
+`healthOverride` means *a human decided this* and carries a mandatory reason, so
+a nightly job writing to it would erase whichever manager had set it and make
+"manual override" a lie. Escalation is instead a fourth input to
+`computeProjectHealth`, counted with an indexed query on `Task.escalationLevel`.
 
 ---
 
@@ -334,6 +421,21 @@ audit.view
 **Scoping rule:** `*.view.all` sees everything; `*.view.assigned` is limited to
 projects where the user is owner/member, or tasks where they are assignee/watcher.
 Enforcement lives in `lib/rbac` and is applied in **queries**, not in the UI.
+
+**Three Phase-6 reads that no key in this catalog covers, and how they are gated:**
+
+- **Reading holidays** — `requireAuth`, no permission. Which days the agency is
+  closed is not confidential, every منفّذ needs it to read their own deadlines,
+  and there is no `calendar.view` key. Writing them needs `calendar.manage`.
+- **Reading leave** — `leave.view` (or `leave.manage`) sees everyone; everybody
+  else sees **their own**. A منفّذ who cannot see the request they filed cannot
+  tell whether Thursday is approved. This applies the scoping rule's intent to
+  the one entity whose "assigned" simply means "mine".
+- **Requesting leave or an extension** — `requireAuth` plus an ownership check
+  in the service. There is no key for "ask for time off", and inventing one
+  would be inventing a permission. A `leave.manage` holder may file for someone
+  else (and it lands APPROVED, because they have already decided); a
+  `task.extend` holder may raise a request on a task that is not theirs.
 
 **How that sentence is read (settled in Phase 1).** Literally, and per entity:
 `scopeProjects` → owner or `ProjectMember`; `scopeTasks` → assignee or
@@ -382,6 +484,12 @@ renaming a category in Settings is a label change and not a silent
 re-categorisation of every task ever filed under it. It is the same split §2
 already makes for statuses ("Arabic labels are editable; the enum values are
 not"), applied to a list the operator also creates entries in.
+
+**`calendar.leaveTypes` followed in Phase 6**, for the same reason and with the
+same shape: `Leave.typeId` stores the id, so renaming "إجازة طارئة" does not
+re-type every leave ever recorded under it. `payout.paymentMethods` is the one
+remaining plain list of Arabic strings, and correctly so — nothing stores a
+reference to it.
 
 ---
 

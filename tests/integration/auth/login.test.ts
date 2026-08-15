@@ -197,9 +197,9 @@ describe('modules/auth — تغيير كلمة المرور', () => {
       }),
     ).rejects.toMatchObject({ messageKey: 'auth.invalidCredentials' })
 
-    expect((await db.user.findUniqueOrThrow({ where: { id: user.id } })).passwordHash).toBe(
-      before.passwordHash,
-    )
+    expect(
+      (await db.user.findUniqueOrThrow({ where: { id: user.id } })).passwordHash,
+    ).toBe(before.passwordHash)
   })
 
   it('يرفض كلمة مرور أقصر من الحد الأدنى في الإعدادات', async () => {

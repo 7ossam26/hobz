@@ -66,6 +66,48 @@ export const noopLedgerPort: LedgerPort = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Leave — the Phase 6 assignment warning
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Approved leave overlapping the window a task has to be done in.
+ *
+ * Dates are Cairo date keys (`YYYY-MM-DD`), not `Date`s: leave has no time of
+ * day, and handing a `Date` to a toast invites it to be rendered in whatever
+ * zone the renderer is in.
+ */
+export interface AssignmentLeaveWarning {
+  leaveId: string
+  userId: string
+  userFullName: string
+  startDate: string
+  endDate: string
+  typeId: string
+}
+
+/**
+ * A port rather than a direct `modules/leave` import, for the reason the two
+ * ports above exist: the task domain needs to *ask* whether the person it is
+ * about to make accountable will be away, and it does not need to know how
+ * leave is stored, approved, or scoped.
+ *
+ * The phase brief is explicit that this is "a warning (not a block)". Nothing
+ * in `assignTask` gates on the answer — it records it in the audit row and
+ * hands it back to the caller, exactly as finish-to-start dependencies work.
+ */
+export interface LeaveLookup {
+  approvedLeaveInWindow(
+    db: Db,
+    args: { userId: string; from: Date; to: Date },
+  ): Promise<AssignmentLeaveWarning[]>
+}
+
+/** The default: no leave module wired in, so nothing to warn about. */
+export const noLeaveLookup: LeaveLookup = {
+  approvedLeaveInWindow: async () => [],
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Domain events
 // ─────────────────────────────────────────────────────────────────────────
 

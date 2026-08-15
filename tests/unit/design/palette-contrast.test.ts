@@ -138,7 +138,10 @@ describe('ألوان البيانات', () => {
 
     const sorted = [...angles].sort((a, b) => a - b)
     for (let i = 1; i < sorted.length; i++) {
-      expect(sorted[i]! - sorted[i - 1]!, `${sorted[i - 1]} → ${sorted[i]}`).toBeGreaterThan(15)
+      expect(
+        sorted[i]! - sorted[i - 1]!,
+        `${sorted[i - 1]} → ${sorted[i]}`,
+      ).toBeGreaterThan(15)
     }
   })
 })

@@ -38,10 +38,9 @@ describe('lib/navigation — جدول المسارات', () => {
 
   it('يوفّر مسمى عربيًا لكل عنصر تنقّل', () => {
     for (const item of NAV_ITEMS) {
-      expect(
-        Object.keys(ar.nav),
-        `missing Arabic label for ${item.labelKey}`,
-      ).toContain(item.labelKey)
+      expect(Object.keys(ar.nav), `missing Arabic label for ${item.labelKey}`).toContain(
+        item.labelKey,
+      )
     }
   })
 

@@ -3,10 +3,18 @@ import { describe, expect, it } from 'vitest'
 import { validatePassword } from '@/lib/auth/password'
 import { evaluate, throttleKeys } from '@/lib/auth/rate-limit'
 import { validateUsername } from '@/lib/auth/username'
-import { permissionsForRoute, routeAllowedByToken, visibleNavItems } from '@/lib/navigation'
+import {
+  permissionsForRoute,
+  routeAllowedByToken,
+  visibleNavItems,
+} from '@/lib/navigation'
 import { formatMobileForDisplay, toWhatsappNumber } from '@/lib/phone'
 import { createRoleSchema } from '@/modules/role/schema'
-import { createUserSchema, listUsersSchema, updateUserSchema } from '@/modules/user/schema'
+import {
+  createUserSchema,
+  listUsersSchema,
+  updateUserSchema,
+} from '@/modules/user/schema'
 
 import { actingAs, nobody } from '../../helpers/auth'
 
@@ -60,7 +68,11 @@ describe('modules/user — الحقول الفارغة في المخطّط', () 
   })
 
   it('يعامل المسافات وحدها كفراغ في الحقول الاختيارية', () => {
-    const parsed = createUserSchema.parse({ ...base, phone: '   ', penaltyProfileId: '  ' })
+    const parsed = createUserSchema.parse({
+      ...base,
+      phone: '   ',
+      penaltyProfileId: '  ',
+    })
     expect(parsed.phone).toBeNull()
     expect(parsed.penaltyProfileId).toBeNull()
   })
@@ -69,7 +81,9 @@ describe('modules/user — الحقول الفارغة في المخطّط', () 
     // `.trim().min(1)` — a name of three spaces is not a name.
     expect(createUserSchema.safeParse({ ...base, fullName: '   ' }).success).toBe(false)
     expect(createUserSchema.safeParse({ ...base, fullName: '' }).success).toBe(false)
-    expect(createRoleSchema.safeParse({ nameAr: '  ', nameEn: 'X_Y' }).success).toBe(false)
+    expect(createRoleSchema.safeParse({ nameAr: '  ', nameEn: 'X_Y' }).success).toBe(
+      false,
+    )
   })
 
   it('يرفض كلمة مرور فارغة أو مسافات', () => {
@@ -170,9 +184,9 @@ describe('lib/auth — الحالات الفارغة', () => {
 
   it('لا يفحص احتواء اسم المستخدم عند غيابه', () => {
     expect(validatePassword('anything-at-all', { minLength: 4 }, {})).toEqual([])
-    expect(validatePassword('anything-at-all', { minLength: 4 }, { username: '' })).toEqual(
-      [],
-    )
+    expect(
+      validatePassword('anything-at-all', { minLength: 4 }, { username: '' }),
+    ).toEqual([])
   })
 })
 

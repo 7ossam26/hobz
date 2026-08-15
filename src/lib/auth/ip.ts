@@ -17,7 +17,10 @@ const REAL_IP = 'x-real-ip'
 
 /** IPv6 loses its zone id and brackets; IPv4-mapped forms are unwrapped. */
 function normalizeIp(raw: string): string | undefined {
-  const value = raw.trim().replace(/^\[|\]$/g, '').split('%')[0]
+  const value = raw
+    .trim()
+    .replace(/^\[|\]$/g, '')
+    .split('%')[0]
   if (!value) return undefined
   const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(value)
   return mapped?.[1] ?? value

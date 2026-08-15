@@ -11,19 +11,15 @@ import {
   seedPermissionCatalog,
 } from '../../factories/db'
 import { actorFor } from '../../helpers/actor-from-db'
-import {
-  clearSessionActor,
-  setSessionActor,
-} from '../../helpers/session-mock'
+import { clearSessionActor, setSessionActor } from '../../helpers/session-mock'
 import { testDb } from '../../setup/reset'
 
 vi.mock('@/lib/auth/session', () => import('../../helpers/session-mock'))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('next/headers', () => ({ headers: async () => new Headers() }))
 
-const { createRoleAction, deleteRoleAction, updateRoleAction } = await import(
-  '@/modules/role/actions'
-)
+const { createRoleAction, deleteRoleAction, updateRoleAction } =
+  await import('@/modules/role/actions')
 const {
   activateUserAction,
   createUserAction,

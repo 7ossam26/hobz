@@ -25,16 +25,13 @@ describe('lib/rbac — مصفوفة الصلاحيات كاملة', () => {
     expect(can(actingAs([permission]), permission)).toBe(true)
   })
 
-  it.each([...PERMISSIONS])(
-    'لا تمنح %s أي صلاحية أخرى في الكتالوج',
-    (permission) => {
-      // The isolation property. Without it, a `startsWith`-style check in `can`
-      // would let `project.view` quietly satisfy `project.view.all`.
-      const actor = actingAs([permission])
-      const leaked = PERMISSIONS.filter((p) => p !== permission && can(actor, p))
-      expect(leaked).toEqual([])
-    },
-  )
+  it.each([...PERMISSIONS])('لا تمنح %s أي صلاحية أخرى في الكتالوج', (permission) => {
+    // The isolation property. Without it, a `startsWith`-style check in `can`
+    // would let `project.view` quietly satisfy `project.view.all`.
+    const actor = actingAs([permission])
+    const leaked = PERMISSIONS.filter((p) => p !== permission && can(actor, p))
+    expect(leaked).toEqual([])
+  })
 })
 
 describe('lib/rbac — الصلاحيات المتجاورة', () => {

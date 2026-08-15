@@ -1,5 +1,16 @@
 import { ar } from '@/i18n/ar'
-import type { Weekday } from '@/lib/calendar'
+/**
+ * Deep import, not the `@/lib/calendar` barrel, and that matters: the barrel
+ * constructs the app's Prisma-backed calendar, so importing it here would drag
+ * `@prisma/client` into every client component that renders a date. `cairo.ts`
+ * is pure — `Intl` and integer arithmetic — and safe in a browser bundle.
+ */
+import {
+  CAIRO_TIMEZONE,
+  cairoParts,
+  type CairoParts,
+  type Weekday,
+} from '@/lib/calendar/cairo'
 
 /**
  * lib/datetime — how a moment is *shown*.
@@ -23,69 +34,15 @@ import type { Weekday } from '@/lib/calendar'
  *    genuinely hard) and this module supplies the wording (which is not).
  */
 
-export const CAIRO_TIMEZONE = 'Africa/Cairo'
-
 /**
- * `en-US` with an explicit `timeZone` is used only to *extract* numbers. The
- * locale never reaches the screen; it is here because a numeric formatter with
- * a fixed locale is the one reliable way to ask "what is the wall-clock date in
- * Cairo for this instant".
+ * The Cairo wall-clock reading is `lib/calendar`'s primitive, not a second
+ * copy here. Both modules answer "what does the clock in Cairo say at this
+ * instant", and the display layer disagreeing with the layer that decides
+ * money would be the worst kind of bug to chase: the deadline on screen and
+ * the deadline in the penalty would differ by a day and both would look right.
+ * Re-exported so importers of this module keep working.
  */
-const CAIRO_PARTS = new Intl.DateTimeFormat('en-US', {
-  timeZone: CAIRO_TIMEZONE,
-  calendar: 'gregory',
-  year: 'numeric',
-  month: 'numeric',
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hour12: false,
-  weekday: 'short',
-})
-
-/** `Weekday` is `lib/calendar`'s type, imported rather than restated: the two
-    modules must agree on what "Friday" is called, and one of them owns it. */
-const WEEKDAY_BY_SHORT: Record<string, Weekday> = {
-  Sun: 'SUN',
-  Mon: 'MON',
-  Tue: 'TUE',
-  Wed: 'WED',
-  Thu: 'THU',
-  Fri: 'FRI',
-  Sat: 'SAT',
-}
-
-export interface CairoParts {
-  year: number
-  /** 1–12. */
-  month: number
-  day: number
-  hour: number
-  minute: number
-  second: number
-  weekday: Weekday
-}
-
-export function cairoParts(date: Date): CairoParts {
-  const parts = CAIRO_PARTS.formatToParts(date)
-  const get = (type: Intl.DateTimeFormatPartTypes): string =>
-    parts.find((part) => part.type === type)?.value ?? ''
-
-  // `hour12: false` renders midnight as 24 in some ICU builds. Folding it here
-  // keeps every downstream comparison on a 0–23 clock.
-  const hour = Number(get('hour')) % 24
-
-  return {
-    year: Number(get('year')),
-    month: Number(get('month')),
-    day: Number(get('day')),
-    hour,
-    minute: Number(get('minute')),
-    second: Number(get('second')),
-    weekday: WEEKDAY_BY_SHORT[get('weekday')] ?? 'SUN',
-  }
-}
+export { CAIRO_TIMEZONE, cairoParts, type CairoParts }
 
 const pad2 = (value: number): string => String(value).padStart(2, '0')
 
@@ -116,6 +73,22 @@ export function formatDateTime(date: Date): string {
 export function toCairoDateInput(date: Date): string {
   const { year, month, day } = cairoParts(date)
   return `${year}-${pad2(month)}-${pad2(day)}`
+}
+
+/**
+ * `14 أغسطس 2026`, from a Cairo date *key* rather than an instant.
+ *
+ * Holidays and leave carry keys, not timestamps (SPEC §4 Calendar), and
+ * converting one to a `Date` just to render it would re-introduce the timezone
+ * question the key exists to avoid. A malformed key renders as itself rather
+ * than throwing: this is display copy, and a bad string on screen is a smaller
+ * failure than a crashed page.
+ */
+export function formatDateKey(key: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key)
+  if (!match) return key
+  const month = ar.months[Number(match[2]) - 1]
+  return month ? `${Number(match[3])} ${month} ${match[1]}` : key
 }
 
 /** `2026-08-14T15:30` — the value a `datetime-local` input expects. */

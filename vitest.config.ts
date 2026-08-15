@@ -131,6 +131,23 @@ export default defineConfig({
         'src/modules/task/elapsed.ts',
         'src/modules/task/mentions.ts',
         'src/modules/task/ports.ts',
+        // Phase 6. `lib/calendar` carries the 90% gate docs/TESTING.md §3 names
+        // it under, and every file below it does too: a wrong working-day count
+        // is a wrong deduction, and it looks exactly like a right one.
+        // `index.ts` is excluded — it is the Prisma singleton wiring, the same
+        // exclusion `lib/auth/session.ts` gets, and a unit test of it would only
+        // assert that a client was constructed.
+        'src/lib/calendar/cairo.ts',
+        'src/lib/calendar/calendar.ts',
+        'src/lib/calendar/work-calendar.ts',
+        'src/lib/calendar/source.ts',
+        'src/lib/calendar/zod.ts',
+        // `escalation.ts` and `job.ts` live outside `service.ts` and are listed
+        // so their coverage is measured honestly rather than quietly excluded.
+        'src/modules/lateness/escalation.ts',
+        'src/modules/lateness/ports.ts',
+        'src/modules/calendar/job.ts',
+        'src/modules/leave/lookup.ts',
       ],
       thresholds: {
         // Global gate (docs/TESTING.md §3).
@@ -220,6 +237,47 @@ export default defineConfig({
           statements: 90,
         },
         'src/modules/task/elapsed.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        // docs/TESTING.md §3 names `lib/calendar` in the 90% group alongside
+        // money, rbac, penalty and payout. Phase 6 is where that gate starts
+        // applying to something other than a stub.
+        'src/lib/calendar/cairo.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/lib/calendar/calendar.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/lib/calendar/work-calendar.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/lib/calendar/source.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        // The lateness figure is the multiplicand of every automatic deduction
+        // (SPEC §5.3 → §5.4), so it carries the financial gate.
+        'src/modules/lateness/service.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/modules/lateness/escalation.ts': {
           lines: 90,
           functions: 90,
           branches: 90,

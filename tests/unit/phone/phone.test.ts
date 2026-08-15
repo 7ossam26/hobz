@@ -99,9 +99,7 @@ describe('lib/phone — التطبيع إلى E.164', () => {
       expect(normalizeEgyptMobile(phone.e164)).toBe(phone.e164)
       // The whole point of the fixture pair: the local spelling a user types
       // must normalise to the E.164 form the column stores.
-      expect(normalizeEgyptMobile(phone.local), `fixture ${phone.local}`).toBe(
-        phone.e164,
-      )
+      expect(normalizeEgyptMobile(phone.local), `fixture ${phone.local}`).toBe(phone.e164)
     }
   })
 })

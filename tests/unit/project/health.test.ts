@@ -23,7 +23,7 @@ const THRESHOLDS: HealthThresholds = {
   blockedDaysThreshold: 3,
   amberDaysBeforeDue: 3,
 }
-const NO_SIGNALS = { overdueTaskCount: 0, maxBlockedDays: 0 }
+const NO_SIGNALS = { overdueTaskCount: 0, maxBlockedDays: 0, adminEscalationCount: 0 }
 const DUE = new Date('2026-03-15T12:00:00.000Z')
 
 function health(
@@ -87,7 +87,7 @@ describe('computeProjectHealth — إشارات المهام (سيصير حيً�
       status: 'ACTIVE',
       dueDate: new Date('2027-01-01T00:00:00.000Z'),
       now: new Date('2026-01-01T00:00:00.000Z'),
-      signals: { overdueTaskCount: 4, maxBlockedDays: 0 },
+      signals: { overdueTaskCount: 4, maxBlockedDays: 0, adminEscalationCount: 0 },
       thresholds: THRESHOLDS,
     })
     expect(result).toBe('RED')
@@ -98,7 +98,11 @@ describe('computeProjectHealth — إشارات المهام (سيصير حيً�
       status: 'ACTIVE',
       dueDate: new Date('2027-01-01T00:00:00.000Z'),
       now: new Date('2026-01-01T00:00:00.000Z'),
-      signals: { overdueTaskCount: THRESHOLDS.overdueTasksThreshold, maxBlockedDays: 0 },
+      signals: {
+        overdueTaskCount: THRESHOLDS.overdueTasksThreshold,
+        maxBlockedDays: 0,
+        adminEscalationCount: 0,
+      },
       thresholds: THRESHOLDS,
     })
     expect(result).toBe('GREEN')
@@ -109,7 +113,7 @@ describe('computeProjectHealth — إشارات المهام (سيصير حيً�
       status: 'ACTIVE',
       dueDate: new Date('2027-01-01T00:00:00.000Z'),
       now: new Date('2026-01-01T00:00:00.000Z'),
-      signals: { overdueTaskCount: 0, maxBlockedDays: 4 },
+      signals: { overdueTaskCount: 0, maxBlockedDays: 4, adminEscalationCount: 0 },
       thresholds: THRESHOLDS,
     })
     expect(result).toBe('RED')
@@ -120,10 +124,37 @@ describe('computeProjectHealth — إشارات المهام (سيصير حيً�
       status: 'ACTIVE',
       dueDate: new Date('2027-01-01T00:00:00.000Z'),
       now: new Date('2026-01-01T00:00:00.000Z'),
-      signals: { overdueTaskCount: 1, maxBlockedDays: 0 },
+      signals: { overdueTaskCount: 1, maxBlockedDays: 0, adminEscalationCount: 0 },
       thresholds: { ...THRESHOLDS, overdueTasksThreshold: 0 },
     })
     expect(result).toBe('RED')
+  })
+
+  it('مهمة واحدة مُصعَّدة للإدارة تكفي لفرض الأحمر (المرحلة 6)', () => {
+    // "M days → notify admin + force project health RED". One is enough: the
+    // threshold was already crossed when the level was written.
+    const result = computeProjectHealth({
+      status: 'ACTIVE',
+      dueDate: new Date('2027-01-01T00:00:00.000Z'),
+      now: new Date('2026-01-01T00:00:00.000Z'),
+      signals: { overdueTaskCount: 0, maxBlockedDays: 0, adminEscalationCount: 1 },
+      thresholds: THRESHOLDS,
+    })
+    expect(result).toBe('RED')
+  })
+
+  it('التصعيد لمدير المشروع وحده لا يفرض الأحمر', () => {
+    // Only ADMIN-level escalation counts here; `adminEscalationCount` is
+    // literally a count of tasks at that level, so a PM escalation leaves it
+    // at zero and the project stays where the other signals put it.
+    const result = computeProjectHealth({
+      status: 'ACTIVE',
+      dueDate: new Date('2027-01-01T00:00:00.000Z'),
+      now: new Date('2026-01-01T00:00:00.000Z'),
+      signals: { overdueTaskCount: 0, maxBlockedDays: 0, adminEscalationCount: 0 },
+      thresholds: THRESHOLDS,
+    })
+    expect(result).toBe('GREEN')
   })
 })
 
@@ -135,7 +166,7 @@ describe('computeProjectHealth — الحالات النهائية', () => {
         status,
         dueDate: new Date('2020-01-01T00:00:00.000Z'),
         now: new Date('2026-01-01T00:00:00.000Z'),
-        signals: { overdueTaskCount: 999, maxBlockedDays: 999 },
+        signals: { overdueTaskCount: 999, maxBlockedDays: 999, adminEscalationCount: 0 },
         thresholds: THRESHOLDS,
       })
       expect(result).toBe('GREEN')
@@ -147,7 +178,7 @@ describe('computeProjectHealth — الحالات النهائية', () => {
       status: 'ACTIVE',
       dueDate: new Date('2020-01-01T00:00:00.000Z'),
       now: new Date('2026-01-01T00:00:00.000Z'),
-      signals: { overdueTaskCount: 999, maxBlockedDays: 999 },
+      signals: { overdueTaskCount: 999, maxBlockedDays: 999, adminEscalationCount: 0 },
       thresholds: THRESHOLDS,
     })
     expect(result).toBe('RED')

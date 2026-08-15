@@ -6,11 +6,7 @@ import { listAuditEntries } from '@/modules/audit/service'
 import { listUsersSchema } from '@/modules/user/schema'
 import { listUsers } from '@/modules/user/service'
 
-import {
-  createRole,
-  createUser,
-  seedPermissionCatalog,
-} from '../../factories/db'
+import { createRole, createUser, seedPermissionCatalog } from '../../factories/db'
 import { actorFor, maybeActorFor } from '../../helpers/actor-from-db'
 import { testDb } from '../../setup/reset'
 

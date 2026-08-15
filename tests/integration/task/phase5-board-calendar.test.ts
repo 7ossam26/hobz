@@ -94,7 +94,11 @@ describe('modules/task/queries — getTaskBoard', () => {
     await seedPermissionCatalog(db)
     const owner = await createUserWithPermissions(db, ['task.view.all'])
     const project = await createProject(db, { ownerId: owner.id })
-    await createTask(db, { projectId: project.id, title: 'مهمة غيري', status: 'IN_PROGRESS' })
+    await createTask(db, {
+      projectId: project.id,
+      title: 'مهمة غيري',
+      status: 'IN_PROGRESS',
+    })
 
     const stranger = await createUserWithPermissions(db, ['task.view.assigned'])
     setSessionActor(await actorFor(db, stranger.id))
@@ -117,7 +121,10 @@ describe('modules/task/queries — getTaskCalendar', () => {
       dueDate: cairo('2026-04-10T09:00'),
     })
 
-    const range = { from: cairo('2026-03-01T00:00'), to: cairo('2026-03-05T23:59:59.999') }
+    const range = {
+      from: cairo('2026-03-01T00:00'),
+      to: cairo('2026-03-05T23:59:59.999'),
+    }
     const calendar = await getTaskCalendar({ projectId: [project.id] }, range, NOW)
 
     expect(calendar.items).toEqual([])
@@ -180,7 +187,10 @@ describe('modules/task/queries — getTaskCalendar', () => {
     const stranger = await createUserWithPermissions(db, ['task.view.assigned'])
     setSessionActor(await actorFor(db, stranger.id))
 
-    const range = { from: cairo('2026-03-01T00:00'), to: cairo('2026-03-31T23:59:59.999') }
+    const range = {
+      from: cairo('2026-03-01T00:00'),
+      to: cairo('2026-03-31T23:59:59.999'),
+    }
     const calendar = await getTaskCalendar({ projectId: [project.id] }, range, NOW)
 
     expect(calendar.items).toEqual([])

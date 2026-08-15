@@ -82,5 +82,7 @@ export const config = {
    * `/api/auth` is deliberate — the handler needs the session cookie parsed,
    * and `isPublicPath` lets it straight through.
    */
-  matcher: ['/((?!_next/static|_next/image|fonts/|favicon.ico|.*\\.(?:png|svg|ico|woff2)$).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|fonts/|favicon.ico|.*\\.(?:png|svg|ico|woff2)$).*)',
+  ],
 }

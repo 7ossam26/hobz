@@ -200,22 +200,53 @@ describe('modules/setting — الكتابة', () => {
     })
   })
 
-  // The vehicle is `calendar.leaveTypes`, still a plain list of Arabic strings.
-  // `tasks.categories` moved to `{ id, label }` entries in Phase 4 so that
-  // `Task.categoryId` points at something a rename cannot break; its shape is
-  // covered in tests/unit/settings/catalog.test.ts.
+  // The vehicle is `payout.paymentMethods`, the remaining plain list of Arabic
+  // strings. `tasks.categories` moved to `{ id, label }` entries in Phase 4 and
+  // `calendar.leaveTypes` followed in Phase 6, both so that the column pointing
+  // at them (`Task.categoryId`, `Leave.typeId`) survives a rename; those shapes
+  // are covered in tests/unit/settings/catalog.test.ts.
   it('يقبل تعديل قائمة عربية كاملة', async () => {
     const { db, settings } = fakeDb()
 
     await updateSetting(db, {
       actor: actingAs(['settings.edit']),
+      key: 'payout.paymentMethods',
+      value: ['إنستاباي', 'نقدًا'],
+    })
+
+    expect(settings.get('payout.paymentMethods')?.value).toEqual(['إنستاباي', 'نقدًا'])
+  })
+
+  it('يرفض قائمة أنواع الإجازات بالشكل القديم (نصوص بلا معرّف)', async () => {
+    // The Phase 6 migration rewrote the stored row; a client still posting the
+    // old shape must be refused rather than silently accepted and then thrown
+    // on at read time.
+    const { db } = fakeDb()
+
+    await expect(
+      updateSetting(db, {
+        actor: actingAs(['settings.edit']),
+        key: 'calendar.leaveTypes',
+        value: ['إجازة سنوية', 'إجازة مرضية'],
+      }),
+    ).rejects.toMatchObject({ code: 'VALIDATION' })
+  })
+
+  it('يقبل تعديل أنواع الإجازات بمعرّف ثابت ومسمى عربي', async () => {
+    const { db, settings } = fakeDb()
+
+    await updateSetting(db, {
+      actor: actingAs(['settings.edit']),
       key: 'calendar.leaveTypes',
-      value: ['إجازة سنوية', 'إجازة مرضية'],
+      value: [
+        { id: 'annual', label: 'إجازة سنوية' },
+        { id: 'study', label: 'إجازة دراسية' },
+      ],
     })
 
     expect(settings.get('calendar.leaveTypes')?.value).toEqual([
-      'إجازة سنوية',
-      'إجازة مرضية',
+      { id: 'annual', label: 'إجازة سنوية' },
+      { id: 'study', label: 'إجازة دراسية' },
     ])
   })
 

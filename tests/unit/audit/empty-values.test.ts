@@ -32,10 +32,10 @@ describe('modules/audit — الفرق على الحمولات الفارغة', 
     // set and still is not" is not.
     expect(
       diffAuditEntry({ before: { phone: '+201012345678' }, after: { phone: null } }),
-    ).toEqual([
-      { field: 'phone', kind: 'changed', before: '+201012345678', after: null },
-    ])
-    expect(diffAuditEntry({ before: { phone: null }, after: { phone: null } })).toEqual([])
+    ).toEqual([{ field: 'phone', kind: 'changed', before: '+201012345678', after: null }])
+    expect(diffAuditEntry({ before: { phone: null }, after: { phone: null } })).toEqual(
+      [],
+    )
   })
 
   it('يميّز الحقل الغائب عن الحقل الفارغ', () => {
@@ -57,7 +57,9 @@ describe('modules/audit — الفرق على الحمولات الفارغة', 
   })
 
   it('يعتبر السلسلة الفارغة قيمة لا غيابًا', () => {
-    expect(diffAuditEntry({ before: { note: '' }, after: { note: 'شيء' } })).toHaveLength(1)
+    expect(diffAuditEntry({ before: { note: '' }, after: { note: 'شيء' } })).toHaveLength(
+      1,
+    )
     expect(diffAuditEntry({ before: { note: '' }, after: { note: '' } })).toEqual([])
   })
 })

@@ -43,6 +43,18 @@ export type ComputedHealth = 'GREEN' | 'AMBER' | 'RED'
 export interface ProjectHealthSignals {
   overdueTaskCount: number
   maxBlockedDays: number
+  /**
+   * Tasks whose overdue escalation has reached the admin threshold (Phase 6,
+   * `notifications.escalateToAdminAfterDays`). One is enough to force RED.
+   *
+   * A **signal**, deliberately, and not a write to `healthOverride`: that
+   * column means "a human decided this" and carries a mandatory reason
+   * (SPEC §5.7). A nightly job writing to it would erase whichever manager had
+   * set it and make "manual override" a lie. Escalation is a fact about the
+   * project's tasks, so it belongs on the side of the computation that reads
+   * facts.
+   */
+  adminEscalationCount: number
 }
 
 export type TaskHealthLookup = (
@@ -54,6 +66,7 @@ export type TaskHealthLookup = (
 export const noTaskHealthSignals: TaskHealthLookup = async () => ({
   overdueTaskCount: 0,
   maxBlockedDays: 0,
+  adminEscalationCount: 0,
 })
 
 /**
@@ -79,7 +92,7 @@ const UNDELIVERED = ['BACKLOG', 'ASSIGNED', 'IN_PROGRESS', 'REVISION_REQUESTED']
  */
 export function taskHealthSignals(now: Date = new Date()): TaskHealthLookup {
   return async (db, projectId) => {
-    const [overdueTaskCount, blocked] = await Promise.all([
+    const [overdueTaskCount, blocked, adminEscalationCount] = await Promise.all([
       db.task.count({
         where: {
           projectId,
@@ -100,6 +113,11 @@ export function taskHealthSignals(now: Date = new Date()): TaskHealthLookup {
           },
         },
       }),
+      // Indexed by `[projectId, escalationLevel]` — a count, not a walk of the
+      // calendar, which is the whole reason the level is a stored column.
+      db.task.count({
+        where: { projectId, deletedAt: null, escalationLevel: 'ADMIN' },
+      }),
     ])
 
     const maxBlockedDays = blocked.reduce((worst, task) => {
@@ -109,7 +127,7 @@ export function taskHealthSignals(now: Date = new Date()): TaskHealthLookup {
       return Math.max(worst, days)
     }, 0)
 
-    return { overdueTaskCount, maxBlockedDays }
+    return { overdueTaskCount, maxBlockedDays, adminEscalationCount }
   }
 }
 
@@ -139,7 +157,11 @@ export function computeProjectHealth(input: ComputeProjectHealthInput): Computed
 
   const signalsRed =
     signals.overdueTaskCount > thresholds.overdueTasksThreshold ||
-    signals.maxBlockedDays > thresholds.blockedDaysThreshold
+    signals.maxBlockedDays > thresholds.blockedDaysThreshold ||
+    // Phase 6: "M days → notify admin + force project health RED". One
+    // admin-level escalation is enough — the threshold has already been
+    // crossed by the time the level was written.
+    signals.adminEscalationCount > 0
 
   // "Past dueDate" is strict: the instant the deadline lands is not yet past
   // it. That instant is exactly where the AMBER check below picks it up.

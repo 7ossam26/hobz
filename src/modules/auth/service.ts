@@ -79,7 +79,11 @@ export async function authenticate(
       entityId: username,
       ...(args.ip ? { ip: args.ip } : {}),
     })
-    return { ok: false, reason: 'THROTTLED', retryAfterMinutes: retryAfterMinutes(gate.retryAfterMs) }
+    return {
+      ok: false,
+      reason: 'THROTTLED',
+      retryAfterMinutes: retryAfterMinutes(gate.retryAfterMs),
+    }
   }
 
   const user = await db.user.findUnique({

@@ -2,12 +2,7 @@ import type { Db } from '@/lib/db'
 import { NotFoundError } from '@/lib/errors'
 
 import type { AuditFilterInput } from './schema'
-import type {
-  AuditDiffRow,
-  AuditEntryDto,
-  AuditFacetsDto,
-  AuditPageDto,
-} from './types'
+import type { AuditDiffRow, AuditEntryDto, AuditFacetsDto, AuditPageDto } from './types'
 
 /**
  * modules/audit/service — reads only.

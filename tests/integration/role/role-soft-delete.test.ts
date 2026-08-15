@@ -49,7 +49,9 @@ describe('الحذف الناعم — عدّاد أعضاء الدور', () => {
 
     await deleteRole(db, { actor, id: role.id })
 
-    expect((await db.role.findUniqueOrThrow({ where: { id: role.id } })).deletedAt).not.toBeNull()
+    expect(
+      (await db.role.findUniqueOrThrow({ where: { id: role.id } })).deletedAt,
+    ).not.toBeNull()
   })
 
   it('يظل يمنع حذف دور له عضو نشط واحد على الأقل', async () => {

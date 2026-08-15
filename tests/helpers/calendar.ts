@@ -1,4 +1,10 @@
-import type { Calendar, Weekday } from '@/lib/calendar'
+import {
+  buildWorkCalendar,
+  type CalendarSource,
+  type Calendar,
+  type Weekday,
+  type WorkCalendar,
+} from '@/lib/calendar'
 
 import { cairo, cairoWeekday } from './time'
 
@@ -96,6 +102,14 @@ export function businessDayCalendar(options: BusinessDayCalendarOptions = {}): C
   }
 
   return {
+    workCalendar: async () =>
+      buildWorkCalendar({
+        weekendDays,
+        workdayStart,
+        workdayEnd,
+        workingDaysPerMonth: 22,
+      }),
+
     isWorkingDay: async (date, userId) => isWorkingDate(cairoDate(date), userId),
 
     workingDaysBetween: async (from, to, userId) => {
@@ -150,6 +164,102 @@ export function businessDayCalendar(options: BusinessDayCalendarOptions = {}): C
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 6 — the real `lib/calendar`, fed from memory instead of Postgres
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface InMemoryCalendarOptions {
+  weekendDays?: readonly Weekday[]
+  /** `HH:mm`, Cairo wall clock. */
+  workdayStart?: string
+  workdayEnd?: string
+  workingDaysPerMonth?: number
+  /** One-off holidays, as Cairo date keys (`YYYY-MM-DD`). */
+  holidays?: readonly string[]
+  /** Yearly holidays, as `MM-DD`. Expanded across whatever range is asked for. */
+  recurringHolidays?: readonly string[]
+  /** APPROVED leave only — a source never sees the pending or rejected rows. */
+  leave?: readonly LeaveRange[]
+}
+
+/**
+ * A `CalendarSource` with no database behind it.
+ *
+ * This is what the `lib/calendar` unit suite runs against: the *real*
+ * implementation, given holidays and leave directly. `businessDayCalendar()`
+ * above is a different thing entirely — a hand-rolled model of a calendar,
+ * written in Phase 4 to exercise code that only *consumed* the interface. The
+ * two must not be confused: one proves `lib/calendar`, the other stands in for
+ * it.
+ */
+export function inMemoryCalendarSource(
+  options: InMemoryCalendarOptions = {},
+): CalendarSource & { holidayCalls: number; leaveCalls: number } {
+  const work = buildWorkCalendar({
+    weekendDays: options.weekendDays ?? DEFAULT_WEEKEND,
+    workdayStart: options.workdayStart ?? '09:00',
+    workdayEnd: options.workdayEnd ?? '17:00',
+    workingDaysPerMonth: options.workingDaysPerMonth ?? 22,
+  })
+
+  const oneOff = options.holidays ?? []
+  const recurring = options.recurringHolidays ?? []
+  const leave = options.leave ?? []
+
+  const source = {
+    holidayCalls: 0,
+    leaveCalls: 0,
+
+    async workCalendar(): Promise<WorkCalendar> {
+      return work
+    },
+
+    async holidays(from: string, to: string): Promise<ReadonlySet<string>> {
+      source.holidayCalls += 1
+      const keys = new Set<string>()
+      for (const key of oneOff) {
+        if (key >= from && key <= to) keys.add(key)
+      }
+      const firstYear = Number(from.slice(0, 4))
+      const lastYear = Number(to.slice(0, 4))
+      for (let year = firstYear; year <= lastYear; year += 1) {
+        for (const monthDay of recurring) {
+          const key = `${year}-${monthDay}`
+          if (key >= from && key <= to) keys.add(key)
+        }
+      }
+      return keys
+    },
+
+    async leaveDays(
+      userId: string,
+      from: string,
+      to: string,
+    ): Promise<ReadonlySet<string>> {
+      source.leaveCalls += 1
+      const keys = new Set<string>()
+      for (const range of leave) {
+        if (range.userId !== userId) continue
+        let cursor = range.start > from ? range.start : from
+        const last = range.end < to ? range.end : to
+        for (let guard = 0; guard < 4_000 && cursor <= last; guard += 1) {
+          keys.add(cursor)
+          cursor = addCairoDayKey(cursor, 1)
+        }
+      }
+      return keys
+    },
+  }
+
+  return source
+}
+
+/** Local `YYYY-MM-DD` + n, kept independent of the implementation under test. */
+function addCairoDayKey(key: string, days: number): string {
+  const [y, m, d] = key.split('-').map(Number) as [number, number, number]
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10)
+}
+
 export interface StubCalendarOptions {
   workingMinutesBetween?: Calendar['workingMinutesBetween']
   workingDaysBetween?: Calendar['workingDaysBetween']
@@ -169,6 +279,13 @@ export function stubCalendar(options: StubCalendarOptions = {}): Calendar & {
 
   return {
     calls,
+    workCalendar: async () =>
+      buildWorkCalendar({
+        weekendDays: DEFAULT_WEEKEND,
+        workdayStart: '09:00',
+        workdayEnd: '17:00',
+        workingDaysPerMonth: 22,
+      }),
     isWorkingDay: options.isWorkingDay ?? (async () => true),
     workingDaysBetween: options.workingDaysBetween ?? (async () => 0),
     workingMinutesBetween: async (from, to, userId) => {

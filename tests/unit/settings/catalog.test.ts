@@ -149,9 +149,7 @@ describe('lib/settings — القيم الافتراضية تحترم قواعد
     expect(schema.safeParse([{ id: '-design', label: 'تصميم' }]).success).toBe(false)
 
     expect(schema.safeParse([{ id: 'design', label: 'تصميم' }]).success).toBe(true)
-    expect(schema.safeParse([{ id: 'motion-design', label: 'تصميم' }]).success).toBe(
-      true,
-    )
+    expect(schema.safeParse([{ id: 'motion-design', label: 'تصميم' }]).success).toBe(true)
   })
 
   it('يرفض تكرار معرّف تصنيف', () => {

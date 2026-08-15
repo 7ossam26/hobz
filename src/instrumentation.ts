@@ -25,12 +25,15 @@ export async function register(): Promise<void> {
    */
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { startScheduler } = await import('@/lib/scheduler')
+    const { registerCalendarJobs } = await import('@/modules/calendar/job')
 
     // Jobs register themselves here as phases land:
-    //   Phase 6 — calendar.recomputeElapsed  (03:00 Cairo)
+    //   Phase 6 — calendar.recomputeSchedule (03:00 Cairo)  ← registered below
     //   Phase 7 — payout.closeCycle          (23:59 Cairo on settings.payoutCycleDay)
     //   Phase 8 — penalty.recompute          (03:00 Cairo)
     //   Phase 9 — notifications.dailyDigest  (08:00 Cairo)
+    registerCalendarJobs()
+
     startScheduler()
   }
 }

@@ -253,8 +253,7 @@ export async function updateRole(
 
   const beforePermissions = before.permissions.map((p) => p.permissionKey).sort()
   const afterPermissions = [...input.permissions].sort()
-  const permissionsChanged =
-    beforePermissions.join(',') !== afterPermissions.join(',')
+  const permissionsChanged = beforePermissions.join(',') !== afterPermissions.join(',')
 
   await recordAudit(db, {
     actor: args.actor,

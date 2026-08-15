@@ -163,8 +163,8 @@ describe('قيم فارغة — منفّذ بلا أجر افتراضي', () => 
       input: { taskId: task.id, assigneeId: noRate.id, taskValue: null },
     })
 
-    expect(result.taskValue).toBe('0.00')
-    expect(result.status).toBe('ASSIGNED')
+    expect(result.task.taskValue).toBe('0.00')
+    expect(result.task.status).toBe('ASSIGNED')
   })
 
   it('ينشئ مهمة لمنفّذ بلا أجر افتراضي بقيمة صفرية', async () => {
@@ -197,6 +197,7 @@ describe('قيم فارغة — مستخدم جديد ومشروع جديد', ()
     expect(await taskHealthSignals(NOW)(db, project.id)).toEqual({
       overdueTaskCount: 0,
       maxBlockedDays: 0,
+      adminEscalationCount: 0,
     })
   })
 
@@ -206,6 +207,7 @@ describe('قيم فارغة — مستخدم جديد ومشروع جديد', ()
     expect(await taskHealthSignals(NOW)(db, 'no-such-project')).toEqual({
       overdueTaskCount: 0,
       maxBlockedDays: 0,
+      adminEscalationCount: 0,
     })
   })
 

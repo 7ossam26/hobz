@@ -2,7 +2,12 @@ import { ar } from '@/i18n/ar'
 import { recordAudit } from '@/lib/audit'
 import type { Calendar } from '@/lib/calendar'
 import type { Db } from '@/lib/db'
-import { ConflictError, DomainError, NotFoundError } from '@/lib/errors'
+import {
+  ConflictError,
+  DomainError,
+  NotFoundError,
+  NotImplementedError,
+} from '@/lib/errors'
 import { fitsColumn, gt, toMoney, toStorageString } from '@/lib/money'
 import type { Actor, Permission, WhereFragment } from '@/lib/rbac'
 import { normalizeArabic } from '@/lib/search'
@@ -10,8 +15,10 @@ import { normalizeArabic } from '@/lib/search'
 import { computeElapsed } from './elapsed'
 import { parseMentions } from './mentions'
 import {
+  noLeaveLookup,
   noopLedgerPort,
   noopTaskEvents,
+  type LeaveLookup,
   type LedgerPort,
   type TaskEventBus,
 } from './ports'
@@ -40,7 +47,9 @@ import type {
   DependencyWarningDto,
   TaskActivityDto,
   TaskActivityKind,
+  TaskAssignmentResultDto,
   TaskCommentDto,
+  TaskCreationResultDto,
   TaskDetailDto,
   TaskPageDto,
   TaskSummaryDto,
@@ -568,14 +577,17 @@ export async function listActivity(db: Db, taskId: string): Promise<TaskActivity
 export interface CreateTaskArgs extends TaskMutationArgs {
   input: CreateTaskInput
   categories: readonly TaskCategoryOption[]
+  /** Approved-leave lookup for the non-blocking warning (Phase 6). */
+  leave?: LeaveLookup
 }
 
 export async function createTask(
   db: Db,
   args: CreateTaskArgs,
-): Promise<TaskTransitionResultDto> {
+): Promise<TaskCreationResultDto> {
   const { input } = args
   const now = nowOf(args)
+  const leave = args.leave ?? noLeaveLookup
 
   const project = await db.project.findFirst({
     where: { id: input.projectId, deletedAt: null },
@@ -683,7 +695,35 @@ export async function createTask(
     ...(args.ip ? { ip: args.ip } : {}),
   })
 
-  return { task: await detail(db, created.id, now), warnings: [] }
+  const leaveWarnings = assignee
+    ? await leave.approvedLeaveInWindow(db, {
+        userId: assignee.id,
+        from: now,
+        to: input.dueDate.getTime() > now.getTime() ? input.dueDate : now,
+      })
+    : []
+
+  if (leaveWarnings.length > 0) {
+    await recordAudit(db, {
+      actor: args.actor,
+      action: 'task.assignedDuringLeave',
+      entity: 'Task',
+      entityId: created.id,
+      after: {
+        assigneeId: assignee?.id ?? null,
+        dueDate: input.dueDate,
+        leave: leaveWarnings.map((w) => ({
+          leaveId: w.leaveId,
+          startDate: w.startDate,
+          endDate: w.endDate,
+          typeId: w.typeId,
+        })),
+      },
+      ...(args.ip ? { ip: args.ip } : {}),
+    })
+  }
+
+  return { task: await detail(db, created.id, now), warnings: [], leaveWarnings }
 }
 
 function assertStorableMoney(amount: string): void {
@@ -825,6 +865,8 @@ export interface AssignTaskArgs extends TaskMutationArgs {
   input: AssignTaskInput
   /** Where the partial-payment decision goes. Phase 7 replaces the no-op. */
   ledger?: LedgerPort
+  /** Approved-leave lookup for the non-blocking warning (Phase 6). */
+  leave?: LeaveLookup
 }
 
 /**
@@ -852,11 +894,23 @@ export interface AssignTaskArgs extends TaskMutationArgs {
  * the outgoing worker's partial payment is checked against — so a manager
  * could pay out against a value that only existed because of the reassignment
  * they were making.
+ *
+ * ── The Phase 6 leave warning ────────────────────────────────────────────
+ *
+ * Assigning work to somebody who is on approved leave for most of the window
+ * is usually a mistake and occasionally deliberate, so the phase brief asks
+ * for a warning and explicitly not a block. It is computed *before* the write
+ * so that the audit row records the fact, and returned so the manager sees it
+ * — the same shape finish-to-start dependencies already use.
  */
-export async function assignTask(db: Db, args: AssignTaskArgs): Promise<TaskDetailDto> {
+export async function assignTask(
+  db: Db,
+  args: AssignTaskArgs,
+): Promise<TaskAssignmentResultDto> {
   const { input } = args
   const now = nowOf(args)
   const ledger = args.ledger ?? noopLedgerPort
+  const leave = args.leave ?? noLeaveLookup
 
   const task = await loadTask(db, input.taskId)
   const previousAssigneeId = task.assigneeId
@@ -892,6 +946,15 @@ export async function assignTask(db: Db, args: AssignTaskArgs): Promise<TaskDeta
     },
     now,
   )
+
+  // The window the incoming person actually has to do the work in. An already
+  // overdue task still asks about today, so "they are out sick right now"
+  // reaches the manager who is reassigning it *because* it is overdue.
+  const leaveWarnings = await leave.approvedLeaveInWindow(db, {
+    userId: assignee.id,
+    from: now,
+    to: task.dueDate.getTime() > now.getTime() ? task.dueDate : now,
+  })
 
   await db.task.update({
     where: { id: task.id },
@@ -948,6 +1011,30 @@ export async function assignTask(db: Db, args: AssignTaskArgs): Promise<TaskDeta
     ...(args.ip ? { ip: args.ip } : {}),
   })
 
+  // A second row rather than a field on the one above: "who was warned that
+  // they were assigning into approved leave, and assigned anyway" is a
+  // question a manager will be asked one day, and it should be an indexed
+  // lookup on `action` rather than a JSON scan.
+  if (leaveWarnings.length > 0) {
+    await recordAudit(db, {
+      actor: args.actor,
+      action: 'task.assignedDuringLeave',
+      entity: 'Task',
+      entityId: task.id,
+      after: {
+        assigneeId: assignee.id,
+        dueDate: task.dueDate,
+        leave: leaveWarnings.map((w) => ({
+          leaveId: w.leaveId,
+          startDate: w.startDate,
+          endDate: w.endDate,
+          typeId: w.typeId,
+        })),
+      },
+      ...(args.ip ? { ip: args.ip } : {}),
+    })
+  }
+
   if (input.partialAmount !== undefined) {
     await recordPartialPayment(db, {
       actor: args.actor,
@@ -961,7 +1048,7 @@ export async function assignTask(db: Db, args: AssignTaskArgs): Promise<TaskDeta
     })
   }
 
-  return detail(db, task.id, now)
+  return { task: await detail(db, task.id, now), leaveWarnings }
 }
 
 interface PartialPaymentArgs {
@@ -1361,11 +1448,12 @@ export interface TransitionTaskArgs extends TaskMutationArgs {
   newDueDate?: Date | undefined
   events?: TaskEventBus
   /**
-   * Optional today. `lib/calendar` throws `NotImplementedError` until Phase 6,
-   * so production passes nothing and only `elapsedMinutesRaw` — pure
-   * arithmetic — is written on submission. `elapsedMinutesWorking` stays the
-   * job-updated column SPEC §4 calls it, filled by `recomputeElapsed` once
-   * Phase 6 lands. Tests pass a fake and get both.
+   * Optional, and supplied in production since Phase 6: `submitTaskAction`
+   * passes `calendarFor(prisma)`, so both elapsed columns are written at the
+   * moment of delivery. Omitting it still works and writes only
+   * `elapsedMinutesRaw` — the pure-arithmetic half — which is what a caller
+   * with no database-backed calendar (a unit test, a fixture) should get
+   * rather than a fabricated working figure.
    */
   calendar?: Calendar | undefined
 }
@@ -1556,6 +1644,14 @@ export async function transitionTask(
  * is never written unless a real calendar was passed.
  */
 const RAW_ONLY_CALENDAR: Calendar = {
+  // Throws rather than inventing a weekend and a workday: a work calendar is
+  // Settings data (CLAUDE.md invariant 4), and a stand-in that made one up
+  // would be a hardcoded business value hiding in a service file. Nothing on
+  // this path asks for it — `computeElapsed` only calls
+  // `workingMinutesBetween` — so the throw is a tripwire, not a limitation.
+  workCalendar: async () => {
+    throw new NotImplementedError('calendar.workCalendar', 'a real calendar')
+  },
   isWorkingDay: async () => true,
   workingDaysBetween: async () => 0,
   workingMinutesBetween: async () => 0,

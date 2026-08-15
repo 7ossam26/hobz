@@ -183,6 +183,7 @@ describe('modules/project — إشارات صحة المشروع من المها
     expect(await taskHealthSignals(NOW)(db, project.id)).toEqual({
       overdueTaskCount: 0,
       maxBlockedDays: 0,
+      adminEscalationCount: 0,
     })
   })
 

@@ -2,10 +2,11 @@
 //
 // Phase 0 laid the identity/access/audit/settings core (SPEC §4 "Identity &
 // access" + §7). Phase 3 added the first slice of "Work" (SPEC §4): Client,
-// Project, ProjectMember, Milestone, ProjectTemplate. Phase 4 adds the Task
+// Project, ProjectMember, Milestone, ProjectTemplate. Phase 4 added the Task
 // domain: Task, TaskWatcher, TaskDependency, TaskComment, TaskActivity.
-// ExtensionRequest, Calendar and Money models still arrive in their own phases
-// — do not add them here ahead of schedule.
+// Phase 6 adds the Calendar slice — Holiday, Leave — plus ExtensionRequest and
+// the task columns the nightly lateness job writes. Money models still arrive
+// in their own phase — do not add them here ahead of schedule.
 //
 // Structural invariants this schema must keep possible (CLAUDE.md):
 //  - Money columns are always Decimal(12,2), never Float.
@@ -69,6 +70,12 @@ model User {
   watchedTasks  TaskWatcher[]
   taskComments  TaskComment[]  @relation("TaskCommentAuthor")
   taskActivity  TaskActivity[] @relation("TaskActivityActor")
+
+  leave              Leave[]            @relation("LeaveSubject")
+  leaveRequested     Leave[]            @relation("LeaveRequestedBy")
+  leaveDecided       Leave[]            @relation("LeaveDecidedBy")
+  extensionsRequested ExtensionRequest[] @relation("ExtensionRequestedBy")
+  extensionsDecided   ExtensionRequest[] @relation("ExtensionDecidedBy")
 
   @@index([deletedAt])
   @@index([isWorker, isActive])
@@ -507,6 +514,18 @@ model Task {
   elapsedMinutesRaw     Int @default(0)
   elapsedMinutesWorking Int @default(0)
 
+  /// Denormalised in the same sense as the two columns above, and written by
+  /// the same nightly job (Phase 6, `modules/calendar/job.ts`): how many
+  /// working days past `dueDate + grace` this task is, and how far that has
+  /// escalated under the Settings thresholds (SPEC §8). Derived values only —
+  /// the authority is always `modules/lateness/service.ts` recomputing from
+  /// `lib/calendar`. They exist so the escalation decision is auditable and so
+  /// project health can read "is anything escalated here" as an indexed count
+  /// rather than by walking the calendar for every task on every dashboard.
+  overdueWorkingDays Int             @default(0)
+  escalationLevel    EscalationLevel @default(NONE)
+  escalatedAt        DateTime?
+
   delayReason      String?
   delayAttribution DelayAttribution?
 
@@ -525,6 +544,7 @@ model Task {
   watchers     TaskWatcher[]
   comments     TaskComment[]
   activity     TaskActivity[]
+  extensions   ExtensionRequest[]
   /// Tasks this one waits on, and the ones waiting on it.
   dependencies TaskDependency[] @relation("TaskDependent")
   dependents   TaskDependency[] @relation("TaskDependedOn")
@@ -537,6 +557,7 @@ model Task {
   @@index([dueDate])
   @@index([priority])
   @@index([categoryId])
+  @@index([projectId, escalationLevel])
   @@map("tasks")
 }
 
@@ -630,4 +651,164 @@ model TaskActivity {
   @@index([taskId, type, createdAt])
   @@index([actorId])
   @@map("task_activity")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Calendar — Phase 6 slice (SPEC §4 "Calendar", §5.2, §5.3).
+//
+// SPEC §4 lists three things here: `WorkCalendar`, `Holiday` and `Leave`.
+// Only two of them are tables. **`WorkCalendar` is not a model** — weekend
+// days, workday bounds and working-days-per-month are already Settings keys
+// (`calendar.*`, SPEC §7), and CLAUDE.md invariant 4 says every business
+// number comes from `lib/settings`. A second, authoritative copy in a
+// single-row table would be exactly the drift that invariant exists to stop.
+// `lib/calendar` materialises the Settings group into a `WorkCalendar` value
+// object instead — the shape SPEC §4 describes, sourced where §7 says.
+//
+// Dates here are `@db.Date`, not `DateTime`. A holiday and a leave range are
+// *calendar dates in Cairo*, not instants: "7 يناير is a holiday" is true for
+// the whole Cairo day, and storing 00:00Z would make that statement depend on
+// which side of midnight a reader's timezone sits. `lib/calendar` is the one
+// place that converts between a Cairo date key and a UTC instant.
+// ─────────────────────────────────────────────────────────────────────────
+
+/// SPEC §4 gives `Leave … status` without enumerating it. Three values, and
+/// no CANCELLED: the phase brief's vocabulary is "approve/reject", and a
+/// request withdrawn before a decision is rejected by whoever handles it. A
+/// fourth value would be a second way to say "this leave does not apply",
+/// which is one more state every lateness query has to remember to exclude.
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// SPEC §4 lists this one verbatim: `status(PENDING|APPROVED|REJECTED)`.
+enum ExtensionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// How far an overdue task has escalated (SPEC §8; thresholds in Settings,
+/// `notifications.escalateToPmAfterDays` / `…AdminAfterDays`).
+///
+/// Stored rather than derived on read because the escalation *event* — the
+/// notification Phase 9 delivers — must fire exactly once per level change.
+/// A value recomputed on every read has no way to know it has already fired.
+enum EscalationLevel {
+  NONE
+  PM
+  ADMIN
+}
+
+/// SPEC §4: `Holiday id, date, nameAr`. Plus `isRecurring`, which the phase
+/// brief asks for: عيد الميلاد المجيد falls on 7 January every year, while
+/// عيد الفطر moves and must be entered per year.
+///
+/// No `deletedAt`, matching `Milestone` and the SPEC §4 listing. A holiday is
+/// calendar configuration, not a record of anything that happened: a
+/// soft-deleted one that a query forgot to filter would keep being a day off,
+/// which is the failure mode soft-delete is supposed to prevent, inverted.
+model Holiday {
+  id     String   @id @default(cuid())
+  /// Cairo calendar date. For a recurring holiday the year is the first
+  /// occurrence and only month/day are matched.
+  date   DateTime @db.Date
+  nameAr String
+
+  isRecurring Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// One row per date. Overlapping *coverage* (a one-off inside a recurring
+  /// holiday's month/day) is rejected in the service, where recurrence can be
+  /// reasoned about; this constraint is the backstop for the exact-duplicate
+  /// case a race could still produce.
+  @@unique([date])
+  @@index([isRecurring])
+  @@map("holidays")
+}
+
+/// SPEC §4: `Leave id, userId, startDate, endDate, type, status, note`.
+///
+/// Three columns are added to that listing and each earns its place: leave is
+/// approved by someone (`decidedById`/`decidedAt`, the same pair SPEC §4 gives
+/// `ExtensionRequest`), and it can be *recorded* for a منفّذ by a manager
+/// rather than requested by them (`requestedById`), which is the difference
+/// between "أحمد asked for Thursday off" and "أحمد was out sick and المدير
+/// logged it".
+///
+/// `startDate`/`endDate` are **inclusive** Cairo dates. A one-day leave has
+/// `startDate == endDate`; there is no zero-length leave.
+model Leave {
+  id     String @id @default(cuid())
+  /// Whose leave it is — the person the calendar excludes days for.
+  userId String
+
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+
+  /// Stable id from Settings `calendar.leaveTypes`, never the Arabic label —
+  /// the same split SPEC §7 settled for `tasks.categories` in Phase 4, so
+  /// renaming a leave type is a label change and not a re-typing of history.
+  typeId String
+
+  status LeaveStatus @default(PENDING)
+  note   String?
+
+  requestedById String
+  decidedById   String?
+  decidedAt     DateTime?
+  decisionNote  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user        User  @relation("LeaveSubject", fields: [userId], references: [id], onDelete: Cascade)
+  requestedBy User  @relation("LeaveRequestedBy", fields: [requestedById], references: [id])
+  decidedBy   User? @relation("LeaveDecidedBy", fields: [decidedById], references: [id], onDelete: SetNull)
+
+  /// The calendar's hot path: "APPROVED leave for this user overlapping this
+  /// range". Overlap is `startDate <= to AND endDate >= from`, so both bounds
+  /// are in the index.
+  @@index([userId, status, startDate, endDate])
+  @@index([status, startDate])
+  @@index([requestedById])
+  @@map("leaves")
+}
+
+/// SPEC §4, verbatim: `id, taskId, requestedById, oldDueDate, newDueDate,
+/// reason, status, decidedById`.
+///
+/// `oldDueDate` is not decoration. It is the optimistic-concurrency check on
+/// approval: if the task's deadline moved between request and decision — a
+/// revision (SPEC T4) or another extension — the request is stale and
+/// approving it would silently overwrite a newer decision.
+model ExtensionRequest {
+  id     String @id @default(cuid())
+  taskId String
+
+  requestedById String
+  oldDueDate    DateTime
+  newDueDate    DateTime
+  reason        String
+
+  status       ExtensionStatus @default(PENDING)
+  decidedById  String?
+  decidedAt    DateTime?
+  decisionNote String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task        Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  requestedBy User  @relation("ExtensionRequestedBy", fields: [requestedById], references: [id])
+  decidedBy   User? @relation("ExtensionDecidedBy", fields: [decidedById], references: [id], onDelete: SetNull)
+
+  @@index([taskId, status])
+  @@index([status, createdAt])
+  @@index([requestedById])
+  @@map("extension_requests")
 }

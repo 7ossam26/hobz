@@ -280,9 +280,9 @@ describe('الصلاحيات — حدود العرض كمستخدم آخر', () 
     }))!.actor
     setSessionActor(impersonating)
 
-    await expect(
-      startImpersonationAction({ userId: third.id }),
-    ).rejects.toMatchObject({ messageKey: 'impersonation.notAllowed' })
+    await expect(startImpersonationAction({ userId: third.id })).rejects.toMatchObject({
+      messageKey: 'impersonation.notAllowed',
+    })
   })
 
   it('يمنع من يحمل صلاحية العرض دون أن يكون مدير نظام', async () => {
@@ -295,9 +295,9 @@ describe('الصلاحيات — حدود العرض كمستخدم آخر', () 
     const target = await createUser(db, { username: 'target' })
     setSessionActor(await actorFor(db, pretender.id))
 
-    await expect(
-      startImpersonationAction({ userId: target.id }),
-    ).rejects.toMatchObject({ messageKey: 'impersonation.notAllowed' })
+    await expect(startImpersonationAction({ userId: target.id })).rejects.toMatchObject({
+      messageKey: 'impersonation.notAllowed',
+    })
   })
 
   it('يمنع العرض بحساب معطّل', async () => {
@@ -306,9 +306,9 @@ describe('الصلاحيات — حدود العرض كمستخدم آخر', () 
     const disabled = await createUser(db, { username: 'disabled', isActive: false })
     setSessionActor(await actorFor(db, admin.id))
 
-    await expect(
-      startImpersonationAction({ userId: disabled.id }),
-    ).rejects.toMatchObject({ messageKey: 'impersonation.cannotImpersonateInactive' })
+    await expect(startImpersonationAction({ userId: disabled.id })).rejects.toMatchObject(
+      { messageKey: 'impersonation.cannotImpersonateInactive' },
+    )
   })
 
   it('يمنع العرض بحساب المستخدم نفسه', async () => {
@@ -316,9 +316,9 @@ describe('الصلاحيات — حدود العرض كمستخدم آخر', () 
     const admin = await createSuperAdmin(db, { username: 'root' })
     setSessionActor(await actorFor(db, admin.id))
 
-    await expect(
-      startImpersonationAction({ userId: admin.id }),
-    ).rejects.toMatchObject({ messageKey: 'impersonation.cannotImpersonateSelf' })
+    await expect(startImpersonationAction({ userId: admin.id })).rejects.toMatchObject({
+      messageKey: 'impersonation.cannotImpersonateSelf',
+    })
   })
 
   it('يمنع غير المسجَّل من بدء العرض', async () => {

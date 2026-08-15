@@ -104,9 +104,7 @@ test('تدفّق ١: إنشاء دور ومستخدم ثم رؤية التنقّ
   // Saving without the rate must fail *on the field*, not with a generic
   // error — the shared Zod schema runs in the form as well as the action.
   await userSheet.getByRole('button', { name: ar.common.save }).click()
-  await expect(pageAlert(page)).toHaveText(
-    ar.validation.rateRequiredForPayType,
-  )
+  await expect(pageAlert(page)).toHaveText(ar.validation.rateRequiredForPayType)
   await expect(userSheet).toBeVisible()
 
   await userSheet.getByLabel(ar.users.defaultTaskRate).fill(MEMBER.taskRate)

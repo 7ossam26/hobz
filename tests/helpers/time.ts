@@ -49,7 +49,10 @@ function cairoOffsetMs(at: Date): number {
     Number(parts.minute),
     Number(parts.second),
   )
-  return asUtc - at.getTime()
+  // The formatter reports whole seconds, so the milliseconds have to come off
+  // `at` too — otherwise the offset comes back fractional and every `===`
+  // comparison against it (the DST bisect below, above all) silently fails.
+  return asUtc - (at.getTime() - at.getMilliseconds())
 }
 
 /** Freeze the clock at a Cairo wall-clock reading. Remember `unfreezeTime()`. */
@@ -85,4 +88,69 @@ export function cairoWeekday(at: Date): string {
   return new Intl.DateTimeFormat('en-US', { timeZone: CAIRO, weekday: 'short' })
     .format(at)
     .toUpperCase()
+}
+
+/** Cairo's UTC offset at an instant, in minutes. +120 in winter, +180 in summer. */
+export function cairoOffsetMinutes(at: Date): number {
+  return cairoOffsetMs(at) / MINUTE_MS
+}
+
+export interface CairoTransitions {
+  /** The instant the clock jumps forward (a 23-hour Cairo day starts here). */
+  forward: Date | null
+  /** The instant it jumps back (the Cairo day containing this one is 25 hours). */
+  back: Date | null
+}
+
+/**
+ * Find the year's DST transitions **by measurement, not by rule**.
+ *
+ * docs/TESTING.md §2 was corrected in Phase 4 to say Egypt has DST again
+ * (reinstated 2023, forward on the last Friday of April, back on the last
+ * Thursday of October) and to "never assume a fixed +02:00". Hardcoding the
+ * two dates in a test would break the moment tzdata revises them — which is
+ * precisely the class of change these tests exist to survive. So they are
+ * derived: scan the year a day at a time for an offset change, then bisect to
+ * the hour.
+ */
+export function findCairoTransitions(year: number): CairoTransitions {
+  const start = Date.UTC(year, 0, 1)
+  const end = Date.UTC(year + 1, 0, 1)
+
+  let forward: Date | null = null
+  let back: Date | null = null
+
+  let previous = new Date(start)
+  for (let t = start + DAY_MS; t <= end; t += DAY_MS) {
+    const current = new Date(t)
+    const before = cairoOffsetMinutes(previous)
+    const after = cairoOffsetMinutes(current)
+    if (before !== after) {
+      const at = bisectTransition(previous, current)
+      if (after > before) forward = at
+      else back = at
+    }
+    previous = current
+  }
+
+  return { forward, back }
+}
+
+/**
+ * The exact first instant whose offset differs from `lo`'s.
+ *
+ * Bisected to the millisecond, not to the minute: callers compare this against
+ * `startOfCairoDay`, which returns an exact instant, and a helper that is
+ * "within a minute" would fail that comparison for no real reason.
+ */
+function bisectTransition(lo: Date, hi: Date): Date {
+  const target = cairoOffsetMinutes(lo)
+  let low = lo.getTime()
+  let high = hi.getTime()
+  while (high - low > 1) {
+    const mid = low + Math.floor((high - low) / 2)
+    if (cairoOffsetMinutes(new Date(mid)) === target) low = mid
+    else high = mid
+  }
+  return new Date(high)
 }

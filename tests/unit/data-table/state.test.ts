@@ -38,7 +38,9 @@ describe('parseTableState', () => {
   })
 
   it('يقرأ الصفحة والحجم والترتيب والبحث', () => {
-    const state = parse('page=3&size=50&sort=fullName&dir=desc&q=%D8%A3%D8%AD%D9%85%D8%AF')
+    const state = parse(
+      'page=3&size=50&sort=fullName&dir=desc&q=%D8%A3%D8%AD%D9%85%D8%AF',
+    )
 
     expect(state.page).toBe(3)
     expect(state.pageSize).toBe(50)
@@ -159,7 +161,10 @@ describe('mutations', () => {
   })
 
   it('الترتيب على عمود آخر يبدأ تصاعديًا', () => {
-    const sorted = withSort({ ...DEFAULT_TABLE_STATE, sort: 'name', dir: 'desc' }, 'value')
+    const sorted = withSort(
+      { ...DEFAULT_TABLE_STATE, sort: 'name', dir: 'desc' },
+      'value',
+    )
     expect([sorted.sort, sorted.dir]).toEqual(['value', 'asc'])
   })
 
@@ -208,7 +213,10 @@ describe('mutations', () => {
   })
 
   it('كل دالة تعيد حالة جديدة ولا تعدّل الأصل', () => {
-    const original: TableState = { ...DEFAULT_TABLE_STATE, filters: { status: ['ACTIVE'] } }
+    const original: TableState = {
+      ...DEFAULT_TABLE_STATE,
+      filters: { status: ['ACTIVE'] },
+    }
     const snapshot = JSON.stringify(original)
 
     withFacetValue(original, 'status', 'BLOCKED', true)
@@ -238,8 +246,14 @@ describe('derived values', () => {
   })
 
   it('يحسب المدى المعروض ويقصّه على الإجمالي', () => {
-    expect(pageRange({ ...DEFAULT_TABLE_STATE, page: 2 }, 137)).toEqual({ from: 26, to: 50 })
-    expect(pageRange({ ...DEFAULT_TABLE_STATE, page: 6 }, 137)).toEqual({ from: 126, to: 137 })
+    expect(pageRange({ ...DEFAULT_TABLE_STATE, page: 2 }, 137)).toEqual({
+      from: 26,
+      to: 50,
+    })
+    expect(pageRange({ ...DEFAULT_TABLE_STATE, page: 6 }, 137)).toEqual({
+      from: 126,
+      to: 137,
+    })
   })
 
   it('المدى صفر عند غياب الصفوف', () => {

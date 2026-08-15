@@ -138,9 +138,12 @@ export const SETTINGS_CATALOG = {
   'calendar.workdayEnd': define('calendar', timeOfDay, '17:00'),
   /** Divisor for dailyRate(user) = monthlySalary ÷ this. */
   'calendar.workingDaysPerMonth': define('calendar', positiveInt, 22),
-  'calendar.leaveTypes': define('calendar', nonEmptyArabicList, [
-    ...ar.defaults.leaveTypes,
-  ]),
+  /**
+   * A taxonomy, not a label list — `Leave.typeId` stores the id, for exactly
+   * the reason `tasks.categories` below does (SPEC §7, settled in Phase 4).
+   * Migrated in place by 20260817000000_calendar_leave_extension.
+   */
+  'calendar.leaveTypes': define('calendar', taxonomyList, [...ar.defaults.leaveTypes]),
 
   // ── Payout cycle (SPEC §5.5) ─────────────────────────────────────────────
   /** Capped at 28 so every month has the day — no February special-casing. */

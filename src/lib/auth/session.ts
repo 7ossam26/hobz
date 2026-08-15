@@ -95,7 +95,6 @@ export async function requireActor(): Promise<Actor> {
  * The wrappers actions are built from. Bound here, once, so that no action can
  * accidentally build its own with a different resolver.
  */
-export const requirePermission: RequirePermission =
-  createRequirePermission(requireActor)
+export const requirePermission: RequirePermission = createRequirePermission(requireActor)
 
 export const requireAuth: RequireAuth = createRequireAuth(requireActor)

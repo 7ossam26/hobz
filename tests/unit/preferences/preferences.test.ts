@@ -10,6 +10,7 @@ import {
   htmlPreferenceAttributes,
   parseDensity,
   parseSidebar,
+  parseTaskView,
   parseTheme,
   preferenceCookie,
   readPreferences,
@@ -72,7 +73,9 @@ describe('readPreferences', () => {
   })
 
   it('يخلط المضبوط مع الافتراضي', () => {
-    expect(readPreferences((name) => (name === THEME_COOKIE ? 'dark' : undefined))).toEqual({
+    expect(
+      readPreferences((name) => (name === THEME_COOKIE ? 'dark' : undefined)),
+    ).toEqual({
       ...DEFAULT_PREFERENCES,
       theme: 'dark',
     })
@@ -125,9 +128,28 @@ describe('htmlPreferenceAttributes', () => {
       'data-density': 'comfortable',
     })
 
-    expect(htmlPreferenceAttributes({ ...DEFAULT_PREFERENCES, density: 'compact' })).toEqual({
+    expect(
+      htmlPreferenceAttributes({ ...DEFAULT_PREFERENCES, density: 'compact' }),
+    ).toEqual({
       className: '',
       'data-density': 'compact',
     })
+  })
+})
+
+describe('parseTaskView', () => {
+  it('يقبل الأنماط الثلاثة المعروفة', () => {
+    for (const view of ['board', 'list', 'calendar'] as const) {
+      expect(parseTaskView(view)).toBe(view)
+    }
+  })
+
+  it('يعود إلى اللوحة عند قيمة مجهولة أو غائبة', () => {
+    // A tampered cookie must never take the tasks page down (Phase 5's
+    // `agency_task_view`); the board is the default a fresh visit gets.
+    expect(parseTaskView('gantt')).toBe('board')
+    expect(parseTaskView(null)).toBe('board')
+    expect(parseTaskView(undefined)).toBe('board')
+    expect(parseTaskView('')).toBe('board')
   })
 })

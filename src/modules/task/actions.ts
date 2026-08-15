@@ -5,8 +5,10 @@ import { headers } from 'next/headers'
 
 import { clientIpFromHeaders } from '@/lib/auth/ip'
 import { requireAuth, requirePermission } from '@/lib/auth/session'
+import { calendarFor } from '@/lib/calendar'
 import { prisma } from '@/lib/db'
 import { getSetting } from '@/lib/settings'
+import { prismaLeaveLookup } from '@/modules/leave/lookup'
 
 import {
   getTaskActivity,
@@ -57,7 +59,9 @@ import type {
   DependencyRowDto,
   DependencyWarningDto,
   TaskActivityDto,
+  TaskAssignmentResultDto,
   TaskCommentDto,
+  TaskCreationResultDto,
   TaskDetailDto,
   TaskTransitionResultDto,
 } from './types'
@@ -103,12 +107,13 @@ function revalidateTask(taskId: string, projectId?: string): void {
 
 export const createTaskAction = requirePermission(
   'task.create',
-  async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
+  async (actor, raw: unknown): Promise<TaskCreationResultDto> => {
     const input = createTaskSchema.parse(raw)
     const result = await createTask(prisma, {
       actor,
       input,
       categories: await categories(),
+      leave: prismaLeaveLookup,
       ip: await ip(),
     })
     revalidateTask(result.task.id, input.projectId)
@@ -133,11 +138,16 @@ export const updateTaskAction = requirePermission(
 
 export const assignTaskAction = requirePermission(
   permissionForTransition('ASSIGNED'),
-  async (actor, raw: unknown): Promise<TaskDetailDto> => {
+  async (actor, raw: unknown): Promise<TaskAssignmentResultDto> => {
     const input = assignTaskSchema.parse(raw)
-    const task = await assignTask(prisma, { actor, input, ip: await ip() })
-    revalidateTask(task.id, task.projectId)
-    return task
+    const result = await assignTask(prisma, {
+      actor,
+      input,
+      leave: prismaLeaveLookup,
+      ip: await ip(),
+    })
+    revalidateTask(result.task.id, result.task.projectId)
+    return result
   },
 )
 
@@ -198,6 +208,11 @@ export const submitTaskAction = requirePermission(
     const result = await submitTask(prisma, {
       actor,
       input: { taskId: id },
+      // Phase 4 had to pass nothing here: `lib/calendar` threw until Phase 6,
+      // so only `elapsedMinutesRaw` was written on submission and the working
+      // figure waited for a job that did not exist. Both are written now, at
+      // the moment of delivery (SPEC §5.2).
+      calendar: calendarFor(prisma),
       ip: await ip(),
     })
     revalidateTask(result.task.id, result.task.projectId)

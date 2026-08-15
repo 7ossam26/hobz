@@ -398,6 +398,116 @@ export async function createBlockActivity(
   })
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Calendar — Phase 6 (Holiday, Leave, ExtensionRequest)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * `@db.Date` columns are written and read as UTC midnight — Prisma's
+ * representation of a bare calendar date. Factories therefore take the date
+ * *key* (`YYYY-MM-DD`) and never a `Date`, so a test can never accidentally
+ * assert against a value that a timezone shifted on the way in.
+ */
+const dateColumn = (key: string): Date => new Date(`${key}T00:00:00.000Z`)
+
+export interface CreateHolidayOptions {
+  /** Cairo date key, `YYYY-MM-DD`. */
+  date: string
+  nameAr?: string
+  isRecurring?: boolean
+}
+
+export async function createHoliday(
+  db: PrismaClient,
+  options: CreateHolidayOptions,
+): Promise<{ id: string; date: string }> {
+  const n = next()
+  const row = await db.holiday.create({
+    data: {
+      date: dateColumn(options.date),
+      nameAr: options.nameAr ?? `عطلة ${n}`,
+      isRecurring: options.isRecurring ?? false,
+    },
+    select: { id: true },
+  })
+  return { id: row.id, date: options.date }
+}
+
+export interface CreateLeaveOptions {
+  userId: string
+  /** Inclusive Cairo date keys. */
+  startDate: string
+  endDate: string
+  typeId?: string
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED'
+  note?: string | null
+  requestedById?: string
+  decidedById?: string | null
+  decidedAt?: Date | null
+}
+
+export async function createLeave(
+  db: PrismaClient,
+  options: CreateLeaveOptions,
+): Promise<{ id: string }> {
+  const status = options.status ?? 'APPROVED'
+  return db.leave.create({
+    data: {
+      userId: options.userId,
+      startDate: dateColumn(options.startDate),
+      endDate: dateColumn(options.endDate),
+      typeId: options.typeId ?? 'annual',
+      status,
+      note: options.note ?? null,
+      requestedById: options.requestedById ?? options.userId,
+      // A decided row without a decider would be a state the service can never
+      // produce, and a test built on one proves nothing about the real thing.
+      decidedById:
+        options.decidedById === undefined
+          ? status === 'PENDING'
+            ? null
+            : (options.requestedById ?? options.userId)
+          : options.decidedById,
+      decidedAt:
+        options.decidedAt === undefined
+          ? status === 'PENDING'
+            ? null
+            : new Date('2026-02-01T09:00:00Z')
+          : options.decidedAt,
+    },
+    select: { id: true },
+  })
+}
+
+export interface CreateExtensionRequestOptions {
+  taskId: string
+  requestedById: string
+  oldDueDate: Date
+  newDueDate: Date
+  reason?: string
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED'
+  decidedById?: string | null
+}
+
+export async function createExtensionRequest(
+  db: PrismaClient,
+  options: CreateExtensionRequestOptions,
+): Promise<{ id: string }> {
+  const n = next()
+  return db.extensionRequest.create({
+    data: {
+      taskId: options.taskId,
+      requestedById: options.requestedById,
+      oldDueDate: options.oldDueDate,
+      newDueDate: options.newDueDate,
+      reason: options.reason ?? `سبب التمديد ${n}`,
+      status: options.status ?? 'PENDING',
+      decidedById: options.decidedById ?? null,
+    },
+    select: { id: true },
+  })
+}
+
 export interface CreateProjectTemplateOptions {
   name?: string
   payload?: unknown

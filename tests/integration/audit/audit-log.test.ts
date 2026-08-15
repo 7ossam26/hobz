@@ -3,11 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { recordAudit } from '@/lib/audit'
 import { getPasswordPolicy } from '@/lib/auth/policy'
 import { auditFilterSchema } from '@/modules/audit/schema'
-import {
-  auditFacets,
-  getAuditEntry,
-  listAuditEntries,
-} from '@/modules/audit/service'
+import { auditFacets, getAuditEntry, listAuditEntries } from '@/modules/audit/service'
 import { createUser as createUserService, updateUser } from '@/modules/user/service'
 
 import {
@@ -202,10 +198,12 @@ describe('modules/audit — المرشّحات', () => {
     })
 
     expect(
-      (await listAuditEntries(db, filter({ from: '2026-03-01', to: '2026-03-01' }))).total,
+      (await listAuditEntries(db, filter({ from: '2026-03-01', to: '2026-03-01' })))
+        .total,
     ).toBe(0)
     expect(
-      (await listAuditEntries(db, filter({ from: '2026-03-02', to: '2026-03-02' }))).total,
+      (await listAuditEntries(db, filter({ from: '2026-03-02', to: '2026-03-02' })))
+        .total,
     ).toBe(1)
   })
 

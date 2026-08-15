@@ -18,7 +18,10 @@ import {
   cancelTaskAction,
   requestRevisionAction,
 } from '@/modules/task/actions'
+import type { TaskAssignmentResultDto } from '@/modules/task/types'
 import type { UserOptionDto } from '@/modules/user/queries'
+
+import { leaveWarningMessage } from './leave-warnings'
 
 /**
  * The five transitions that need more than a status to land — shared by the
@@ -27,8 +30,15 @@ import type { UserOptionDto } from '@/modules/user/queries'
  * decision looks and behaves identically wherever it is made.
  */
 
-function useBusyAction<Args extends unknown[]>(
-  action: (...args: Args) => Promise<unknown>,
+/**
+ * `onResult` exists for exactly one caller: an assignment can come back with a
+ * non-blocking leave warning (Phase 6), and `run`'s boolean is about whether
+ * the call *succeeded*, not about what it returned. Keeping the two separate
+ * means the other four dialogs are unchanged.
+ */
+function useBusyAction<Args extends unknown[], R>(
+  action: (...args: Args) => Promise<R>,
+  onResult?: (result: R) => void,
 ): { busy: boolean; run: (...args: Args) => Promise<boolean> } {
   const { toast } = useToast()
   const [busy, setBusy] = React.useState(false)
@@ -37,7 +47,7 @@ function useBusyAction<Args extends unknown[]>(
     async (...args: Args) => {
       setBusy(true)
       try {
-        await action(...args)
+        onResult?.(await action(...args))
         return true
       } catch {
         toast({ title: ar.errors.unexpected, tone: 'error' })
@@ -46,7 +56,7 @@ function useBusyAction<Args extends unknown[]>(
         setBusy(false)
       }
     },
-    [action, toast],
+    [action, onResult, toast],
   )
 
   return { busy, run }
@@ -66,7 +76,19 @@ export function AssignDialog({
   onDone: () => void
 }) {
   const [assigneeId, setAssigneeId] = React.useState('')
-  const { busy, run } = useBusyAction(assignTaskAction)
+  const { toast } = useToast()
+
+  // A warning, never a block: the assignment has already landed by the time
+  // this runs (SPEC §4 Calendar, Phase 6).
+  const warnAboutLeave = React.useCallback(
+    (result: TaskAssignmentResultDto) => {
+      for (const warning of result.leaveWarnings) {
+        toast({ title: leaveWarningMessage(warning), tone: 'info' })
+      }
+    },
+    [toast],
+  )
+  const { busy, run } = useBusyAction(assignTaskAction, warnAboutLeave)
 
   React.useEffect(() => {
     if (open) setAssigneeId('')

@@ -62,13 +62,15 @@ describe('modules/role — مخطّط الدور', () => {
   it('يقبل دورًا بلا صلاحيات', () => {
     // A role with nothing ticked is legitimate — it is how an account is
     // parked without deactivating it.
-    expect(createRoleSchema.parse({ ...valid, permissions: undefined }).permissions).toEqual(
-      [],
-    )
+    expect(
+      createRoleSchema.parse({ ...valid, permissions: undefined }).permissions,
+    ).toEqual([])
   })
 
   it('يعتبر الوصف الفارغ غيابًا', () => {
-    expect(createRoleSchema.parse({ ...valid, description: '' }).description).toBeUndefined()
+    expect(
+      createRoleSchema.parse({ ...valid, description: '' }).description,
+    ).toBeUndefined()
     expect(createRoleSchema.parse({ ...valid, description: '  وصف  ' }).description).toBe(
       'وصف',
     )

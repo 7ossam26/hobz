@@ -42,7 +42,9 @@ function coerceState(raw: unknown): TableState {
   if (value.filters && typeof value.filters === 'object') {
     for (const [id, values] of Object.entries(value.filters)) {
       if (Array.isArray(values)) {
-        const strings = values.filter((entry): entry is string => typeof entry === 'string')
+        const strings = values.filter(
+          (entry): entry is string => typeof entry === 'string',
+        )
         if (strings.length > 0) filters[id] = strings
       }
     }

@@ -56,8 +56,8 @@ describe('modules/task — الإسناد الأول', () => {
       now: NOW,
     })
 
-    expect(result.status).toBe('ASSIGNED')
-    expect(result.assignee?.id).toBe(first.id)
+    expect(result.task.status).toBe('ASSIGNED')
+    expect(result.task.assignee?.id).toBe(first.id)
 
     const row = await db.task.findUniqueOrThrow({ where: { id: task.id } })
     expect(row.assignedAt).toEqual(NOW)
@@ -73,7 +73,7 @@ describe('modules/task — الإسناد الأول', () => {
       now: NOW,
     })
 
-    expect(result.taskValue).toBe('400.00')
+    expect(result.task.taskValue).toBe('400.00')
   })
 
   it('يحترم قيمة المهمة الصريحة ولا يستبدلها بالأجر الافتراضي', async () => {
@@ -86,7 +86,7 @@ describe('modules/task — الإسناد الأول', () => {
       now: NOW,
     })
 
-    expect(result.taskValue).toBe('1250.50')
+    expect(result.task.taskValue).toBe('1250.50')
   })
 
   it('يترك القيمة المحددة مسبقًا كما هي عند الإسناد', async () => {
@@ -99,7 +99,7 @@ describe('modules/task — الإسناد الأول', () => {
       now: NOW,
     })
 
-    expect(result.taskValue).toBe('900.00')
+    expect(result.task.taskValue).toBe('900.00')
   })
 
   it('يعطي قيمة صفرية لمنفّذ بلا أجر افتراضي', async () => {
@@ -115,7 +115,7 @@ describe('modules/task — الإسناد الأول', () => {
       now: NOW,
     })
 
-    expect(result.taskValue).toBe('0.00')
+    expect(result.task.taskValue).toBe('0.00')
   })
 
   it('يرفض الإسناد لحساب معطّل أو محذوف', async () => {
@@ -175,8 +175,8 @@ describe('modules/task — إعادة الإسناد أثناء التنفيذ (
       now: NOW,
     })
 
-    expect(result.status).toBe('IN_PROGRESS')
-    expect(result.assignee?.id).toBe(second.id)
+    expect(result.task.status).toBe('IN_PROGRESS')
+    expect(result.task.assignee?.id).toBe(second.id)
   })
 
   it('لا يعيد تسعير المهمة تلقائيًا بأجر المنفّذ الجديد', async () => {
@@ -196,7 +196,7 @@ describe('modules/task — إعادة الإسناد أثناء التنفيذ (
 
     // The second worker's default rate is 750; repricing silently would change
     // somebody's earnings with nobody deciding it.
-    expect(result.taskValue).toBe('400.00')
+    expect(result.task.taskValue).toBe('400.00')
   })
 
   it('يصرف مستحقًا جزئيًا للمنفّذ السابق عند طلب ذلك', async () => {

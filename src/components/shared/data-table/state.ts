@@ -34,7 +34,12 @@ export const DEFAULT_TABLE_STATE: TableState = {
 /** Facet params are namespaced so they cannot collide with `page` or `q`. */
 export const FACET_PREFIX = 'f_'
 
-const clampInt = (raw: string | null, fallback: number, min: number, max: number): number => {
+const clampInt = (
+  raw: string | null,
+  fallback: number,
+  min: number,
+  max: number,
+): number => {
   const value = Number.parseInt(raw ?? '', 10)
   if (!Number.isFinite(value)) return fallback
   return Math.min(Math.max(value, min), max)

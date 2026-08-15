@@ -1380,3 +1380,277 @@ exhaustively. No bug found.
   otherwise carry; the activity type label alone still says what happened.
 - **`/tasks` has 8 kB of First Load JS headroom left** (see Surprises) —
   the tightest margin of any route in the app.
+
+---
+
+## Phase 6 — Calendar, Leave & Lateness Engine
+
+### Built
+
+- **`lib/calendar`, fully implemented**, replacing the five throwing Phase 0
+  stubs. Four files: `cairo.ts` (Cairo date keys and the one instant↔date
+  conversion), `work-calendar.ts` (the Settings group as a value object),
+  `calendar.ts` (`createCalendar(source)` — all of the arithmetic), `source.ts`
+  (Prisma, plus a batch snapshot for the job). `index.ts` is the singleton
+  wiring and nothing else.
+- **`modules/lateness`** — `computeLateness` per SPEC §5.3, `resolveGraceHours`,
+  `measurementEnd`, the `latenessForTask` DB wrapper, `escalation.ts`, and two
+  ports (`PenaltyPort`, `LatenessEventBus`) for Phases 8 and 9.
+- **`modules/holiday`** — CRUD with recurrence, coverage-aware duplicate
+  detection, and a dry-run-then-confirm import path Phase 11's `.xlsx` reader
+  will call.
+- **`modules/leave`** — request/record, approve/reject under `leave.manage`,
+  overlap detection on both the request and the approval, own-only read
+  scoping, and the non-blocking assignment warning.
+- **`modules/extension`** — request with a mandatory reason, decide under
+  `task.extend`, staleness check on `oldDueDate`, and the penalty-recompute
+  command.
+- **`modules/calendar/job.ts`** — the 03:00 Cairo sweep, under the advisory
+  lock, registered from `src/instrumentation.ts`.
+- Schema: `Holiday`, `Leave`, `ExtensionRequest`, plus `Task.overdueWorkingDays`
+  / `escalationLevel` / `escalatedAt`. Migration
+  `20260817000000_calendar_leave_extension`, including a data migration turning
+  `calendar.leaveTypes` into a taxonomy.
+
+### Decisions worth recording
+
+- **`WorkCalendar` is a value object, not a table.** SPEC §4 lists it under
+  "Calendar" as though it were a model, and §7 lists the same four values as
+  Settings keys. Only one of them can be the authority, and invariant 4 names
+  Settings. A one-row table would be a second copy, and the first time the two
+  disagreed the penalty engine would pick one without anyone knowing which.
+  SPEC §4 updated to say so.
+
+- **The unit of arithmetic is the Cairo *date key*, not the `Date`.** Everything
+  in `cairo.ts` runs on integer civil fields via Howard Hinnant's
+  `days_from_civil`, so a 23- or 25-hour day cannot perturb a day count and the
+  century leap rules (1900 no, 2000 yes) are exact. The only place an instant
+  and a date meet is `cairoInstant()`, which asks the platform's timezone
+  database with a two-pass offset rather than assuming +02:00.
+
+- **A working day counts when *its own start* falls in `[from, to)`.** One rule,
+  and every consequence the SPEC asks for falls out of it: same-instant is zero,
+  each midnight crossed into a working day adds one, and §5.2's T2 edge case
+  ("working voluntarily on a day off never hurts and never helps") is not a
+  special case but the absence of one — a weekend day contributes no boundary,
+  so moving a submission anywhere inside it changes nothing.
+
+- **The counting is arithmetic, not a loop.** Full weeks contribute
+  `weekendDays.size` non-working days each; holidays and leave are subtracted
+  from the rows that exist, which the database bounds. A year-long span costs
+  the same as a one-day span. `tests/unit/calendar/working-days.test.ts` walks a
+  year a day at a time and demands the same answer, so the shortcut cannot
+  quietly diverge.
+
+- **No cache in the Prisma calendar source.** `lib/settings` caches with a TTL,
+  which is right for a grace period that changes twice a year. Leave is approved
+  minutes before somebody's deduction is recomputed, so a stale answer there is
+  a wrong penalty. Every read is a query; the nightly job uses
+  `snapshotCalendarSource()` instead — one holiday query and one leave query for
+  a whole batch — which is fresh *and* cheap without a cache two unrelated
+  callers can share.
+
+- **What stops the lateness clock is delivery, not review**, and the delivered
+  set is the same one `modules/task` computes `isOverdue` from. A task flagged
+  overdue in the list and showing zero in the penalty breakdown would be a
+  support ticket every week. `REVISION_REQUESTED` therefore restarts the clock
+  against the new due date with no special case, because it is not in that set.
+
+- **Escalation is stored on the task, not derived on read.** An escalation is an
+  *event* — somebody gets notified, once. A value recomputed on every read has
+  no way to know it has already fired, so it would either notify nightly forever
+  or need a second column recording that it had. `Task.escalationLevel` is that
+  column, the job is its only writer, and it emits only on a level *change*.
+
+- **"Force project health RED" is a signal, not an override.**
+  `Project.healthOverride` means a human decided, and carries a mandatory reason
+  (SPEC §5.7). A job writing to it would erase whichever manager had set it.
+  `ProjectHealthSignals` gained `adminEscalationCount` instead — an indexed
+  count on `[projectId, escalationLevel]`, so the dashboard never walks the
+  calendar.
+
+- **`assignTask` and `createTask` now return a result object.** The phase brief
+  asks for "a warning (not a block) when assigning a task that falls inside
+  approved leave", and a warning the caller cannot see is not a warning. This is
+  the shape `transitionTask` and `createTask` already used for finish-to-start
+  dependencies, extended to the assignment paths. The leave lookup arrives
+  through a `LeaveLookup` port so the task domain still does not import
+  `modules/leave`.
+
+- **`Holiday` is hard-deleted.** Invariant 8 says soft-delete is respected in
+  every query; a soft-deleted *holiday* that one query forgot to filter would
+  keep being a day off, which is that invariant's failure mode inverted. Same
+  reasoning, and same precedent, as `Milestone`.
+
+- **Duplicate holidays are detected by *coverage*, not equality.** The unique
+  index on `holidays.date` cannot catch the case that actually happens: a
+  recurring 7 January exists, and somebody adds a one-off for 2027-01-07. Two
+  legal rows, one day off, one of them a mistake.
+
+- **`ExtensionRequest.oldDueDate` is load-bearing**, not decoration. It is the
+  optimistic-concurrency check on approval: a revision (T4) or a second
+  extension can move the deadline between request and decision, and approving a
+  stale request would silently overwrite the newer one.
+
+- **`calendar.leaveTypes` became a taxonomy**, following `tasks.categories` from
+  Phase 4, with an in-place data migration for the same reason that one needed
+  it: the seed never overwrites an existing `Setting` row, and `lib/settings`
+  validates on *read*, so an already-seeded database would have started throwing
+  the moment anyone opened the leave form.
+
+- **`cairoParts` moved from `lib/datetime` to `lib/calendar`**, and datetime
+  re-exports it. Two copies of "what does the clock in Cairo say" is the worst
+  kind of bug to chase: the deadline on screen and the deadline in the penalty
+  would differ by a day and both would look right.
+
+### Surprises
+
+- **The DST helper was silently wrong before it was right.** `cairoOffsetMs` in
+  `tests/helpers/time.ts` subtracted `at.getTime()` including milliseconds from
+  a formatter reading that reports whole seconds, so the offset came back
+  fractional (119.297 minutes) and every `===` comparison against it failed. The
+  bisect that finds the year's transitions therefore found nothing real, and
+  three DST tests failed against a *correct* implementation. Worth recording
+  because the failure looked exactly like an implementation bug.
+
+- **Egypt's 25-hour day is the Thursday, not the Wednesday.** Summer time ends at
+  24:00 local on the last Thursday of October, so the clock reads 23:00 again on
+  the *same* Cairo date. The first version of the test looked at the day before.
+
+- **A recurring 29 February expanded into common years.** `expandHolidayRows`
+  built the candidate key by string concatenation and compared it into range,
+  which `2026-02-29` passes perfectly happily. The calendar would have handed
+  back a day that does not exist, and `startOfCairoDay` would then have thrown
+  deep inside a penalty calculation. Caught by
+  `tests/integration/calendar/holidays.test.ts`, fixed with an `isCairoDateKey`
+  guard in the expansion.
+
+- **Widening the exclusion window was quadratic.** The first `ensure()` grew its
+  loaded range instead of replacing it, so `addWorkingDays` walking forward a
+  month at a time re-fetched and re-expanded everything it had already seen. A
+  test with a 20-year leave range hung until the window started being replaced.
+
+- **`vi.spyOn` on a Prisma delegate leaks.** The delegates are proxies, and a spy
+  left on one survived into the next test as `undefined`. The job's
+  "one task fails, the night continues" case injects the failure through the
+  event bus port instead — which is what ports are for.
+
+### The edge-case sweep (docs/TESTING.md §4, axes 1, 2, 3, 5, 12)
+
+Five subagents, one new unit file each, 127 further cases. Three product bugs
+found, all three fixed, all three invisible to the suite that shipped with the
+implementation — which is the argument for running the protocol at all.
+
+**Axis 2 (time/DST) found the one that mattered.** `workingMinutesBetween`
+clipped the workday window at the ends of a span in **real milliseconds**
+(`cairoInstant(start) → cairoInstant(end)`) while counting the interior days by
+multiplying `work.workdayMinutes`, which is a **wall-clock** length. On the two
+days a year that are not 24 hours long those disagree, so the same Cairo day was
+worth a different number of minutes depending on where it sat in the measured
+span — 1379 as an endpoint against 1439 as an interior day on the short day, and
+1499 against 1439 on the long one, the repeated hour counted twice. The
+consequence is the one that would have been hard to trace:
+`workingMinutesBetween(a, c) ≠ workingMinutesBetween(a, b) + (b, c)`, so a task's
+`elapsedMinutesWorking` depended on where a job happened to slice the span, and
+an estimate-accuracy score (SPEC §5.6) would move for no reason anyone could
+explain. Fixed by clipping on the wall clock — `wallMinutesOn()` — which is the
+reading the rest of the module already commits to. Reachable without DST too:
+an ordinary `09:00–23:30` window gave 930 at the edge and 870 in the interior.
+
+**Axis 1 (boundaries) found a flag that flickered.** `LatenessResult.frozen` was
+`measuredAt !== now`, an object-identity comparison. `measurementEnd` returns the
+`now` *object* when `submittedAt` is not strictly earlier, so a task delivered at
+exactly the measurement instant reported "still accruing" for one instant, with
+no change in the number behind it. Both the delivery test and the freeze flag now
+read one predicate, `deliveredAt()`.
+
+**Axis 5 (idempotency) counted the queries.** `addWorkingDays` claimed in a
+comment to load "a month at a time" and did not: it asked for
+`[cursor, cursor + 30]` on every step, which always ends one day past what is
+loaded, so the window was replaced on every single day walked. Measured at 58
+holiday + 58 leave queries for one 40-working-day count. The window is now
+tracked and re-loaded only when the cursor leaves it — four queries. Correctness
+was never affected, which is exactly why no correctness test caught it.
+
+**Axes 3 (calendar) and 12 (empty/null) found nothing**, and both went out of
+their way to prove they were not passing vacuously — axis 3 by mutation-testing
+the holiday∩leave de-duplication (removing it fails exactly one test and nothing
+else), axis 12 by asserting the *inverse* of every empty case: an agency with no
+holidays configured must still count five working days, and `holidayCalls === 1`
+proves the emptiness was measured rather than skipped.
+
+What the 127 cases add beyond the implementation's own suite, in brief:
+
+- **Axis 1** — the half-open rule to the millisecond; `SEARCH_HORIZON_DAYS`
+  bisected rather than typed in; weekend sets of size 0 and 6 across the
+  full-week seam in the arithmetic shortcut; duplicate entries in
+  `calendar.weekendDays` not subtracting twice; the widest possible workday
+  window (1439 minutes — a workday can never contain the day's last minute).
+- **Axis 2** — every minute of the skipped `00:00–00:59` resolving onto the right
+  date; both passes of the repeated `23:xx` carrying the same key; grace being
+  the same *real* duration for two workers on either side of a transition; the
+  two transitions cancelling so a year is exactly 365 × 24 h; and that
+  `lib/datetime` re-exports the *identical* `cairoParts` function object, by
+  identity rather than by behaviour.
+- **Axis 3** — SPEC §5.2's T2 as a property rather than three samples: all 96
+  hours of عيد الأضحى 2026 running into the weekend sweep to a single answer, in
+  both directions, for days and for minutes.
+- **Axis 5** — an exhaustive 3×3 fixed point over `nextEscalationLevel`, which is
+  what makes "ten job runs, one notification" true; and a calendar answering a
+  *growing* number on every call still clamped to `raw` every time.
+- **Axis 12** — two kinds of nothing kept distinct: a task with no assignee
+  issues no leave query at all, while a brand-new assignee issues exactly one
+  that comes back empty.
+
+### Deferred (with owners)
+
+| Deferred                                                                      | Phase |
+| ----------------------------------------------------------------------------- | ----- |
+| Penalty recomputation on extension approval (`PenaltyPort` is a no-op today; every request is audit-logged first so Phase 8 can replay them) | 8 |
+| Delivery of `TaskEscalated` (the event fires on the real code path; nobody subscribes) | 9 |
+| UI for holidays, leave and extensions — services, actions and queries exist; the screens do not | 12 |
+| `dailyRate(user) = monthlySalary ÷ workingDaysPerMonth` — `Calendar.workCalendar()` exposes the divisor, nothing consumes it yet | 7 |
+| e2e flow #4 ("approve an extension before the due date → no penalty ever accrues") — needs Phase 8's penalty engine to be meaningful | 12 |
+
+### Open question for the operator
+
+**Should a BLOCKED task keep accruing lateness?** It does today, because SPEC
+§5.4 computes from `lateWorkingDays` and the profile, "nothing else", and §4 is
+explicit that `delayAttribution` does not feed the penalty engine. But a task
+blocked by the agency's own dependency is exactly the case where automatic
+arithmetic feels unjust, and this product exists to make deductions feel like
+arithmetic *and* be defensible. Pausing on BLOCKED is a one-line change to
+`DELIVERED_STATUSES` in `modules/lateness/service.ts` plus a test — but it is a
+policy change, and it belongs in SPEC §5.3 before it belongs in code. Raised
+rather than decided quietly.
+
+### Known limitations
+
+- **`addWorkingDays` searches at most ten years** (`SEARCH_HORIZON_DAYS`) before
+  throwing `calendar.errors.noWorkingDay`. A calendar configured with no working
+  days at all — six weekend days plus a holiday on the seventh — refuses rather
+  than returning a plausible date. Correct, but the error reaches the user as a
+  generic domain error rather than as "check your Settings".
+- **The nightly job stops at 20 000 tasks** and logs that it did. At SPEC §2's
+  ~100 people that is decades of work, but the cap is a backstop, not a page
+  boundary: the remainder waits for the next run.
+- **The job recomputes every non-final task every night**, including ones frozen
+  months ago whose numbers cannot move. Idempotent and cheap at this scale, but
+  it is a full scan; an `updatedAt`-bounded candidate query is the obvious
+  optimisation if the table ever grows.
+- **Elapsed working time is written on submission and by the job**, so a task
+  submitted between two runs shows its working figure immediately, while one
+  whose *calendar* changed retroactively (a holiday added last week) waits until
+  03:00.
+- **`/tasks` is down to ~6 kB of First Load JS headroom** (174 kB against the
+  SPEC §9 180 kB budget), from ~8 kB at the end of Phase 5. The leave-warning
+  toast is what spent the difference. Production build verified: no Prisma
+  reaches a client bundle — `lib/datetime` deep-imports `lib/calendar/cairo`
+  rather than the barrel precisely to keep it that way, and the two Zod schemas
+  a form would share do the same.
+- **`npx prettier --check .` fails on 19 `.tsx` files and on `docs/DECISIONS.md`,
+  none of them Phase 6's.** The drift predates this phase — `git show HEAD` of
+  each fails the same check — and reformatting nineteen untouched components
+  would have buried the Phase 6 diff. Phase 12 already owns a codebase-wide
+  audit sweep; this belongs in it, together with adding `format:check` to
+  whatever CI runs `typecheck` and `lint`.

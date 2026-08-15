@@ -87,7 +87,9 @@ describe('formatDate', () => {
   })
 
   it('يجمع التاريخ والوقت بالفاصلة العربية', () => {
-    expect(formatDateTime(SUMMER)).toBe(`14 ${ar.months[7]} 2026${ar.common.listSeparator}12:30`)
+    expect(formatDateTime(SUMMER)).toBe(
+      `14 ${ar.months[7]} 2026${ar.common.listSeparator}12:30`,
+    )
   })
 })
 

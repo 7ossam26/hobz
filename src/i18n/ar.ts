@@ -117,15 +117,7 @@ export const ar = {
    * Gregorian calendar). Index 0 is Sunday, matching `Date.getUTCDay()`
    * exactly, which is what the Phase 5 calendar view's grid math indexes by.
    */
-  weekdays: [
-    'الأحد',
-    'الاثنين',
-    'الثلاثاء',
-    'الأربعاء',
-    'الخميس',
-    'الجمعة',
-    'السبت',
-  ],
+  weekdays: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
   weekdaysShort: ['أحد', 'إثن', 'ثلا', 'أرب', 'خمي', 'جمع', 'سبت'],
 
   /**
@@ -650,6 +642,136 @@ export const ar = {
     },
   },
 
+  /** Phase 6 — the work calendar, holidays, leave, extensions and lateness. */
+  calendar: {
+    title: 'التقويم وأيام العمل',
+    weekendDays: 'أيام الإجازة الأسبوعية',
+    workdayStart: 'بداية يوم العمل',
+    workdayEnd: 'نهاية يوم العمل',
+    workingDaysPerMonth: 'أيام العمل في الشهر',
+    workingDay: 'يوم عمل',
+    nonWorkingDay: 'يوم إجازة',
+    /** `{count}` is substituted at render time. */
+    workingDaysCount: '{count} يوم عمل',
+    errors: {
+      invalidDate: 'تاريخ غير صالح',
+      invalidTime: 'صيغة الوقت غير صالحة، المطلوب HH:mm',
+      noWorkingDay:
+        'لا يوجد يوم عمل ضمن المدى المسموح. راجع أيام العمل والعطلات في الإعدادات.',
+      rangeTooLarge: 'المدى الزمني المطلوب أكبر مما يسمح به التقويم',
+    },
+  },
+
+  holidays: {
+    title: 'العطلات الرسمية',
+    subtitle: 'الأيام التي لا يُحتسب فيها تأخير ولا وقت عمل.',
+    create: 'عطلة جديدة',
+    edit: 'تعديل العطلة',
+    name: 'اسم العطلة',
+    date: 'التاريخ',
+    recurring: 'تتكرر كل سنة',
+    recurringHint:
+      'العطلات ذات التاريخ الميلادي الثابت فقط. الأعياد الهجرية تُضاف لكل سنة.',
+    empty: 'لا توجد عطلات مسجَّلة',
+    year: 'السنة',
+    import: 'استيراد عطلات',
+    importPreview: 'معاينة الاستيراد',
+    importSummary: 'سيتم إضافة {created} عطلة، وتخطّي {skipped}، ورفض {invalid}.',
+    errors: {
+      duplicate: 'هذا اليوم مسجَّل كعطلة بالفعل',
+      nameRequired: 'اسم العطلة مطلوب',
+      notFound: 'العطلة غير موجودة',
+    },
+  },
+
+  leave: {
+    title: 'الإجازات',
+    subtitle: 'إجازات المنفّذين المعتمدة لا يُحتسب فيها تأخير.',
+    request: 'طلب إجازة',
+    record: 'تسجيل إجازة',
+    edit: 'تعديل الإجازة',
+    worker: 'المنفّذ',
+    type: 'نوع الإجازة',
+    startDate: 'من تاريخ',
+    endDate: 'إلى تاريخ',
+    note: 'ملاحظة',
+    decisionNote: 'سبب القرار',
+    approve: 'اعتماد',
+    reject: 'رفض',
+    approvedBy: 'اعتمدها',
+    decidedAt: 'تاريخ القرار',
+    days: 'عدد الأيام',
+    empty: 'لا توجد إجازات مسجَّلة',
+    /** `{name}`, `{from}` and `{to}` are substituted at render time. */
+    assignWarning: '{name} في إجازة معتمدة من {from} إلى {to} خلال مدة هذه المهمة',
+    status: {
+      PENDING: 'قيد المراجعة',
+      APPROVED: 'معتمدة',
+      REJECTED: 'مرفوضة',
+    },
+    errors: {
+      overlap: 'توجد إجازة أخرى لنفس المنفّذ في هذه الفترة',
+      rangeInvalid: 'تاريخ البداية بعد تاريخ النهاية',
+      unknownType: 'نوع الإجازة غير موجود في الإعدادات',
+      alreadyDecided: 'تم البتّ في هذه الإجازة بالفعل',
+      notFound: 'الإجازة غير موجودة',
+      subjectInactive: 'لا يمكن تسجيل إجازة لحساب معطّل أو محذوف',
+      notOwn: 'لا يمكنك طلب إجازة نيابة عن مستخدم آخر',
+    },
+  },
+
+  extensions: {
+    title: 'طلبات التمديد',
+    request: 'طلب تمديد',
+    newDueDate: 'موعد التسليم الجديد',
+    oldDueDate: 'موعد التسليم الحالي',
+    reason: 'سبب التمديد',
+    approve: 'اعتماد التمديد',
+    reject: 'رفض التمديد',
+    decisionNote: 'سبب القرار',
+    requestedBy: 'مقدّم الطلب',
+    decidedBy: 'صاحب القرار',
+    empty: 'لا توجد طلبات تمديد',
+    approved: 'تم اعتماد التمديد وتحديث موعد التسليم',
+    rejected: 'تم رفض طلب التمديد',
+    status: {
+      PENDING: 'قيد المراجعة',
+      APPROVED: 'معتمد',
+      REJECTED: 'مرفوض',
+    },
+    errors: {
+      notLater: 'موعد التسليم الجديد يجب أن يكون بعد الموعد الحالي',
+      alreadyPending: 'يوجد طلب تمديد قيد المراجعة لهذه المهمة',
+      alreadyDecided: 'تم البتّ في هذا الطلب بالفعل',
+      stale: 'تغيّر موعد تسليم المهمة بعد تقديم الطلب. قدّم طلبًا جديدًا.',
+      notFound: 'طلب التمديد غير موجود',
+      notAssignee: 'طلب التمديد يقدّمه منفّذ المهمة',
+      taskDelivered: 'لا يمكن تمديد مهمة تم تسليمها أو إغلاقها',
+      reasonRequired: 'سبب التمديد مطلوب',
+    },
+  },
+
+  /** SPEC §5.3 — the lateness breakdown a منفّذ reads on their own task. */
+  lateness: {
+    title: 'التأخير',
+    dueDate: 'موعد التسليم',
+    graceHours: 'مهلة السماح',
+    effectiveDueDate: 'الموعد بعد المهلة',
+    measuredAt: 'محسوب حتى',
+    workingDaysLate: 'أيام العمل المتأخرة',
+    onTime: 'سُلّمت في الموعد',
+    frozen: 'توقّف احتساب التأخير عند التسليم',
+    extended: 'موعد التسليم مُمدَّد',
+    originalDueDate: 'الموعد الأصلي',
+    /** `{hours}` is substituted at render time. */
+    graceHoursValue: '{hours} ساعة',
+    escalation: {
+      NONE: 'لا تصعيد',
+      PM: 'أُبلغ مدير المشروع',
+      ADMIN: 'أُبلغت الإدارة',
+    },
+  },
+
   audit: {
     title: 'سجل التدقيق',
     subtitle: 'سجل غير قابل للتعديل أو الحذف لكل ما يمسّ المال والصلاحيات والحالة.',
@@ -726,6 +848,21 @@ export const ar = {
     'task.dependencyRemoved': 'إزالة اعتمادية من مهمة',
     'task.commented': 'تعليق على مهمة',
     'task.partialPaymentIntent': 'مستحق جزئي لمنفّذ سابق',
+    'task.assignedDuringLeave': 'إسناد مهمة خلال إجازة معتمدة',
+    'task.escalated': 'تصعيد مهمة متأخرة',
+    'task.dueDateExtended': 'تمديد موعد تسليم مهمة',
+    'holiday.created': 'إضافة عطلة رسمية',
+    'holiday.updated': 'تعديل عطلة رسمية',
+    'holiday.deleted': 'حذف عطلة رسمية',
+    'holiday.imported': 'استيراد عطلات رسمية',
+    'leave.requested': 'طلب إجازة',
+    'leave.recorded': 'تسجيل إجازة',
+    'leave.approved': 'اعتماد إجازة',
+    'leave.rejected': 'رفض إجازة',
+    'extension.requested': 'طلب تمديد',
+    'extension.approved': 'اعتماد تمديد',
+    'extension.rejected': 'رفض تمديد',
+    'extension.penaltyRecomputeRequested': 'إعادة احتساب خصم بعد تمديد',
   },
 
   impersonation: {
@@ -1001,7 +1138,17 @@ export const ar = {
 
   /** Default seed values for Settings entries that hold Arabic content. */
   defaults: {
-    leaveTypes: ['إجازة سنوية', 'إجازة مرضية', 'إجازة طارئة', 'إجازة بدون أجر'],
+    /**
+     * Leave types carry a stable id for the same reason categories do
+     * (`Leave.typeId`, Phase 6) — renaming "إجازة طارئة" must not re-type
+     * every leave ever recorded under it.
+     */
+    leaveTypes: [
+      { id: 'annual', label: 'إجازة سنوية' },
+      { id: 'sick', label: 'إجازة مرضية' },
+      { id: 'emergency', label: 'إجازة طارئة' },
+      { id: 'unpaid', label: 'إجازة بدون أجر' },
+    ],
     /**
      * Categories carry a stable id plus an editable Arabic label, so renaming
      * one in Settings never orphans the tasks that reference it

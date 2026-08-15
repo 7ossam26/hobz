@@ -279,8 +279,14 @@ describe('bulkChangeTaskDueDateAction — الصلاحيات', () => {
     const { project } = await baseFixture()
     const permitted = await createUserWithPermissions(db, ['task.edit'])
 
-    const validOne = await createTask(db, { projectId: project.id, dueDate: originalDueDate })
-    const validTwo = await createTask(db, { projectId: project.id, dueDate: originalDueDate })
+    const validOne = await createTask(db, {
+      projectId: project.id,
+      dueDate: originalDueDate,
+    })
+    const validTwo = await createTask(db, {
+      projectId: project.id,
+      dueDate: originalDueDate,
+    })
     const deleted = await createTask(db, {
       projectId: project.id,
       dueDate: originalDueDate,

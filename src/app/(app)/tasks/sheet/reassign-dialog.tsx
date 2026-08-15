@@ -13,6 +13,8 @@ import { assignTaskAction } from '@/modules/task/actions'
 import type { TaskDetailDto } from '@/modules/task/types'
 import type { UserOptionDto } from '@/modules/user/queries'
 
+import { leaveWarningMessage } from '../leave-warnings'
+
 /**
  * SPEC M4: reassigning a task already under way opens *"pay the previous
  * assignee a partial amount?"*. Distinct from the plain `AssignDialog` used
@@ -50,12 +52,19 @@ export function ReassignDialog({
   async function submit() {
     setBusy(true)
     try {
-      await assignTaskAction({
+      const result = await assignTaskAction({
         taskId: task.id,
         assigneeId,
         ...(partialAmount.trim() ? { partialAmount: partialAmount.trim() } : {}),
       })
       toast({ title: ar.tasks.assignment.reassigned, tone: 'success' })
+      // Phase 6, and a warning rather than a block on purpose: the assignment
+      // has already landed. A manager giving work to somebody on approved leave
+      // is usually a mistake and occasionally deliberate, and the system is not
+      // in a position to know which — so it says so and gets out of the way.
+      for (const warning of result.leaveWarnings) {
+        toast({ title: leaveWarningMessage(warning), tone: 'info' })
+      }
       onClose()
       onDone()
     } catch {

@@ -37,10 +37,7 @@ describe('lib/rbac — نطاق المشاريع', () => {
 
     expect(scopeProjects(actor)).toEqual({
       deletedAt: null,
-      OR: [
-        { ownerId: 'u_ahmed' },
-        { members: { some: { userId: 'u_ahmed' } } },
-      ],
+      OR: [{ ownerId: 'u_ahmed' }, { members: { some: { userId: 'u_ahmed' } } }],
     })
   })
 
@@ -111,10 +108,7 @@ describe('lib/rbac — نطاق المهام', () => {
 
     expect(scopeTasks(actor)).toEqual({
       deletedAt: null,
-      OR: [
-        { assigneeId: 'u_sara' },
-        { watchers: { some: { userId: 'u_sara' } } },
-      ],
+      OR: [{ assigneeId: 'u_sara' }, { watchers: { some: { userId: 'u_sara' } } }],
     })
   })
 

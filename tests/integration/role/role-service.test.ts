@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest'
 import { ar } from '@/i18n/ar'
 import { ConflictError, DomainError, NotFoundError } from '@/lib/errors'
 import { PERMISSIONS, SUPER_ADMIN_ROLE } from '@/lib/rbac'
-import { createRole, deleteRole, getRole, listRoles, updateRole } from '@/modules/role/service'
+import {
+  createRole,
+  deleteRole,
+  getRole,
+  listRoles,
+  updateRole,
+} from '@/modules/role/service'
 
 import {
   createRole as makeRole,
@@ -188,7 +194,10 @@ describe('modules/role — دورة حياة الدور', () => {
       orderBy: { createdAt: 'asc' },
       select: { action: true },
     })
-    expect(actions.map((a) => a.action)).toEqual(['role.updated', 'role.permissionsChanged'])
+    expect(actions.map((a) => a.action)).toEqual([
+      'role.updated',
+      'role.permissionsChanged',
+    ])
   })
 
   it('يمنع حذف دور مسنَد إلى مستخدمين', async () => {

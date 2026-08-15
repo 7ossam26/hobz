@@ -31,7 +31,11 @@ const roleNameEnSchema = z
   .toUpperCase()
   .regex(/^[A-Z][A-Z0-9_]{1,39}$/, ar.validation.roleNameEnFormat)
 
-const roleNameArSchema = z.string().trim().min(1, ar.validation.roleNameArRequired).max(60)
+const roleNameArSchema = z
+  .string()
+  .trim()
+  .min(1, ar.validation.roleNameArRequired)
+  .max(60)
 
 /**
  * `.optional()` comes *last* on purpose. Applied before the transform, Zod

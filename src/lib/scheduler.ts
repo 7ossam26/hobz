@@ -1,6 +1,8 @@
 import cron, { type ScheduledTask } from 'node-cron'
 
-import { CAIRO_TIMEZONE } from '@/lib/calendar'
+// Deep import: the `@/lib/calendar` barrel builds the app calendar on the
+// Prisma singleton, and the scheduler only needs the timezone name.
+import { CAIRO_TIMEZONE } from '@/lib/calendar/cairo'
 import { prisma } from '@/lib/db'
 import type { DbClient } from '@/lib/db'
 

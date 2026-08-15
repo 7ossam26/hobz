@@ -1,3 +1,4 @@
+import type { AssignmentLeaveWarning } from './ports'
 import type { DelayAttributionInput, PriorityInput } from './schema'
 import type { TaskStatus } from './state-machine'
 
@@ -124,4 +125,28 @@ export interface TaskActivityDto {
 export interface TaskTransitionResultDto {
   task: TaskDetailDto
   warnings: DependencyWarningDto[]
+}
+
+/**
+ * What an assignment returns (Phase 6).
+ *
+ * Same shape and same reasoning as `TaskTransitionResultDto`: the phase brief
+ * asks for "a warning (not a block) when assigning a task that falls inside
+ * approved leave", and a warning that the caller cannot see is not a warning.
+ * The call resolves, the assignment stands, and the manager is told that
+ * أحمد is away for four of the six days they just gave him.
+ */
+export interface TaskAssignmentResultDto {
+  task: TaskDetailDto
+  leaveWarnings: AssignmentLeaveWarning[]
+}
+
+/**
+ * Creating a task with an assignee *is* an assignment (it takes the BACKLOG →
+ * ASSIGNED edge at birth), so it can warn about leave too — and it carries the
+ * dependency warnings a fresh task can already have. Hence both lists, rather
+ * than an always-empty `leaveWarnings` bolted onto every transition result.
+ */
+export interface TaskCreationResultDto extends TaskTransitionResultDto {
+  leaveWarnings: AssignmentLeaveWarning[]
 }

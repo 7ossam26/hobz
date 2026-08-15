@@ -81,7 +81,10 @@ describe('قاعدة بيانات فارغة — الترقيم خارج الن�
   it('يعيد لا شيء لبحث لا يطابق أحدًا', async () => {
     await createUser(db, { username: 'ahmed', fullName: 'أحمد' })
 
-    const page = await listUsers(db, listUsersSchema.parse({ search: 'لا-أحد-بهذا-الاسم' }))
+    const page = await listUsers(
+      db,
+      listUsersSchema.parse({ search: 'لا-أحد-بهذا-الاسم' }),
+    )
     expect(page.items).toEqual([])
     expect(page.total).toBe(0)
   })

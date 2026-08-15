@@ -236,8 +236,9 @@ describe('modules/auth — التحقق من بيانات الدخول', () => {
       )
     }
 
-    expect(results.slice(0, -1).every((r) => !r.ok && r.reason === 'INVALID_CREDENTIALS'))
-      .toBe(true)
+    expect(
+      results.slice(0, -1).every((r) => !r.ok && r.reason === 'INVALID_CREDENTIALS'),
+    ).toBe(true)
     expect(results.at(-1)).toEqual({
       ok: false,
       reason: 'THROTTLED',

@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import { auditFilterSchema } from '@/modules/audit/schema'
-import { buildAuditWhere, cairoDayBoundary, diffAuditEntry } from '@/modules/audit/service'
+import {
+  buildAuditWhere,
+  cairoDayBoundary,
+  diffAuditEntry,
+} from '@/modules/audit/service'
 
 describe('modules/audit — عرض الفرق', () => {
   it('يعرض الحقول المتغيّرة فقط', () => {
@@ -88,9 +92,12 @@ describe('modules/audit — عرض الفرق', () => {
 
   it('يميّز null عن undefined عن السلسلة الفارغة', () => {
     // "phone cleared" and "phone never set" are different events.
-    expect(diffAuditEntry({ before: { phone: '+201012345678' }, after: { phone: null } }))
-      .toHaveLength(1)
-    expect(diffAuditEntry({ before: { phone: null }, after: { phone: null } })).toEqual([])
+    expect(
+      diffAuditEntry({ before: { phone: '+201012345678' }, after: { phone: null } }),
+    ).toHaveLength(1)
+    expect(diffAuditEntry({ before: { phone: null }, after: { phone: null } })).toEqual(
+      [],
+    )
   })
 })
 
