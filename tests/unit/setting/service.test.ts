@@ -200,15 +200,36 @@ describe('modules/setting — الكتابة', () => {
     })
   })
 
+  // The vehicle is `calendar.leaveTypes`, still a plain list of Arabic strings.
+  // `tasks.categories` moved to `{ id, label }` entries in Phase 4 so that
+  // `Task.categoryId` points at something a rename cannot break; its shape is
+  // covered in tests/unit/settings/catalog.test.ts.
   it('يقبل تعديل قائمة عربية كاملة', async () => {
     const { db, settings } = fakeDb()
 
     await updateSetting(db, {
       actor: actingAs(['settings.edit']),
-      key: 'tasks.categories',
-      value: ['تصميم', 'تطوير'],
+      key: 'calendar.leaveTypes',
+      value: ['إجازة سنوية', 'إجازة مرضية'],
     })
 
-    expect(settings.get('tasks.categories')?.value).toEqual(['تصميم', 'تطوير'])
+    expect(settings.get('calendar.leaveTypes')?.value).toEqual([
+      'إجازة سنوية',
+      'إجازة مرضية',
+    ])
+  })
+
+  it('يقبل تعديل تصنيفات المهام بمعرّف ثابت ومسمى عربي', async () => {
+    const { db, settings } = fakeDb()
+
+    await updateSetting(db, {
+      actor: actingAs(['settings.edit']),
+      key: 'tasks.categories',
+      value: [{ id: 'design', label: 'تصميم جرافيك' }],
+    })
+
+    expect(settings.get('tasks.categories')?.value).toEqual([
+      { id: 'design', label: 'تصميم جرافيك' },
+    ])
   })
 })

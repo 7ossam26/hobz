@@ -84,6 +84,41 @@ const engagementType = z.enum(['FIXED_PRICE', 'RETAINER', 'MILESTONE_BASED', 'HO
 
 const nonEmptyArabicList = z.array(z.string().trim().min(1)).min(1)
 
+/**
+ * A Settings-defined taxonomy entry: a stable machine id plus an editable
+ * Arabic label — the same split SPEC §2 makes for statuses ("Arabic labels are
+ * editable in Settings; the enum values are not"), applied to a list the
+ * operator also *creates* entries in.
+ *
+ * Task rows store the id (`Task.categoryId`, SPEC §4), never the label, so
+ * renaming "تصميم" to "تصميم جرافيك" is a label change and not a silent
+ * re-categorisation of every task ever filed under it.
+ */
+const taxonomyEntry = z.object({
+  id: z
+    .string()
+    .trim()
+    .min(1)
+    .max(40)
+    .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, 'kebab-case latin id'),
+  label: z.string().trim().min(1).max(60),
+})
+
+const taxonomyList = z
+  .array(taxonomyEntry)
+  .min(1)
+  .superRefine((entries, ctx) => {
+    const ids = new Set<string>()
+    for (const [index, entry] of entries.entries()) {
+      if (ids.has(entry.id)) {
+        ctx.addIssue({ code: 'custom', path: [index, 'id'], message: 'duplicate id' })
+      }
+      ids.add(entry.id)
+    }
+  })
+
+export type TaxonomyEntry = z.infer<typeof taxonomyEntry>
+
 export const SETTINGS_CATALOG = {
   // ── Penalties (SPEC §5.4) ────────────────────────────────────────────────
   /** Global default penalty formula. Overridable per user via PenaltyProfile. */
@@ -136,9 +171,7 @@ export const SETTINGS_CATALOG = {
   'notifications.pollingIntervalSeconds': define('notifications', positiveInt, 30),
 
   // ── Task & project taxonomy ──────────────────────────────────────────────
-  'tasks.categories': define('tasks', nonEmptyArabicList, [
-    ...ar.defaults.taskCategories,
-  ]),
+  'tasks.categories': define('tasks', taxonomyList, [...ar.defaults.taskCategories]),
   'projects.engagementTypes': define('projects', z.array(engagementType).min(1), [
     'FIXED_PRICE',
     'RETAINER',

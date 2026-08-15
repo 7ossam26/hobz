@@ -1,5 +1,4 @@
 import type { Db } from '@/lib/db'
-import type { WhereFragment } from '@/lib/rbac'
 
 /**
  * modules/project/health.ts — RAG computation (SPEC §5.7).
@@ -28,11 +27,15 @@ import type { WhereFragment } from '@/lib/rbac'
  *
  * ── Task signals are a port, exactly like Phase 1's `OpenTaskLookup` ───────
  *
- * `Task` is a Phase 4 table, so "overdue tasks" and "blocked days" cannot be
- * queried yet. The *rule* ships now, guarded and unit-tested against a lookup
- * that returns real numbers; `noTaskHealthSignals` is Phase 3's honest answer
- * — there are no tasks, so both signals are zero — and Phase 4 swaps in the
- * real query behind the same port.
+ * `Task` was a Phase 4 table, so "overdue tasks" and "blocked days" could not
+ * be queried in Phase 3. The *rule* shipped then, guarded and unit-tested
+ * against a lookup that returns real numbers, with `noTaskHealthSignals` as
+ * the honest answer for a database with no tasks.
+ *
+ * **Phase 4 filled it in** — `taskHealthSignals` below is the real query, and
+ * the port it plugs into is unchanged. `noTaskHealthSignals` stays, because
+ * the pure-computation tests are better off stating their signals inline than
+ * building a project's worth of tasks to imply them.
  */
 
 export type ComputedHealth = 'GREEN' | 'AMBER' | 'RED'
@@ -47,11 +50,68 @@ export type TaskHealthLookup = (
   projectId: string,
 ) => Promise<ProjectHealthSignals>
 
-/** Phase 3's honest answer: no `Task` table exists yet, so nothing is overdue or blocked. */
+/** No tasks, nothing overdue or blocked. The baseline for pure-computation tests. */
 export const noTaskHealthSignals: TaskHealthLookup = async () => ({
   overdueTaskCount: 0,
   maxBlockedDays: 0,
 })
+
+/**
+ * Statuses in which a task's due date is still the worker's problem. Time in
+ * review never counts against them (SPEC §5.3), so a delivered task is not
+ * overdue no matter how long the reviewer sits on it — the same set
+ * `modules/task/service.ts` filters `overdueOnly` on.
+ */
+const UNDELIVERED = ['BACKLOG', 'ASSIGNED', 'IN_PROGRESS', 'REVISION_REQUESTED'] as const
+
+/**
+ * The real signals, as of Phase 4.
+ *
+ * `maxBlockedDays` is measured from the `STATUS_CHANGED → BLOCKED` activity row
+ * rather than from a column, for the same reason `unblockTask` reads that feed:
+ * it is already the record of when the block happened, and a second copy would
+ * be a second thing that can be wrong.
+ *
+ * Plain day arithmetic, deliberately — `health.blockedDaysThreshold` is named
+ * in calendar days and feeds a dashboard hint, not a deduction. CLAUDE.md
+ * invariant 5 governs lateness and working elapsed time; see the note at the
+ * top of this file.
+ */
+export function taskHealthSignals(now: Date = new Date()): TaskHealthLookup {
+  return async (db, projectId) => {
+    const [overdueTaskCount, blocked] = await Promise.all([
+      db.task.count({
+        where: {
+          projectId,
+          deletedAt: null,
+          status: { in: [...UNDELIVERED] },
+          dueDate: { lt: now },
+        },
+      }),
+      db.task.findMany({
+        where: { projectId, deletedAt: null, status: 'BLOCKED' },
+        select: {
+          id: true,
+          activity: {
+            where: { type: 'STATUS_CHANGED', to: 'BLOCKED' },
+            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+            take: 1,
+            select: { createdAt: true },
+          },
+        },
+      }),
+    ])
+
+    const maxBlockedDays = blocked.reduce((worst, task) => {
+      const blockedAt = task.activity[0]?.createdAt
+      if (!blockedAt) return worst
+      const days = Math.floor((now.getTime() - blockedAt.getTime()) / DAY_MS)
+      return Math.max(worst, days)
+    }, 0)
+
+    return { overdueTaskCount, maxBlockedDays }
+  }
+}
 
 export interface HealthThresholds {
   overdueTasksThreshold: number
@@ -113,39 +173,21 @@ export function effectiveProjectHealth(
 }
 
 /**
- * The `healthWhereFragment` above translated into a Prisma `where` fragment,
- * so the health facet on `/projects` is a real indexed filter rather than a
- * fetch-everything-then-filter-in-JS shortcut (SPEC §9: "every list
- * paginated").
+ * ── Where the `/projects` health facet went (Phase 4) ─────────────────────
  *
- * This is only valid because Phase 3's task signals are always zero
- * (`noTaskHealthSignals`) — the two RED conditions that depend on them can
- * never fire, so RED here reduces to "past due date". `tests/unit/project/health.test.ts`
- * asserts this fragment agrees with `computeProjectHealth` at zero signals
- * across the same boundary matrix. **Phase 4 must revisit this** once real
- * task signals exist — either by pushing them into the `where` too or by
- * moving this facet to an application-level filter.
+ * Phase 3 shipped a `healthWhereFragment()` here that translated a target RAG
+ * value into a Prisma `where`, so the facet was an indexed filter. It was
+ * correct precisely while `noTaskHealthSignals` was the only lookup: with both
+ * signals pinned at zero, RED reduced to "past due date", which SQL can say.
+ *
+ * `taskHealthSignals` above makes RED also mean "more overdue tasks than the
+ * threshold" or "blocked longer than N days" — a per-project aggregate over
+ * another table against Settings-driven thresholds, which Prisma cannot put in
+ * a `where` without raw SQL. Keeping the fragment would have meant a facet
+ * that quietly disagreed with the badge rendered on the row beside it.
+ *
+ * So the facet now filters on `computeProjectHealth`'s own output in
+ * `listProjects`, which is the second of the two options Phase 3's note named.
+ * The cost is the one already recorded as a known limitation there: that list
+ * path materialises its scoped-and-filtered candidate rows before paginating.
  */
-export function healthWhereFragment(
-  target: ComputedHealth,
-  now: Date,
-  amberDaysBeforeDue: number,
-): WhereFragment {
-  const amberCutoff = new Date(now.getTime() + amberDaysBeforeDue * DAY_MS)
-  const nonTerminal = { status: { notIn: [...TERMINAL_PROJECT_STATUSES] } }
-
-  const byTarget: Record<ComputedHealth, WhereFragment> = {
-    RED: { ...nonTerminal, dueDate: { lt: now } },
-    AMBER: { ...nonTerminal, dueDate: { gte: now, lte: amberCutoff } },
-    GREEN: {
-      OR: [
-        { status: { in: [...TERMINAL_PROJECT_STATUSES] } },
-        { ...nonTerminal, dueDate: { gt: amberCutoff } },
-      ],
-    },
-  }
-
-  return {
-    OR: [{ healthOverride: target }, { healthOverride: null, ...byTarget[target] }],
-  }
-}

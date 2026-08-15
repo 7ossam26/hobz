@@ -386,8 +386,16 @@ function Gallery({ tableState }: { tableState: TableState }) {
           ))}
           <Row>
             <PhoneText phone={person.phone} />
-            <CategoryDot category={ar.defaults.taskCategories[0]!} index={0} />
-            <CategoryDot category={ar.defaults.taskCategories[1]!} index={1} />
+            <CategoryDot
+              category={ar.defaults.taskCategories[0]!.label}
+              hueKey={ar.defaults.taskCategories[0]!.id}
+              index={0}
+            />
+            <CategoryDot
+              category={ar.defaults.taskCategories[1]!.label}
+              hueKey={ar.defaults.taskCategories[1]!.id}
+              index={1}
+            />
             <ProjectMark project={{ ...SAMPLES.projects[0]!, id: SAMPLES.projects[0]!.code }} />
           </Row>
         </div>

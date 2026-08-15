@@ -66,7 +66,13 @@ After implementing a feature, **spawn subagents** whose only job is to enumerate
 and write failing-then-passing cases across these axes:
 
 1. **Boundaries** — 0, 1, exactly-at-deadline, one minute after, max values.
-2. **Time** — Cairo vs UTC, DST-free but midnight-boundary, month ends, Feb.
+2. **Time** — Cairo vs UTC, midnight boundaries, month ends, Feb, **and DST**.
+   This axis originally read "DST-free". That was wrong: Egypt reinstated summer
+   time in 2023 (forward on the last Friday of April, back on the last Thursday
+   of October), so a Cairo year contains one 23-hour day and one 25-hour day —
+   and both land on the Friday/Thursday pair the default weekend is built
+   around. Corrected in Phase 4 after the axis-2 sweep; never assume a fixed
+   `+02:00`, derive the offset (`tests/helpers/time.ts`).
 3. **Calendar** — deadline on Friday, on a holiday, spanning a holiday, worker on
    approved leave, worker submits *on* a day off (must not increase penalty).
 4. **Permissions** — every action attempted by a user lacking the permission;

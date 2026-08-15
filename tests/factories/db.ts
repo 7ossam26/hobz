@@ -273,6 +273,131 @@ export async function createMilestone(
   })
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Work — Phase 4 (Task and its satellites)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type TaskStatusOption =
+  | 'BACKLOG'
+  | 'ASSIGNED'
+  | 'IN_PROGRESS'
+  | 'SUBMITTED'
+  | 'IN_REVIEW'
+  | 'REVISION_REQUESTED'
+  | 'APPROVED'
+  | 'DONE'
+  | 'BLOCKED'
+  | 'CANCELLED'
+
+export interface CreateTaskOptions {
+  projectId: string
+  milestoneId?: string | null
+  title?: string
+  description?: string | null
+  assigneeId?: string | null
+  status?: TaskStatusOption
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+  categoryId?: string
+  estimatedHours?: string
+  taskValue?: string
+  dueDate?: Date
+  originalDueDate?: Date
+  assignedAt?: Date | null
+  startedAt?: Date | null
+  submittedAt?: Date | null
+  approvedAt?: Date | null
+  elapsedMinutesRaw?: number
+  elapsedMinutesWorking?: number
+  qualityRating?: number | null
+  watcherIds?: readonly string[]
+  deletedAt?: Date | null
+}
+
+/**
+ * A task in whatever state the test needs, written directly.
+ *
+ * Deliberately bypasses the state machine: a test about *approving* should not
+ * have to walk BACKLOG → ASSIGNED → IN_PROGRESS → SUBMITTED → IN_REVIEW first,
+ * and one that did would fail for four unrelated reasons. Tests about the
+ * transitions themselves call the service.
+ *
+ * `assignedAt` follows the status when not given explicitly, so a task built
+ * `IN_PROGRESS` has the stamp the state machine would have left — otherwise
+ * every elapsed-time assertion would silently measure from null.
+ */
+export async function createTask(
+  db: PrismaClient,
+  options: CreateTaskOptions,
+): Promise<{ id: string; title: string; status: TaskStatusOption }> {
+  const n = next()
+  const status = options.status ?? 'BACKLOG'
+  const dueDate = options.dueDate ?? new Date('2026-04-01T12:00:00Z')
+  const assignedByStatus = status !== 'BACKLOG' && options.assigneeId
+
+  const row = await db.task.create({
+    data: {
+      projectId: options.projectId,
+      milestoneId: options.milestoneId ?? null,
+      title: options.title ?? `مهمة ${n}`,
+      description: options.description ?? null,
+      assigneeId: options.assigneeId ?? null,
+      status,
+      priority: options.priority ?? 'MEDIUM',
+      categoryId: options.categoryId ?? 'design',
+      estimatedHours: options.estimatedHours ?? '8.00',
+      taskValue: options.taskValue ?? '500.00',
+      dueDate,
+      originalDueDate: options.originalDueDate ?? dueDate,
+      assignedAt:
+        options.assignedAt === undefined
+          ? assignedByStatus
+            ? new Date('2026-03-01T09:00:00Z')
+            : null
+          : options.assignedAt,
+      startedAt: options.startedAt ?? null,
+      submittedAt: options.submittedAt ?? null,
+      approvedAt: options.approvedAt ?? null,
+      elapsedMinutesRaw: options.elapsedMinutesRaw ?? 0,
+      elapsedMinutesWorking: options.elapsedMinutesWorking ?? 0,
+      qualityRating: options.qualityRating ?? null,
+      deletedAt: options.deletedAt ?? null,
+      watchers: {
+        create: (options.watcherIds ?? []).map((userId) => ({ userId })),
+      },
+    },
+    select: { id: true, title: true, status: true },
+  })
+
+  return { ...row, status: row.status as TaskStatusOption }
+}
+
+/**
+ * A `STATUS_CHANGED → BLOCKED` activity row, which is where `unblockTask` and
+ * the project-health `maxBlockedDays` signal both read "what was this doing
+ * when it was blocked, and since when".
+ */
+export async function createBlockActivity(
+  db: PrismaClient,
+  options: {
+    taskId: string
+    from: TaskStatusOption
+    actorId?: string | null
+    at?: Date
+  },
+): Promise<{ id: string }> {
+  return db.taskActivity.create({
+    data: {
+      taskId: options.taskId,
+      actorId: options.actorId ?? null,
+      type: 'STATUS_CHANGED',
+      from: options.from,
+      to: 'BLOCKED',
+      createdAt: options.at ?? new Date('2026-03-01T09:00:00Z'),
+    },
+    select: { id: true },
+  })
+}
+
 export interface CreateProjectTemplateOptions {
   name?: string
   payload?: unknown

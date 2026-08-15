@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest'
 import {
   computeProjectHealth,
   effectiveProjectHealth,
-  healthWhereFragment,
   TERMINAL_PROJECT_STATUSES,
   type ComputedHealth,
   type HealthThresholds,
@@ -184,89 +183,5 @@ describe('effectiveProjectHealth — التقدير اليدوي مقابل ال
     const effective = effectiveProjectHealth('RED', 'AMBER', 'سبب')
     expect(effective.computed).toBe('RED')
     expect(effective.health).toBe('AMBER')
-  })
-})
-
-describe('healthWhereFragment — يتفق مع computeProjectHealth عند إشارات صفرية', () => {
-  const now = new Date('2026-03-01T00:00:00.000Z')
-  const amberDaysBeforeDue = 3
-
-  const nonTerminalStatuses = [
-    'DRAFT',
-    'PROPOSED',
-    'ACTIVE',
-    'ON_HOLD',
-    'IN_REVIEW',
-  ] as const
-
-  const dueDateOffsetsDays = [-10, -1, 0, 1, 2, 3, 4, 10]
-
-  function matchesFragment(
-    row: { status: string; dueDate: Date },
-    fragment: unknown,
-  ): boolean {
-    // A tiny structural matcher for the specific shape `healthWhereFragment`
-    // produces — good enough to prove the two implementations agree without
-    // pulling Prisma's query engine into a unit test.
-    function matches(condition: unknown): boolean {
-      const c = condition as Record<string, unknown>
-      if ('OR' in c) return (c.OR as unknown[]).some(matches)
-      const parts: boolean[] = []
-      if ('status' in c) {
-        const statusCond = c.status as { notIn?: string[]; in?: string[] }
-        if (statusCond.notIn) parts.push(!statusCond.notIn.includes(row.status))
-        if (statusCond.in) parts.push(statusCond.in.includes(row.status))
-      }
-      if ('dueDate' in c) {
-        const dateCond = c.dueDate as { lt?: Date; gte?: Date; lte?: Date; gt?: Date }
-        if (dateCond.lt) parts.push(row.dueDate.getTime() < dateCond.lt.getTime())
-        if (dateCond.gte) parts.push(row.dueDate.getTime() >= dateCond.gte.getTime())
-        if (dateCond.lte) parts.push(row.dueDate.getTime() <= dateCond.lte.getTime())
-        if (dateCond.gt) parts.push(row.dueDate.getTime() > dateCond.gt.getTime())
-      }
-      return parts.every(Boolean)
-    }
-    return matches(fragment)
-  }
-
-  it.each(nonTerminalStatuses)('يتفق على كل نقاط الحدود لحالة %s', (status) => {
-    for (const offsetDays of dueDateOffsetsDays) {
-      const dueDate = new Date(now.getTime() + offsetDays * DAY_MS)
-      const computed = computeProjectHealth({
-        status,
-        dueDate,
-        now,
-        signals: NO_SIGNALS,
-        thresholds: { ...THRESHOLDS, amberDaysBeforeDue },
-      })
-
-      for (const target of ['GREEN', 'AMBER', 'RED'] as const) {
-        const fragment = healthWhereFragment(target, now, amberDaysBeforeDue)
-        // healthOverride is null in this matrix — the OR's second branch is
-        // the one that must reflect the computed value.
-        const secondBranch = (fragment as { OR: unknown[] }).OR[1]
-        const matches = matchesFragment({ status, dueDate }, secondBranch)
-        expect(matches).toBe(target === computed)
-      }
-    }
-  })
-
-  it('حالة نهائية دائمًا ضمن فرع الأخضر بصرف النظر عن التاريخ', () => {
-    const fragment = healthWhereFragment('GREEN', now, amberDaysBeforeDue)
-    const secondBranch = (fragment as { OR: unknown[] }).OR[1]
-    expect(
-      matchesFragment(
-        { status: 'COMPLETED', dueDate: new Date('2020-01-01T00:00:00.000Z') },
-        secondBranch,
-      ),
-    ).toBe(true)
-  })
-
-  it('يطابق أي مشروع يحمل تقديرًا يدويًا مساويًا للهدف، بصرف النظر عن باقي حقوله', () => {
-    const fragment = healthWhereFragment('RED', now, amberDaysBeforeDue) as {
-      OR: unknown[]
-    }
-    const overrideBranch = fragment.OR[0] as { healthOverride: string }
-    expect(overrideBranch).toEqual({ healthOverride: 'RED' })
   })
 })

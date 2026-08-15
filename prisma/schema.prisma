@@ -1,10 +1,11 @@
 // Agency OS schema.
 //
 // Phase 0 laid the identity/access/audit/settings core (SPEC §4 "Identity &
-// access" + §7). Phase 3 adds the first slice of "Work" (SPEC §4): Client,
-// Project, ProjectMember, Milestone, ProjectTemplate. Task, Calendar and Money
-// models still arrive in their own phases — do not add them here ahead of
-// schedule.
+// access" + §7). Phase 3 added the first slice of "Work" (SPEC §4): Client,
+// Project, ProjectMember, Milestone, ProjectTemplate. Phase 4 adds the Task
+// domain: Task, TaskWatcher, TaskDependency, TaskComment, TaskActivity.
+// ExtensionRequest, Calendar and Money models still arrive in their own phases
+// — do not add them here ahead of schedule.
 //
 // Structural invariants this schema must keep possible (CLAUDE.md):
 //  - Money columns are always Decimal(12,2), never Float.
@@ -63,6 +64,11 @@ model User {
   ownedProjects      Project[]         @relation("ProjectOwner")
   projectMemberships ProjectMember[]
   createdTemplates   ProjectTemplate[] @relation("ProjectTemplateCreatedBy")
+
+  assignedTasks Task[]         @relation("TaskAssignee")
+  watchedTasks  TaskWatcher[]
+  taskComments  TaskComment[]  @relation("TaskCommentAuthor")
+  taskActivity  TaskActivity[] @relation("TaskActivityActor")
 
   @@index([deletedAt])
   @@index([isWorker, isActive])
@@ -310,6 +316,7 @@ model Project {
   owner      User            @relation("ProjectOwner", fields: [ownerId], references: [id])
   members    ProjectMember[]
   milestones Milestone[]
+  tasks      Task[]
 
   @@index([deletedAt])
   @@index([clientId])
@@ -355,6 +362,7 @@ model Milestone {
   updatedAt DateTime @updatedAt
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks   Task[]
 
   @@index([projectId, order])
   @@map("milestones")
@@ -379,4 +387,247 @@ model ProjectTemplate {
 
   @@index([deletedAt])
   @@map("project_templates")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Work — Phase 4 slice: the Task domain (SPEC §4 "Work", §5.1, §5.2).
+// ExtensionRequest belongs to Phase 6, which owns the lateness engine it
+// feeds; `Task.originalDueDate` below is the seam it will write against.
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Fixed per SPEC §4. Arabic labels are editable in Settings
+/// (`labels.taskStatus`); the values are not (SPEC §2). The legal moves
+/// between them are SPEC §5.1, enforced in `modules/task/state-machine.ts`.
+enum TaskStatus {
+  BACKLOG
+  ASSIGNED
+  IN_PROGRESS
+  SUBMITTED
+  IN_REVIEW
+  REVISION_REQUESTED
+  APPROVED
+  DONE
+  BLOCKED
+  CANCELLED
+}
+
+/// Fixed per SPEC §4. Label editable via `labels.priority`.
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+/// Fixed per SPEC §4. Who a delay is *attributed* to — recorded for reporting
+/// only. It deliberately does not feed the penalty engine (SPEC §5.4 computes
+/// from `lateWorkingDays` and the user's profile, nothing else); a manager
+/// re-attributing a delay must never quietly change someone's deduction.
+enum DelayAttribution {
+  WORKER
+  CLIENT
+  INTERNAL
+  DEPENDENCY
+}
+
+/// The activity feed's vocabulary. Not a SPEC §4 enum — SPEC types
+/// `TaskActivity.type` loosely — so the values are recorded in
+/// docs/DECISIONS.md alongside `ProjectMemberRole`/`MilestoneStatus`.
+///
+/// `from`/`to` carry the change as strings, whatever the type: statuses for
+/// STATUS_CHANGED, user ids for ASSIGNED, ISO instants for DUE_DATE_CHANGED.
+/// SPEC §4 gives the row exactly `type, from, to` and no metadata column, and
+/// that constraint is kept — anything richer belongs in the AuditLog row the
+/// same operation writes.
+enum TaskActivityType {
+  CREATED
+  STATUS_CHANGED
+  ASSIGNED
+  WATCHER_ADDED
+  WATCHER_REMOVED
+  COMMENTED
+  DUE_DATE_CHANGED
+  VALUE_CHANGED
+  UPDATED
+  DEPENDENCY_ADDED
+  DEPENDENCY_REMOVED
+  ELAPSED_RECOMPUTED
+}
+
+model Task {
+  id          String  @id @default(cuid())
+  projectId   String
+  milestoneId String?
+  title       String
+  description String?
+
+  /// The one accountable person (SPEC §4 `assigneeId?`). Watchers are the
+  /// many; see `TaskWatcher`. Null only while the task sits in BACKLOG.
+  assigneeId String?
+
+  status   TaskStatus @default(BACKLOG)
+  priority Priority   @default(MEDIUM)
+
+  /// Stable id of a Settings-defined category (`tasks.categories`), not its
+  /// Arabic label — so renaming a category in Settings never orphans a task.
+  /// Required, per the SPEC §4 listing (no `?`, unlike `milestoneId?` and
+  /// `assigneeId?` beside it); validated against the live Settings list on
+  /// write. See docs/DECISIONS.md (Phase 4).
+  categoryId String
+
+  /// Hours, not money — but `Decimal` all the same: it is divided by working
+  /// elapsed time for the estimate-accuracy score (SPEC §5.6), and a float
+  /// there would drift the same way a float payout would.
+  estimatedHours Decimal @default(0) @db.Decimal(6, 2)
+
+  /// What the assignee earns on approval (SPEC §5.1: "APPROVED is the only
+  /// event that creates an EARNING ledger entry"). Auto-filled from the
+  /// assignee's `defaultTaskRate` on assignment, editable per task.
+  taskValue Decimal @default(0) @db.Decimal(12, 2)
+
+  /// Required, per the SPEC §4 listing (no `?`, unlike `assigneeId?` beside
+  /// it) and because the whole lateness engine measures against it.
+  dueDate         DateTime
+  /// The deadline the task was first given. An approved extension (Phase 6)
+  /// moves `dueDate` and leaves this alone (SPEC §5.3).
+  originalDueDate DateTime
+
+  /// Stamped by the state machine, never by hand. `assignedAt`, `startedAt`
+  /// and `approvedAt` are stamped once and never overwritten; `submittedAt` is
+  /// re-stamped by every re-submission, with the original preserved in
+  /// `TaskActivity` (SPEC §5.1).
+  assignedAt  DateTime?
+  startedAt   DateTime?
+  submittedAt DateTime?
+  approvedAt  DateTime?
+
+  /// Denormalised, job-updated (SPEC §4). Raw is wall-clock; working excludes
+  /// weekends, holidays and approved leave via `lib/calendar` (SPEC §5.2).
+  /// Derived values only — `modules/task/elapsed.ts` is the one writer.
+  elapsedMinutesRaw     Int @default(0)
+  elapsedMinutesWorking Int @default(0)
+
+  delayReason      String?
+  delayAttribution DelayAttribution?
+
+  /// 1–5, captured on approval and feeding the performance score (SPEC §5.6).
+  /// Not in the SPEC §4 Task listing — a Phase 4 addition, recorded in
+  /// docs/DECISIONS.md and added to SPEC §4.
+  qualityRating Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  project      Project          @relation(fields: [projectId], references: [id])
+  milestone    Milestone?       @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  assignee     User?            @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  watchers     TaskWatcher[]
+  comments     TaskComment[]
+  activity     TaskActivity[]
+  /// Tasks this one waits on, and the ones waiting on it.
+  dependencies TaskDependency[] @relation("TaskDependent")
+  dependents   TaskDependency[] @relation("TaskDependedOn")
+
+  @@index([deletedAt])
+  @@index([projectId, status])
+  @@index([assigneeId, status])
+  @@index([milestoneId])
+  @@index([status, dueDate])
+  @@index([dueDate])
+  @@index([priority])
+  @@index([categoryId])
+  @@map("tasks")
+}
+
+/// The many, to the assignee's one. Watchers see the task under
+/// `task.view.assigned` (SPEC §6) and are notified about it (SPEC §8), but are
+/// not accountable for it and never earn from it.
+///
+/// No `deletedAt`, matching `ProjectMember`/`UserRole`: a watcher is added and
+/// removed outright.
+model TaskWatcher {
+  taskId  String
+  userId  String
+  addedAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, userId])
+  @@index([userId])
+  @@map("task_watchers")
+}
+
+/// Finish-to-start, **warning only, never blocking** (SPEC §4, §5.1). There is
+/// deliberately no database constraint or application guard that stops a task
+/// starting while `dependsOnTask` is unapproved — the product surfaces a banner
+/// and lets the human decide.
+model TaskDependency {
+  taskId          String
+  dependsOnTaskId String
+  createdAt       DateTime @default(now())
+
+  task          Task @relation("TaskDependent", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOnTask Task @relation("TaskDependedOn", fields: [dependsOnTaskId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, dependsOnTaskId])
+  @@index([dependsOnTaskId])
+  @@map("task_dependencies")
+}
+
+/// SPEC §4: `id, taskId, authorId, body, mentions[]`. No attachments, no
+/// uploads — the only file input in the product is in-memory `.xlsx`
+/// (CLAUDE.md invariant 9).
+///
+/// `mentions` holds resolved user ids, not the raw `@handles`: the handle is a
+/// display detail that a rename would break, and the id is what the notifier
+/// (Phase 9) actually needs.
+model TaskComment {
+  id       String   @id @default(cuid())
+  taskId   String
+  authorId String
+  body     String
+  mentions String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation("TaskCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, createdAt])
+  @@index([authorId])
+  @@map("task_comments")
+}
+
+/// The human-readable history of one task (SPEC §4). Distinct from `AuditLog`,
+/// and both are written: the audit row is the compliance record (actor, ip,
+/// before/after diff, queryable across entities), this is the feed a منفّذ
+/// reads on the task itself.
+///
+/// Append-only in practice — nothing updates or deletes a row — because
+/// SPEC §5.1 makes it load-bearing: it is where a task's *original*
+/// `submittedAt` survives re-submission, and where `BLOCKED → previous`
+/// recovers what "previous" was.
+model TaskActivity {
+  id      String           @id @default(cuid())
+  taskId  String
+  /// Null for scheduler/system activity (the elapsed-time recompute job).
+  actorId String?
+  type    TaskActivityType
+  from    String?
+  to      String?
+
+  /// Set explicitly from the operation's `now`, never left to the database
+  /// clock: this column *is* the historical timestamp the SPEC relies on.
+  createdAt DateTime @default(now())
+
+  task  Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actor User? @relation("TaskActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([taskId, createdAt])
+  @@index([taskId, type, createdAt])
+  @@index([actorId])
+  @@map("task_activity")
 }

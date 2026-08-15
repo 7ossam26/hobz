@@ -119,6 +119,18 @@ export default defineConfig({
         // rather than quietly excluded because it lives outside `service.ts`.
         'src/modules/project/health.ts',
         'src/modules/project/code.ts',
+        // Phase 4. `task/state-machine.ts` and `task/elapsed.ts` carry the 90%
+        // gate below for the same reason `money` does: a silent wrong answer
+        // reads as a correct one. An illegal transition that slips through
+        // corrupts a task's history, and elapsed working time is a direct
+        // input to the penalty engine (SPEC §5.2 → §5.4). `task/mentions.ts`
+        // and `task/ports.ts` are listed without an elevated gate so their
+        // coverage is measured honestly rather than quietly excluded for
+        // living outside `service.ts`.
+        'src/modules/task/state-machine.ts',
+        'src/modules/task/elapsed.ts',
+        'src/modules/task/mentions.ts',
+        'src/modules/task/ports.ts',
       ],
       thresholds: {
         // Global gate (docs/TESTING.md §3).
@@ -196,6 +208,18 @@ export default defineConfig({
           statements: 90,
         },
         'src/modules/project/health.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/modules/task/state-machine.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/modules/task/elapsed.ts': {
           lines: 90,
           functions: 90,
           branches: 90,

@@ -395,6 +395,146 @@ export const ar = {
     },
   },
 
+  tasks: {
+    title: 'المهام',
+    create: 'مهمة جديدة',
+    edit: 'تعديل المهمة',
+    taskTitle: 'عنوان المهمة',
+    description: 'الوصف',
+    project: 'المشروع',
+    milestone: 'المرحلة',
+    noMilestone: 'بدون مرحلة',
+    assignee: 'المنفّذ',
+    noAssignee: 'بدون منفّذ',
+    watchers: 'المتابعون',
+    status: 'الحالة',
+    priority: 'الأولوية',
+    category: 'التصنيف',
+    estimatedHours: 'الساعات التقديرية',
+    taskValue: 'قيمة المهمة',
+    taskValueHint: 'تُملأ تلقائيًا من أجر المهمة الافتراضي للمنفّذ، ويمكن تعديلها.',
+    dueDate: 'موعد التسليم',
+    originalDueDate: 'الموعد الأصلي',
+    qualityRating: 'تقييم الجودة',
+    delayReason: 'سبب التأخير',
+    delayAttribution: 'مسؤولية التأخير',
+    created: 'تم إنشاء المهمة',
+    updated: 'تم تحديث المهمة',
+    deleted: 'تم حذف المهمة',
+    empty: 'لا توجد مهام بعد',
+    emptyAction: 'أنشئ أول مهمة',
+    deleteTitle: 'حذف المهمة',
+    deleteDescription:
+      'ستُخفى المهمة من كل الشاشات. الحركات المالية المرتبطة بها تبقى كما هي.',
+
+    /** The state-machine transitions, as the buttons that trigger them. */
+    actions: {
+      assign: 'إسناد المهمة',
+      reassign: 'تغيير المنفّذ',
+      start: 'بدء التنفيذ',
+      submit: 'تسليم المهمة',
+      sendToReview: 'إرسال للمراجعة',
+      requestRevision: 'طلب تعديل',
+      approve: 'اعتماد المهمة',
+      complete: 'إنهاء المهمة',
+      block: 'تعليق المهمة',
+      unblock: 'استئناف المهمة',
+      cancel: 'إلغاء المهمة',
+      addWatcher: 'إضافة متابع',
+      removeWatcher: 'إزالة متابع',
+    },
+
+    assignment: {
+      title: 'إسناد المهمة',
+      selectAssignee: 'اختر المنفّذ',
+      assigned: 'تم إسناد المهمة',
+      reassigned: 'تم تغيير منفّذ المهمة',
+      /** SPEC M4 — the mid-task reassignment decision. */
+      payPreviousTitle: 'صرف مستحق جزئي للمنفّذ السابق؟',
+      payPreviousDescription:
+        'المهمة كانت قيد التنفيذ. يمكنك صرف مبلغ جزئي للمنفّذ السابق مقابل ما أنجزه، ويُسجَّل كتسوية في حسابه.',
+      payPreviousAmount: 'المبلغ الجزئي',
+      payPreviousSkip: 'بدون صرف',
+      /** `{name}` is substituted at render time. */
+      payPreviousNote: 'مستحق جزئي عن مهمة أُعيد إسنادها — المنفّذ السابق {name}',
+      watcherAdded: 'تمت إضافة المتابع',
+      watcherRemoved: 'تمت إزالة المتابع',
+    },
+
+    approval: {
+      title: 'اعتماد المهمة',
+      ratingLabel: 'تقييم الجودة (١–٥)',
+      ratingHint: 'يدخل هذا التقييم في حساب مؤشر الأداء، ولا يؤثر على الخصومات.',
+      approved: 'تم اعتماد المهمة',
+      revisionTitle: 'طلب تعديل',
+      revisionReason: 'المطلوب تعديله',
+      revisionNewDueDate: 'موعد التسليم الجديد',
+      revisionRequested: 'تم طلب التعديل',
+    },
+
+    /** Finish-to-start, warning only — never a block (SPEC §4, §5.1). */
+    dependencies: {
+      title: 'الاعتماديات',
+      add: 'إضافة اعتمادية',
+      dependsOn: 'تعتمد على',
+      dependents: 'مهام تعتمد عليها',
+      empty: 'لا توجد اعتماديات',
+      added: 'تمت إضافة الاعتمادية',
+      removed: 'تمت إزالة الاعتمادية',
+      /** `{count}` is substituted at render time. */
+      warningTitle: 'هذه المهمة تعتمد على {count} مهمة غير معتمدة',
+      warningDescription:
+        'يمكنك المتابعة رغم ذلك — الاعتماديات تنبيه وليست قيدًا على البدء.',
+      warningDismiss: 'متابعة على أي حال',
+    },
+
+    comments: {
+      title: 'التعليقات',
+      placeholder: 'اكتب تعليقًا… استخدم @ لذكر زميل',
+      submit: 'إضافة تعليق',
+      empty: 'لا توجد تعليقات بعد',
+      added: 'تمت إضافة التعليق',
+      mentionHint: 'اكتب @ ثم اسم المستخدم',
+    },
+
+    activity: {
+      title: 'سجل المهمة',
+      empty: 'لا توجد حركات مسجَّلة',
+      system: 'النظام',
+    },
+
+    elapsed: {
+      raw: 'الزمن المنقضي',
+      working: 'زمن العمل الفعلي',
+      /** `{hours}`/`{minutes}` are substituted at render time. */
+      hoursMinutes: '{hours} س {minutes} د',
+      notStarted: 'لم يبدأ بعد',
+      hint: 'زمن العمل يستبعد العطلات الأسبوعية والأجازات الرسمية وإجازات المنفّذ المعتمدة.',
+    },
+
+    errors: {
+      /** `{from}`/`{to}` are substituted at render time. */
+      illegalTransition: 'لا يمكن نقل المهمة من "{from}" إلى "{to}"',
+      unknownCategory: 'تصنيف المهمة غير موجود في الإعدادات',
+      milestoneNotInProject: 'المرحلة المختارة لا تتبع هذا المشروع',
+      assigneeRequired: 'يجب اختيار منفّذ للمهمة',
+      assigneeInactive: 'لا يمكن إسناد مهمة لحساب معطّل أو محذوف',
+      assigneeUnchanged: 'المهمة مُسندة بالفعل لهذا المنفّذ',
+      sameAssigneeAsWatcher: 'منفّذ المهمة متابع لها تلقائيًا',
+      selfDependency: 'لا يمكن أن تعتمد المهمة على نفسها',
+      reciprocalDependency: 'المهمتان لا يمكن أن تعتمد كل منهما على الأخرى',
+      duplicateDependency: 'هذه الاعتمادية مضافة بالفعل',
+      ratingRange: 'تقييم الجودة بين ١ و٥',
+      ratingRequired: 'تقييم الجودة مطلوب عند الاعتماد',
+      notBlocked: 'المهمة ليست معلَّقة',
+      noPreviousStatus: 'لا توجد حالة سابقة لاستئناف المهمة إليها',
+      partialAmountRequiresPreviousAssignee: 'لا يوجد منفّذ سابق لصرف مستحق له',
+      partialAmountInvalid: 'المبلغ الجزئي يجب أن يكون أكبر من صفر',
+      partialAmountTooLarge: 'المبلغ الجزئي يتجاوز قيمة المهمة',
+      commentEmpty: 'التعليق فارغ',
+    },
+  },
+
   audit: {
     title: 'سجل التدقيق',
     subtitle: 'سجل غير قابل للتعديل أو الحذف لكل ما يمسّ المال والصلاحيات والحالة.',
@@ -456,6 +596,21 @@ export const ar = {
     'milestone.deleted': 'حذف مرحلة',
     'milestone.reordered': 'إعادة ترتيب المراحل',
     'projectTemplate.created': 'حفظ قالب مشروع',
+    'task.created': 'إنشاء مهمة',
+    'task.updated': 'تعديل مهمة',
+    'task.deleted': 'حذف مهمة',
+    'task.assigned': 'إسناد مهمة',
+    'task.reassigned': 'تغيير منفّذ مهمة',
+    'task.statusChanged': 'تغيير حالة مهمة',
+    'task.approved': 'اعتماد مهمة',
+    'task.revisionRequested': 'طلب تعديل على مهمة',
+    'task.cancelled': 'إلغاء مهمة',
+    'task.watcherAdded': 'إضافة متابع لمهمة',
+    'task.watcherRemoved': 'إزالة متابع من مهمة',
+    'task.dependencyAdded': 'إضافة اعتمادية لمهمة',
+    'task.dependencyRemoved': 'إزالة اعتمادية من مهمة',
+    'task.commented': 'تعليق على مهمة',
+    'task.partialPaymentIntent': 'مستحق جزئي لمنفّذ سابق',
   },
 
   impersonation: {
@@ -702,12 +857,49 @@ export const ar = {
       CONTRIBUTOR: 'مساهم',
       VIEWER: 'مشاهد',
     },
+    /** SPEC §4 enum — who a delay is attributed to, for reporting only. */
+    delayAttribution: {
+      WORKER: 'المنفّذ',
+      CLIENT: 'العميل',
+      INTERNAL: 'داخلي',
+      DEPENDENCY: 'اعتمادية',
+    },
+    /**
+     * Phase 4 addition — not a SPEC §4 enum. The vocabulary of the task
+     * activity feed. See docs/DECISIONS.md.
+     */
+    taskActivityType: {
+      CREATED: 'أُنشئت المهمة',
+      STATUS_CHANGED: 'تغيّرت الحالة',
+      ASSIGNED: 'تغيّر المنفّذ',
+      WATCHER_ADDED: 'أُضيف متابع',
+      WATCHER_REMOVED: 'أُزيل متابع',
+      COMMENTED: 'تعليق جديد',
+      DUE_DATE_CHANGED: 'تغيّر موعد التسليم',
+      VALUE_CHANGED: 'تغيّرت قيمة المهمة',
+      UPDATED: 'تعديل بيانات المهمة',
+      DEPENDENCY_ADDED: 'أُضيفت اعتمادية',
+      DEPENDENCY_REMOVED: 'أُزيلت اعتمادية',
+      ELAPSED_RECOMPUTED: 'أُعيد احتساب زمن العمل',
+    },
   },
 
   /** Default seed values for Settings entries that hold Arabic content. */
   defaults: {
     leaveTypes: ['إجازة سنوية', 'إجازة مرضية', 'إجازة طارئة', 'إجازة بدون أجر'],
-    taskCategories: ['تصميم', 'تطوير', 'محتوى', 'تسويق', 'مونتاج', 'إدارة'],
+    /**
+     * Categories carry a stable id plus an editable Arabic label, so renaming
+     * one in Settings never orphans the tasks that reference it
+     * (`Task.categoryId`). See docs/DECISIONS.md (Phase 4).
+     */
+    taskCategories: [
+      { id: 'design', label: 'تصميم' },
+      { id: 'development', label: 'تطوير' },
+      { id: 'content', label: 'محتوى' },
+      { id: 'marketing', label: 'تسويق' },
+      { id: 'video', label: 'مونتاج' },
+      { id: 'management', label: 'إدارة' },
+    ],
     paymentMethods: ['إنستاباي', 'فودافون كاش', 'تحويل بنكي', 'نقدًا'],
     whatsappTemplates: {
       taskAssigned:

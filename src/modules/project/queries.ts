@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db'
 import { scopeProjects } from '@/lib/rbac'
 import { getSettings } from '@/lib/settings'
 
-import type { HealthThresholds } from './health'
+import { taskHealthSignals, type HealthThresholds } from './health'
 import { listProjectsSchema } from './schema'
 import { getProject, getProjectFacetOptions, listProjects } from './service'
 import type { ProjectDetailDto, ProjectFacetOptionsDto, ProjectPageDto } from './types'
@@ -52,7 +52,16 @@ export async function getProjects(
   const actor = await requireActor()
   const filters = listProjectsSchema.parse(raw)
   const thresholds = await healthThresholds()
-  return listProjects(prisma, { scope: scopeProjects(actor), filters, now, thresholds })
+  return listProjects(prisma, {
+    scope: scopeProjects(actor),
+    filters,
+    now,
+    thresholds,
+    // Phase 4 filled this port in. Passed explicitly rather than defaulted
+    // inside the service so the pure-computation tests keep stating their
+    // signals inline instead of having to build tasks to imply them.
+    taskHealthLookup: taskHealthSignals(now),
+  })
 }
 
 export async function getProjectById(
@@ -61,7 +70,13 @@ export async function getProjectById(
 ): Promise<ProjectDetailDto> {
   const actor = await requireActor()
   const thresholds = await healthThresholds()
-  return getProject(prisma, { scope: scopeProjects(actor), id, now, thresholds })
+  return getProject(prisma, {
+    scope: scopeProjects(actor),
+    id,
+    now,
+    thresholds,
+    taskHealthLookup: taskHealthSignals(now),
+  })
 }
 
 /** Owner/client/status facet options for the `/projects` toolbar, scoped like the list itself. */

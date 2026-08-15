@@ -8,7 +8,6 @@ import { nextProjectCode } from './code'
 import {
   computeProjectHealth,
   effectiveProjectHealth,
-  healthWhereFragment,
   noTaskHealthSignals,
   type ComputedHealth,
   type HealthThresholds,
@@ -214,38 +213,54 @@ export async function listProjects(
   if (filters.clientId && filters.clientId.length > 0) {
     conditions.push(clientFilterFragment(filters.clientId))
   }
-  if (filters.health && filters.health.length > 0) {
-    conditions.push({
-      OR: filters.health.map((h) =>
-        healthWhereFragment(h, args.now, args.thresholds.amberDaysBeforeDue),
-      ),
-    })
-  }
-
   const where: WhereFragment =
     conditions.length === 1 ? conditions[0]! : { AND: conditions }
   const orderBy = projectOrderBy(filters.sort, filters.dir)
 
-  if (searchNeedle !== null) {
+  /**
+   * Health is filtered in application code, not in the `WHERE`.
+   *
+   * Phase 3 pushed it down as `healthWhereFragment`, which was correct exactly
+   * while task signals were hardcoded to zero: RED reduced to "past due date",
+   * which SQL can express. Phase 4 gave `TaskHealthLookup` a real query, so RED
+   * now also means "more overdue tasks than the threshold" or "blocked longer
+   * than N days" — a per-project aggregate over another table, against
+   * Settings-driven thresholds, that Prisma cannot put in a `where` without
+   * raw SQL. Phase 3's note named the two ways out; this is the second one,
+   * and it has the property that matters: the facet filters on *the same*
+   * `computeProjectHealth` the row itself displays, so a project can never be
+   * missing from its own health filter.
+   */
+  const healthFilter = filters.health && filters.health.length > 0 ? filters.health : null
+
+  if (searchNeedle !== null || healthFilter !== null) {
     const needle = searchNeedle
     const candidates = await db.project.findMany({
       where,
       select: PROJECT_SUMMARY_SELECT,
       orderBy,
     })
-    const matchedRows = candidates.filter(
-      (row) =>
-        normalizeArabic(row.name).includes(needle) ||
-        normalizeArabic(row.code).includes(needle),
+    const textMatched =
+      needle === null
+        ? candidates
+        : candidates.filter(
+            (row) =>
+              normalizeArabic(row.name).includes(needle) ||
+              normalizeArabic(row.code).includes(needle),
+          )
+
+    const computed = await Promise.all(
+      textMatched.map((row) => toSummaryDto(db, row, args.now, args.thresholds, lookup)),
     )
+    const matched =
+      healthFilter === null
+        ? computed
+        : computed.filter((dto) => healthFilter.includes(dto.health.health))
+
     const start = (filters.page - 1) * filters.pageSize
-    const pageRows = matchedRows.slice(start, start + filters.pageSize)
-    const items = await Promise.all(
-      pageRows.map((row) => toSummaryDto(db, row, args.now, args.thresholds, lookup)),
-    )
     return {
-      items,
-      total: matchedRows.length,
+      items: matched.slice(start, start + filters.pageSize),
+      total: matched.length,
       page: filters.page,
       pageSize: filters.pageSize,
     }

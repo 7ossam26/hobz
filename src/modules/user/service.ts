@@ -4,7 +4,7 @@ import type { Db } from '@/lib/db'
 import { ConflictError, DomainError, NotFoundError } from '@/lib/errors'
 import { SUPER_ADMIN_ROLE, type Actor } from '@/lib/rbac'
 
-import { noOpenTasks, type OpenTaskLookup } from './open-tasks'
+import { openTasksForUser, type OpenTaskLookup } from './open-tasks'
 import type { CreateUserInput, ListUsersInput, UpdateUserInput } from './schema'
 import type { UserDetailDto, UserPageDto, UserSummaryDto } from './types'
 
@@ -391,7 +391,7 @@ export async function deactivateUser(db: Db, args: DeactivateUserArgs): Promise<
     if (remaining === 0) throw new DomainError('users.cannotDeactivateLastSuperAdmin')
   }
 
-  const lookup = args.openTasks ?? noOpenTasks
+  const lookup = args.openTasks ?? openTasksForUser
   const open = await lookup(db, user.id)
   if (open.length > 0) {
     throw new ConflictError('users.hasOpenTasks', {

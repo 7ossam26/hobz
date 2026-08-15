@@ -21,12 +21,21 @@ import { cn } from '@/lib/utils'
 
 export function CategoryDot({
   category,
+  hueKey,
   index = -1,
   showLabel = true,
   className,
   ...props
 }: Omit<React.ComponentProps<'span'>, 'children'> & {
+  /** The Arabic label, as shown. */
   category: string
+  /**
+   * What the colour is derived from, when it differs from the label. Phase 4
+   * split `tasks.categories` into a stable `id` plus an editable `label`
+   * (`Task.categoryId`), so passing the id here is what keeps a category's
+   * colour from changing the day somebody rewords it in Settings.
+   */
+  hueKey?: string
   /** Position in the Settings list, when the caller knows it. */
   index?: number
   showLabel?: boolean
@@ -34,10 +43,13 @@ export function CategoryDot({
   return (
     <span
       data-slot="category"
-      className={cn('inline-flex w-fit items-center gap-1.5 text-xs whitespace-nowrap', className)}
+      className={cn(
+        'inline-flex w-fit items-center gap-1.5 text-xs whitespace-nowrap',
+        className,
+      )}
       {...props}
     >
-      <Dot hue={hueForIndexed(index, category)} />
+      <Dot hue={hueForIndexed(index, hueKey ?? category)} />
       <span className={showLabel ? undefined : 'sr-only'}>{category}</span>
     </span>
   )

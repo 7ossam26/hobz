@@ -826,3 +826,291 @@ readable after their subject is gone.
   make "does this project have open work" answerable, so — like Phase 1's
   guard — the rule belongs with Phase 4, not invented early against a lookup
   with nothing real to check.
+
+---
+
+## Phase 4 — Task Domain Engine
+
+**Date:** 2026-08-15 · **Model:** Opus 5
+
+### Built
+
+- **`Task`** — SPEC §4's field list, with `dueDate`/`originalDueDate`/
+  `categoryId`/`estimatedHours`/`taskValue` required (no `?` in the listing,
+  the same reading Phase 3 applied to `Project.startDate`/`dueDate`) and
+  `description` optional (free text, the `Client.notes` precedent).
+- **`TaskWatcher`, `TaskDependency`, `TaskComment`, `TaskActivity`** — the four
+  satellites. `ExtensionRequest` is deliberately _not_ here: it belongs to
+  Phase 6, which owns the lateness engine it feeds. `Task.originalDueDate` is
+  the seam it will write against.
+- **`modules/task/state-machine.ts`** — SPEC §5.1 as a pure function.
+  `canTransition` / `assertTransition` / `nextStatuses` / `stampTimestamps` /
+  `timestampRuleFor`, no Prisma and no clock, so the whole 10×10 legality
+  matrix is provable without a database.
+- **`modules/task/elapsed.ts`** — SPEC §5.2. Raw arithmetic here, working time
+  delegated to `lib/calendar` (Phase 6), clamped into `[0, raw]`.
+- **`modules/task/ports.ts`** — `LedgerPort` (the SPEC M4 partial-payment
+  intent) and `TaskEventBus` (`TaskApproved`, `TaskCancelled`), both no-ops
+  today.
+- **`modules/task/service.ts`** — create, edit, assign/reassign, watchers,
+  dependencies, comments with `@mention` resolution, one generic
+  `transitionTask` plus named wrappers, and `recomputeElapsed` for Phase 6's
+  job. Scoped reads via `scopeTasks`, plus `actions.ts` and `queries.ts`.
+- **The two ports earlier phases left for this one**, now filled in behind
+  their original interfaces: Phase 1's `OpenTaskLookup` (`openTasksForUser`)
+  and Phase 3's `TaskHealthLookup` (`taskHealthSignals`). Neither rule was
+  touched — which was the point of shipping them guarded and tested first.
+
+### Decisions worth recording
+
+**`any(active)` and `any(non-final)` are two different sets.** SPEC §5.1 uses
+two different words in adjacent lines, so they are read as naming two different
+things: _active_ (blockable) is `BACKLOG` … `REVISION_REQUESTED`; _non-final_
+(cancellable) is everything but `DONE` and `CANCELLED`. The consequence that
+mattered is that `APPROVED → CANCELLED` stays legal, which means a cancellation
+can land after an `EARNING` already exists. Rather than quietly forbid that
+edge to dodge the problem, `cancelTask` emits `TaskCancelled` carrying
+`wasApproved`, and Phase 7 inserts the `REVERSAL`. Diverging from the SPEC to
+paper over a money question would have been the worse trade.
+
+**There is no "unassign".** The brief says only the SPEC §5.1 transitions are
+legal, and clearing an assignee coherently would need an `ASSIGNED → BACKLOG`
+edge that is not in the list. So `assignTask` requires a non-null assignee; a
+wrong assignment is corrected by reassigning or cancelling. Flagged for Phase 5
+to raise if the UI genuinely needs the inverse — it is a one-line addition to
+`CORE_EDGES` plus a SPEC amendment, and it should be that visible.
+
+**`BLOCKED → previous` reads `TaskActivity`, not a column.** The feed already
+records every status change with its `from`, so a `statusBeforeBlock` column
+would be a second copy of one fact and a second thing that can be wrong. Same
+reasoning as the ledger's "balance is a sum, never a column". It also makes the
+activity feed load-bearing rather than decorative, which is what SPEC §5.1
+already implies by putting the original `submittedAt` there.
+
+**`submittedAt` is the one timestamp that re-stamps.** SPEC §5.1 reads oddly on
+first pass ("frozen … later revisions stamp `submittedAt` again"), and the
+resolution is that the _column_ tracks the latest delivery — which is what the
+current revision's lateness is measured against under T4's new due date — while
+the original survives as the `createdAt` of the first
+`STATUS_CHANGED → SUBMITTED` activity row. `assignedAt`, `startedAt` and
+`approvedAt` stamp once and never again.
+
+**`tasks.categories` became `{ id, label }`.** SPEC §4 names the column
+`categoryId`, and storing an Arabic label in something called an id means a
+rename in Settings silently re-categorises every task filed under it. The
+entries now carry a stable latin kebab-case id plus the editable Arabic name —
+the same split §2 already makes for statuses, applied to a list the operator
+also creates entries in. `CategoryDot` grew an optional `hueKey` so a
+category's colour follows its id rather than its wording. SPEC §7 updated.
+
+That reshape needed a **data migration**, which was nearly missed. The seed
+deliberately never overwrites an existing `Setting` row ("filling gaps only, so
+re-running it after go-live cannot silently reset a grace period"), and
+`lib/settings` Zod-validates on *read* — so an already-seeded database would
+have kept the old string array forever and started throwing the moment anybody
+opened the task form. `20260816000001_task_categories_taxonomy` rewrites it,
+keeping the meaningful id for labels that match a seeded default so a migrated
+database and a fresh one agree, and falling back to `category-N` for anything
+an operator added. `ROW_NUMBER()` keeps the ids unique even for two categories
+that shared a label — the old schema allowed that and the new one rejects it.
+Verified against real Postgres on five shapes, including the duplicate-label
+case and re-running it against the already-migrated shape (a no-op).
+
+**`taskValue` auto-fills once, and is never silently refreshed.** Assignment
+fills it from the assignee's `defaultTaskRate` when the task has no value yet.
+Reassignment does _not_ reprice to the new person's rate — that would change
+someone's earnings with nobody deciding it, which is precisely what this
+product exists to prevent. A manager who wants the new rate passes it.
+
+**The partial-payment audit row is written before the port call.** Today's
+`LedgerPort` is a no-op, so without it a manager's "pay them 300" would exist
+nowhere until Phase 7. The `task.partialPaymentIntent` AuditLog row carries the
+amount, the recipient and the deciding manager, so Phase 7 can replay every
+intent raised while the port was dark.
+
+**Two ports, not one.** `TaskEventBus` is a notification ("this happened,
+whoever cares"); `LedgerPort` is a command (a human answered a question with a
+number, and that instruction must arrive). An event that _must_ be handled is
+not an event, so collapsing them would have blurred a real distinction.
+
+**Moving a task is gated by permission, not by ownership.** Nothing requires
+the caller to *be* the assignee. SPEC §6 gates these edges by key and says
+nothing about ownership, and a manager submitting for a worker who is out sick
+is an ordinary day at an agency this size. What stops a منفّذ touching someone
+else's task is `scopeTasks` — they cannot read it, so they cannot name its id.
+"Only the assignee may submit" would be a policy addition and belongs in
+SPEC §6 before it belongs in code; recorded so the absence reads as a decision.
+
+**Transition permissions are derived, not repeated.** `actions.ts` reads each
+one from `permissionForTransition` rather than restating a literal, so a
+`task.approve` edge cannot quietly become a `task.edit` one — the kind of
+change that looks like a typo in review and is a privilege escalation in
+production. `unblockTask` is the one that cannot derive (its target is only
+known after a read) and gates on `task.edit`, which every blockable status
+carries anyway.
+
+**Phase 3's `healthWhereFragment` was removed, not fixed.** Its own doc-comment
+said Phase 4 must revisit it once real task signals existed, and named the two
+ways out. Pushing "more overdue tasks than the threshold" into a Prisma `where`
+needs raw SQL over an aggregate against Settings-driven thresholds; the
+alternative — filtering on `computeProjectHealth`'s own output in
+`listProjects` — has the property that actually matters: the facet can never
+disagree with the badge rendered on the row beside it. Its unit tests went with
+it, since they asserted the fragment agreed with the computation at signals
+that can no longer be assumed zero.
+
+**Elapsed working time is not written on submission.** `lib/calendar` throws
+`NotImplementedError` until Phase 6, so `transitionTask` writes only
+`elapsedMinutesRaw` (pure arithmetic) and leaves `elapsedMinutesWorking` as the
+job-updated column SPEC §4 calls it. `recomputeElapsed` exists, is idempotent,
+and is tested against a calendar fake — so Phase 6 inherits a proven call site
+rather than a comment promising one.
+
+### Surprises
+
+**The brief's two timestamp bullets look contradictory and are not.**
+"Timestamps stamped exactly once and never overwritten on re-submission" next
+to "re-submission preserves the original `submittedAt` in activity" only makes
+sense under one reading: the first bullet is about each stamp not being wound
+by unrelated transitions, and the second is the `submittedAt` exception. Read
+the other way — column frozen forever — the activity-feed clause would be
+redundant, and a revision's lateness against its new due date would be
+unmeasurable.
+
+**Soft-deleted projects do not hide their tasks.** `deleteProject` only sets
+`deletedAt`, and nothing at the database level cascades that to `Task`. Every
+task read therefore carries `project: { deletedAt: null }` alongside its own
+`deletedAt: null`. This is the same class of leak Phase 3's axis-11 sweep found
+in the project facets — worth noting that it reappears at every new
+parent/child boundary, and is not something the schema will catch for us.
+
+### The edge-case sweep (docs/TESTING.md §4, axes 1, 2, 9, 12)
+
+Run per the protocol. One constraint shaped how: the integration project targets
+a single shared `agency_test` and truncates between tests (docs/TESTING.md §2),
+so two agents running it at once would wipe each other's fixtures mid-test and
+manufacture failures that look like bugs. Per-agent databases were not available
+(the `agency` role cannot `CREATE DATABASE` — the same permission that blocks
+Prisma's shadow database on this machine), so the axes were split by whether
+they need a database: unit-scoped axes ran in parallel, and only one
+integration-scoped agent held the DB at a time.
+
+**Who wrote what.** Axis 2 was completed by a subagent. **Axes 1, 9 and 12 were
+written by the main agent**, not by subagents: the axis-1 and axis-9 subagents
+ran roughly 90 minutes without producing a file or touching the database —
+against axis 2's seven — and were abandoned. Recorded because "spawn subagents"
+is what docs/TESTING.md §4 asks for, and a future reader comparing this entry to
+the protocol should not have to guess which parts the protocol actually
+produced. The tests are the same tests either way; the provenance is not.
+
+**Axis 2 (time) — no bugs, and that is the finding.** 18 tests in
+`tests/unit/task/time-boundaries.test.ts`. Phase 4 reasons purely in instants
+and hands every Cairo-calendar question to `lib/calendar`, so the boundary holds
+by construction; the tests pin it so a later phase cannot quietly move the line.
+Egypt's real transitions are used (forward 2026-04-24, back 2026-10-29) and
+every DST effect is asserted as a *difference* between two identical wall-clock
+spans rather than against a hardcoded `+02:00`, so the suite survives Egypt
+changing the rule again. The sharpest case: with a 00:00–08:00 workday window,
+the spring-forward day contains the hour Cairo skips — a calendar counting
+wall-clock hours would report 480 working minutes against a 420-minute span,
+i.e. working time exceeding raw, which `computeElapsed` clamps but should never
+have to.
+
+That axis also corrected **docs/TESTING.md itself**, which had described axis 2
+as "DST-free". It has not been true since 2023, and left alone it would have
+told Phase 6 — the phase that actually implements the calendar — to skip the
+tests it most needs.
+
+**Axis 1 (boundaries) — one real bug, found and fixed.** 31 tests in
+`tests/integration/task/boundaries.test.ts`. `assignTask` auto-filled
+`taskValue` from the incoming assignee's `defaultTaskRate` whenever the current
+value was zero — including on a **reassignment**, which contradicted the rule
+written three lines above it in the same file ("silently repricing a task
+because a different person picked it up would make someone's earnings change
+without anybody deciding it"). Worse than the repricing: `recordPartialPayment`
+caps the outgoing worker's partial amount at `taskValue`, and the value it
+compared against was the one the auto-fill had just invented. A manager
+reassigning a zero-valued task could therefore pay out against a ceiling that
+existed only because of the reassignment they were making. Fixed by gating
+auto-fill on `previousAssigneeId === null` — "first assignment", not "currently
+zero". The rest of the axis pins the `Decimal(12,2)` ceiling and one cent over
+it (rejected before the insert, on both create and update), a partial payment
+of exactly `taskValue` versus one cent more, quality rating 1/5 versus 0/6 and
+a fractional 4.5, the strict "not overdue at the deadline instant, overdue one
+millisecond later" boundary — asserted to agree between the DTO flag and the
+`overdueOnly` filter — 59 seconds truncating to 0 elapsed minutes, empty/last/
+past-the-end pages, and the RAG thresholds at exactly-at versus one-over.
+
+**Axis 9 (state machine) — no bugs, one dead export removed.** 27 tests in
+`tests/unit/task/state-machine-edges.test.ts`, written as properties rather
+than examples: `assertTransition` agrees with `canTransition` in all 100 cells;
+`nextStatuses` returns exactly what `canTransition` allows; nothing leaves a
+final status under *any* context; every non-final status reaches `CANCELLED` in
+one step and has at least one exit. The `previousStatus` that `unblockTask`
+reads back from `TaskActivity` is treated as untrusted input — a corrupt or
+non-blockable value must make the machine refuse rather than let a task escape
+into a status it could not otherwise reach, while `CANCELLED` stays reachable
+so a task can never be stranded in `BLOCKED` with no legal move. `stampTimestamps`
+is pinned as pure: it does not mutate its argument, never returns a key whose
+value is `undefined` (which a Prisma `update` would silently ignore, turning a
+missed stamp into an invisible no-op), and returns the very `Date` it was
+given. Folding it over a three-round revision cycle proves only `submittedAt`
+moves.
+
+The axis also removed `isOpen()` from `state-machine.ts`: exported, zero
+callers anywhere (`isFinal` and `isBlockable` are both used by
+`canTransition`; `openTasksForUser` uses the `OPEN_TASK_STATUSES` array
+directly in a Prisma filter). It was speculative API, and it was the reason the
+file sat at 87.5% function coverage against its own 90% gate.
+
+**Axis 12 (empty/null) — no bugs.** 16 tests in
+`tests/integration/task/empty-values.test.ts`. A brand-new agency's first hour
+in the product is made entirely of these: a task with no assignee, description,
+milestone or value; an assignee with no `defaultTaskRate` (assigned at zero
+rather than refused); a user created seconds ago with no open tasks; a project
+with no tasks, and a project id that does not exist at all, both answering zero
+signals rather than throwing. Empty filter arrays and a whitespace-only search
+are ignored rather than matching nothing — the failure mode where a blank box
+silently hides every row. A comment with no mentions stores `[]`, not `null`.
+And a task sitting in `BLOCKED` with no block activity refuses to resume rather
+than guessing a status the machine never authorised.
+
+### Deferred (with owners)
+
+| Deferred                                                                      | Phase |
+| ----------------------------------------------------------------------------- | ----- |
+| `ExtensionRequest` model + the request/approve flow                           | 6     |
+| `elapsedMinutesWorking` actually populated (needs `lib/calendar`)             | 6     |
+| Nightly `recomputeElapsed` job under the advisory lock                        | 6     |
+| Leave-overlap warning when assigning (needs `Leave`)                          | 6     |
+| `EARNING` from `TaskApproved`; `REVERSAL` from `TaskCancelled(wasApproved)`   | 7     |
+| `ADJUSTMENT` from `AdjustmentIntent` (+ replay of intents recorded meanwhile) | 7     |
+| Task UI: board/list/detail sheet, dependency banner, comment editor           | 5     |
+| `ProjectTemplatePayload.tasks` — still `never[]`                              | 5     |
+| Notifications on assign/submit/approve/mention                                | 9     |
+
+### Known limitations
+
+- **No delete guard on `Project` for open tasks.** Phase 3 recorded this as
+  "belongs with Phase 4", but it is a new business rule rather than a port to
+  fill, and the brief did not ask for one. `openTasksForUser` shows the query
+  is now trivial; adding the rule is a deliberate scope decision, not a
+  technical one.
+- **`Task.deletedAt` has no writer.** SPEC §6 has no `task.delete` permission,
+  so inventing an action to match the column would have meant inventing a
+  permission. Cancellation is how a task stops existing for its worker; the
+  column is respected by every read and waits for a rule that names it.
+- **Dependency cycles longer than two are allowed.** Warnings resolve one level
+  deep, so a cycle costs a confusing banner and never a hang. Self-dependency
+  and the reciprocal A↔B pair are rejected because both are cheap to catch and
+  unambiguously mistakes; a full graph walk on every write would be a real cost
+  for a rule that never blocks anything.
+- **The task list materialises its candidate rows when searching.** Arabic
+  orthographic folding cannot run inside a `WHERE` clause (`lib/search`), the
+  same trade `listProjects` and `listClients` already make at SPEC §2's capped
+  scale.
+- **`prettier --check` fails repo-wide, and did before this phase.** Files this
+  phase never touched (e.g. `tests/unit/phone/phone.test.ts`) are already
+  flagged, so it looks like a config or version drift rather than a regression.
+  Phase 4's own files are formatted; the pre-existing drift is left alone
+  rather than buried inside an unrelated diff.

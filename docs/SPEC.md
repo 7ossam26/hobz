@@ -133,13 +133,15 @@ Project     id, code, name, clientId?, ownerId, engagementType,
             gracePeriodHours?, penalizeRevisionLateness?, deletedAt
 ProjectMember    projectId, userId, roleInProject
 Milestone   id, projectId, name, dueDate, order, status
-Task        id, projectId, milestoneId?, title, description,
+Task        id, projectId, milestoneId?, title, description?,
             assigneeId?, status, priority, categoryId,
             estimatedHours, taskValue,                 ← money the assignee earns
             dueDate, originalDueDate,
             assignedAt, startedAt, submittedAt, approvedAt,
             elapsedMinutesRaw, elapsedMinutesWorking,  ← denormalized, job-updated
-            delayReason?, delayAttribution?, deletedAt
+            delayReason?, delayAttribution?,
+            qualityRating?,                            ← 1–5, set on approval (§5.6)
+            deletedAt
 TaskWatcher      taskId, userId
 TaskDependency   taskId, dependsOnTaskId              ← warning only, never blocking
 TaskComment      id, taskId, authorId, body, mentions[]
@@ -209,6 +211,36 @@ any(non-final) → CANCELLED
 - `submittedAt` is stamped on entry to `SUBMITTED`, and **frozen** — later revisions stamp `submittedAt` again but the original is preserved in `TaskActivity`.
 - `APPROVED` is the only event that creates an `EARNING` ledger entry.
 - Dependencies produce a **warning banner**, never a block.
+
+**How the machine is read (settled in Phase 4, `modules/task/state-machine.ts`)**
+
+- **`any(active)` is narrower than `any(non-final)`.** Two adjacent lines use two
+  different words, so they name two different sets. *Active* — and therefore
+  blockable — is work in flight: `BACKLOG` through `REVISION_REQUESTED`. An
+  `APPROVED` task is finished being worked on; blocking it would say nothing.
+  *Non-final* is everything except `DONE` and `CANCELLED`.
+- **`APPROVED → CANCELLED` is therefore legal**, and it is the one cancellation
+  that can land *after* an `EARNING` exists. Cancellation emits a
+  `TaskCancelled` domain event carrying `wasApproved`, which Phase 7 subscribes
+  to for the `REVERSAL`. Quietly making `APPROVED` uncancellable would have
+  dodged the money question rather than answered it.
+- **There is no `ASSIGNED → BACKLOG`, so there is no "unassign".** Only the
+  transitions listed above are legal, and adding an eleventh edge for a
+  convenience action would stop this list being the contract. A wrong assignment
+  is corrected by reassigning (`assignTask`) or by cancelling.
+- **Timestamps stamp once, except `submittedAt`.** `assignedAt`, `startedAt` and
+  `approvedAt` are never overwritten — re-entering `IN_PROGRESS` after a revision
+  does not mean the work started again. `submittedAt` tracks the latest delivery
+  (which is what the current revision's lateness is measured against under T4),
+  and the first one survives as the `createdAt` of the first
+  `STATUS_CHANGED → SUBMITTED` activity row.
+- **`BLOCKED → previous` reads the activity feed**, not a column. `TaskActivity`
+  already records every status change with its `from`; a `statusBeforeBlock`
+  column would be a second copy of the same fact and a second thing that can be
+  wrong. This makes the feed load-bearing, not decorative.
+- **Elapsed time is written in two places.** `elapsedMinutesRaw` is stamped on
+  submission (pure arithmetic). `elapsedMinutesWorking` is the job-updated column
+  §4 calls it, written by `recomputeElapsed` once `lib/calendar` exists (Phase 6).
 
 ### 5.2 Elapsed time
 
@@ -342,6 +374,14 @@ loosen it, and neither should need a redeploy.
 
 Backed by a typed `Setting` table with a cached, Zod-validated accessor
 (`getSetting('penalty.defaultGraceHours')`). **No magic numbers in code, ever.**
+
+**Taxonomy settings carry an id, not just a label (settled in Phase 4).**
+`tasks.categories` is a list of `{ id, label }` — a stable latin kebab-case
+identifier plus the editable Arabic name. `Task.categoryId` stores the id, so
+renaming a category in Settings is a label change and not a silent
+re-categorisation of every task ever filed under it. It is the same split §2
+already makes for statuses ("Arabic labels are editable; the enum values are
+not"), applied to a list the operator also creates entries in.
 
 ---
 

@@ -128,9 +128,49 @@ describe('lib/settings — القيم الافتراضية تحترم قواعد
     expect(SETTINGS_CATALOG['calendar.leaveTypes'].schema.safeParse([]).success).toBe(
       false,
     )
-    expect(SETTINGS_CATALOG['tasks.categories'].schema.safeParse(['']).success).toBe(
-      false,
+  })
+
+  /**
+   * `Task.categoryId` (SPEC §4) stores the id, never the label, so that
+   * renaming a category in Settings is a label change and not a silent
+   * re-categorisation of every task filed under it. That only holds if the ids
+   * are real, unique and stable — which is what this asserts.
+   */
+  it('تصنيفات المهام تحمل معرّفًا ثابتًا ومسمى عربيًا', () => {
+    const schema = SETTINGS_CATALOG['tasks.categories'].schema
+
+    expect(schema.safeParse([]).success).toBe(false)
+    expect(schema.safeParse(['تصميم']).success).toBe(false)
+    expect(schema.safeParse([{ id: 'design', label: '' }]).success).toBe(false)
+    expect(schema.safeParse([{ id: '', label: 'تصميم' }]).success).toBe(false)
+    // Ids are latin kebab-case: they end up in URLs, filters and audit rows.
+    expect(schema.safeParse([{ id: 'تصميم', label: 'تصميم' }]).success).toBe(false)
+    expect(schema.safeParse([{ id: 'Design', label: 'تصميم' }]).success).toBe(false)
+    expect(schema.safeParse([{ id: '-design', label: 'تصميم' }]).success).toBe(false)
+
+    expect(schema.safeParse([{ id: 'design', label: 'تصميم' }]).success).toBe(true)
+    expect(schema.safeParse([{ id: 'motion-design', label: 'تصميم' }]).success).toBe(
+      true,
     )
+  })
+
+  it('يرفض تكرار معرّف تصنيف', () => {
+    const schema = SETTINGS_CATALOG['tasks.categories'].schema
+
+    expect(
+      schema.safeParse([
+        { id: 'design', label: 'تصميم' },
+        { id: 'design', label: 'تصميم آخر' },
+      ]).success,
+    ).toBe(false)
+  })
+
+  it('التصنيفات الافتراضية معرّفاتها فريدة', () => {
+    const defaults = SETTINGS_CATALOG['tasks.categories'].default
+    const ids = defaults.map((c) => c.id)
+
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(ids.length).toBeGreaterThan(0)
   })
 
   it('يوفّر مسمى عربيًا لكل حالة مهمة', () => {
