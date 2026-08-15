@@ -17,6 +17,8 @@ export interface TaskSummaryDto {
   id: string
   projectId: string
   projectName: string
+  /** The project's short code (`PRJ-0001…`) — Phase 5's board/card identity mark. */
+  projectCode: string
   milestoneId: string | null
   title: string
   status: TaskStatus
@@ -62,6 +64,21 @@ export interface DependencyWarningDto {
   title: string
   status: TaskStatus
   projectId: string
+}
+
+/**
+ * One side of the Phase 5 dependencies tab's graph — a dependency this task
+ * is waiting on, or a task waiting on this one. `satisfied` mirrors the same
+ * APPROVED/DONE test `DependencyWarningDto`'s absence implies; carried
+ * explicitly here because this DTO, unlike the warning list, includes
+ * satisfied rows too.
+ */
+export interface DependencyRowDto {
+  taskId: string
+  title: string
+  status: TaskStatus
+  projectId: string
+  satisfied: boolean
 }
 
 export interface TaskCommentDto {

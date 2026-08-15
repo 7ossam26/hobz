@@ -84,3 +84,26 @@ export async function getProjectFacets(): Promise<ProjectFacetOptionsDto> {
   const actor = await requireActor()
   return getProjectFacetOptions(prisma, scopeProjects(actor))
 }
+
+export interface ProjectOptionDto {
+  id: string
+  code: string
+  name: string
+}
+
+/**
+ * The lean project list a `<select>` needs — the task module's create form
+ * and its project facet (Phase 5), mirroring `getUserOptions` (`modules/user/
+ * queries.ts`): scoped rather than all-or-nothing, so a `project.view.assigned`
+ * holder sees only the projects they could otherwise open, never a dropdown
+ * naming one they cannot.
+ */
+export async function getProjectOptions(): Promise<ProjectOptionDto[]> {
+  const actor = await requireActor()
+  return prisma.project.findMany({
+    where: scopeProjects(actor),
+    select: { id: true, code: true, name: true },
+    orderBy: { code: 'asc' },
+    take: 200,
+  })
+}

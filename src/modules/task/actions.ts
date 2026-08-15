@@ -4,15 +4,27 @@ import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 
 import { clientIpFromHeaders } from '@/lib/auth/ip'
-import { requirePermission } from '@/lib/auth/session'
+import { requireAuth, requirePermission } from '@/lib/auth/session'
 import { prisma } from '@/lib/db'
 import { getSetting } from '@/lib/settings'
 
+import {
+  getTaskActivity,
+  getTaskById,
+  getTaskComments,
+  getTaskDependencyGraph,
+  getTaskDependencyWarnings,
+  getTaskOptionsForProject,
+  type TaskOptionDto,
+} from './queries'
 import {
   addCommentSchema,
   approveTaskSchema,
   assignTaskSchema,
   blockTaskSchema,
+  bulkAssignTasksSchema,
+  bulkSetDueDateSchema,
+  bulkSetPrioritySchema,
   cancelTaskSchema,
   createTaskSchema,
   requestRevisionSchema,
@@ -41,7 +53,14 @@ import {
   permissionForTransition,
   updateTask,
 } from './service'
-import type { TaskDetailDto, TaskTransitionResultDto } from './types'
+import type {
+  DependencyRowDto,
+  DependencyWarningDto,
+  TaskActivityDto,
+  TaskCommentDto,
+  TaskDetailDto,
+  TaskTransitionResultDto,
+} from './types'
 
 /**
  * Thin server actions: session → permission → zod → service → revalidate
@@ -275,5 +294,195 @@ export const addTaskCommentAction = requirePermission(
     const comment = await addComment(prisma, { actor, input, ip: await ip() })
     revalidateTask(input.taskId)
     return comment
+  },
+)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 5 — the detail sheet's fetch-on-open, and list-view bulk actions
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface TaskSheetDataDto {
+  task: TaskDetailDto
+  comments: TaskCommentDto[]
+  activity: TaskActivityDto[]
+  warnings: DependencyWarningDto[]
+  dependencies: DependencyRowDto[]
+  dependents: DependencyRowDto[]
+}
+
+/**
+ * The task detail `EntitySheet`'s one round trip. Board and list rows only
+ * carry a `TaskSummaryDto` (CLAUDE.md: never fetch data in a client waterfall
+ * — the list itself is server-rendered), so opening the sheet on a row click
+ * needs its own fetch; this is that fetch, done once and combined, following
+ * the sheet's own documented exception: "opens the sheet in a pending state
+ * around a server action — never a `useEffect` waterfall"
+ * (`components/shared/entity-sheet.tsx`). `requireAuth`, not
+ * `requirePermission`, because every read it composes already self-scopes via
+ * `scopeTasks` (`modules/task/queries.ts`) — the same reason those queries
+ * carry no `assertCan` gate of their own.
+ */
+export const getTaskSheetDataAction = requireAuth(
+  async (_actor, taskId: string): Promise<TaskSheetDataDto> => {
+    const [task, comments, activity, warnings, graph] = await Promise.all([
+      getTaskById(taskId),
+      getTaskComments(taskId),
+      getTaskActivity(taskId),
+      getTaskDependencyWarnings(taskId),
+      getTaskDependencyGraph(taskId),
+    ])
+    return {
+      task,
+      comments,
+      activity,
+      warnings,
+      dependencies: graph.dependencies,
+      dependents: graph.dependents,
+    }
+  },
+)
+
+/** The dependency picker's task list, fetched once the project is known. */
+export const getTaskOptionsForProjectAction = requireAuth(
+  async (_actor, projectId: string): Promise<TaskOptionDto[]> =>
+    getTaskOptionsForProject(projectId),
+)
+
+export interface BulkTaskResultDto {
+  succeeded: number
+  failed: number
+}
+
+/**
+ * The current row, in exactly the shape `updateTask`'s full-core-shape input
+ * needs (`modules/task/schema.ts`'s `updateTaskSchema` — status and assignee
+ * have their own guarded paths, but every other field is required together,
+ * so a partial bulk edit still has to resend the rest unchanged).
+ */
+async function loadUpdatableCore(taskId: string) {
+  return prisma.task.findFirst({
+    where: { id: taskId, deletedAt: null },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      milestoneId: true,
+      priority: true,
+      categoryId: true,
+      estimatedHours: true,
+      dueDate: true,
+      delayReason: true,
+      delayAttribution: true,
+    },
+  })
+}
+
+/**
+ * `Promise.allSettled` over the individually-permission-checked and
+ * individually-audited `assignTask`/`updateTask` (`modules/task/service.ts`,
+ * unmodified) — a bulk action is orchestration, not new domain logic: one bad
+ * row (an inactive assignee, a task deleted between page load and click)
+ * fails on its own and the rest still land, which is why this returns a
+ * count rather than throwing on the first rejection.
+ */
+export const bulkAssignTaskAction = requirePermission(
+  permissionForTransition('ASSIGNED'),
+  async (actor, raw: unknown): Promise<BulkTaskResultDto> => {
+    const input = bulkAssignTasksSchema.parse(raw)
+    const requestIp = await ip()
+
+    const results = await Promise.allSettled(
+      input.taskIds.map((taskId) =>
+        assignTask(prisma, {
+          actor,
+          // `taskValue: null` — no override. Matches what
+          // `assignTaskSchema.parse()` itself produces for an omitted field
+          // (`moneySchema`'s transform), since this call bypasses the schema
+          // and constructs the already-parsed `AssignTaskInput` directly.
+          input: { taskId, assigneeId: input.assigneeId, taskValue: null },
+          ip: requestIp,
+        }),
+      ),
+    )
+
+    const succeeded = results.filter((r) => r.status === 'fulfilled').length
+    revalidatePath('/tasks')
+    return { succeeded, failed: results.length - succeeded }
+  },
+)
+
+export const bulkChangeTaskPriorityAction = requirePermission(
+  'task.edit',
+  async (actor, raw: unknown): Promise<BulkTaskResultDto> => {
+    const input = bulkSetPrioritySchema.parse(raw)
+    const cats = await categories()
+    const requestIp = await ip()
+
+    const results = await Promise.allSettled(
+      input.taskIds.map(async (taskId) => {
+        const row = await loadUpdatableCore(taskId)
+        if (!row) throw new Error(`task ${taskId} not found`)
+        await updateTask(prisma, {
+          actor,
+          categories: cats,
+          ip: requestIp,
+          input: {
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            milestoneId: row.milestoneId,
+            priority: input.priority,
+            categoryId: row.categoryId,
+            estimatedHours: row.estimatedHours.toNumber(),
+            dueDate: row.dueDate,
+            taskValue: null,
+            delayReason: row.delayReason,
+            delayAttribution: row.delayAttribution,
+          },
+        })
+      }),
+    )
+
+    const succeeded = results.filter((r) => r.status === 'fulfilled').length
+    revalidatePath('/tasks')
+    return { succeeded, failed: results.length - succeeded }
+  },
+)
+
+export const bulkChangeTaskDueDateAction = requirePermission(
+  'task.edit',
+  async (actor, raw: unknown): Promise<BulkTaskResultDto> => {
+    const input = bulkSetDueDateSchema.parse(raw)
+    const cats = await categories()
+    const requestIp = await ip()
+
+    const results = await Promise.allSettled(
+      input.taskIds.map(async (taskId) => {
+        const row = await loadUpdatableCore(taskId)
+        if (!row) throw new Error(`task ${taskId} not found`)
+        await updateTask(prisma, {
+          actor,
+          categories: cats,
+          ip: requestIp,
+          input: {
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            milestoneId: row.milestoneId,
+            priority: row.priority,
+            categoryId: row.categoryId,
+            estimatedHours: row.estimatedHours.toNumber(),
+            dueDate: input.dueDate,
+            taskValue: null,
+            delayReason: row.delayReason,
+            delayAttribution: row.delayAttribution,
+          },
+        })
+      }),
+    )
+
+    const succeeded = results.filter((r) => r.status === 'fulfilled').length
+    revalidatePath('/tasks')
+    return { succeeded, failed: results.length - succeeded }
   },
 )

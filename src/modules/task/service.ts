@@ -36,6 +36,7 @@ import {
   type TaskTimestamps,
 } from './state-machine'
 import type {
+  DependencyRowDto,
   DependencyWarningDto,
   TaskActivityDto,
   TaskActivityKind,
@@ -91,7 +92,7 @@ const TASK_SUMMARY_SELECT = {
   estimatedHours: true,
   dueDate: true,
   assignee: { select: PERSON_SELECT },
-  project: { select: { name: true } },
+  project: { select: { name: true, code: true } },
 } as const
 
 const TASK_DETAIL_SELECT = {
@@ -146,7 +147,7 @@ type SummaryRow = {
   estimatedHours: { toFixed(dp: number): string }
   dueDate: Date
   assignee: { id: string; fullName: string; username: string } | null
-  project: { name: string }
+  project: { name: string; code: string }
 }
 
 function toSummaryDto(row: SummaryRow, now: Date): TaskSummaryDto {
@@ -155,6 +156,7 @@ function toSummaryDto(row: SummaryRow, now: Date): TaskSummaryDto {
     id: row.id,
     projectId: row.projectId,
     projectName: row.project.name,
+    projectCode: row.project.code,
     milestoneId: row.milestoneId,
     title: row.title,
     status,
@@ -471,6 +473,59 @@ export async function getDependencyWarnings(
     status: row.dependsOnTask.status as TaskStatus,
     projectId: row.dependsOnTask.projectId,
   }))
+}
+
+const SATISFIED_STATUSES: readonly TaskStatus[] = ['APPROVED', 'DONE']
+
+/**
+ * The full dependency graph around one task — both directions, satisfied and
+ * not — for the Phase 5 sheet's dependencies tab, which has to let a manager
+ * *manage* the list (add, remove) and not only read the warning banner
+ * `getDependencyWarnings` produces. That function stays exactly as Phase 4
+ * left it (only unsatisfied predecessors, which is precisely what a warning
+ * banner needs); this is a second, additive read next to it, not a
+ * replacement.
+ */
+export async function getDependencyGraph(
+  db: Db,
+  taskId: string,
+): Promise<{ dependencies: DependencyRowDto[]; dependents: DependencyRowDto[] }> {
+  const [dependencies, dependents] = await Promise.all([
+    db.taskDependency.findMany({
+      where: { taskId, dependsOnTask: { deletedAt: null } },
+      select: {
+        dependsOnTask: {
+          select: { id: true, title: true, status: true, projectId: true },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    }),
+    db.taskDependency.findMany({
+      where: { dependsOnTaskId: taskId, task: { deletedAt: null } },
+      select: {
+        task: { select: { id: true, title: true, status: true, projectId: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    }),
+  ])
+
+  const toRow = (row: {
+    id: string
+    title: string
+    status: string
+    projectId: string
+  }): DependencyRowDto => ({
+    taskId: row.id,
+    title: row.title,
+    status: row.status as TaskStatus,
+    projectId: row.projectId,
+    satisfied: SATISFIED_STATUSES.includes(row.status as TaskStatus),
+  })
+
+  return {
+    dependencies: dependencies.map((row) => toRow(row.dependsOnTask)),
+    dependents: dependents.map((row) => toRow(row.task)),
+  }
 }
 
 export async function listComments(db: Db, taskId: string): Promise<TaskCommentDto[]> {

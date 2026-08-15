@@ -113,6 +113,22 @@ export const ar = {
   ],
 
   /**
+   * Gregorian weekday names, Egyptian usage — the week starts Sunday (SPEC §2:
+   * Gregorian calendar). Index 0 is Sunday, matching `Date.getUTCDay()`
+   * exactly, which is what the Phase 5 calendar view's grid math indexes by.
+   */
+  weekdays: [
+    'الأحد',
+    'الاثنين',
+    'الثلاثاء',
+    'الأربعاء',
+    'الخميس',
+    'الجمعة',
+    'السبت',
+  ],
+  weekdaysShort: ['أحد', 'إثن', 'ثلا', 'أرب', 'خمي', 'جمع', 'سبت'],
+
+  /**
    * Relative time. Arabic counts inflect in four bands — singular, dual,
    * plural-of-paucity (3–10), and singular-again (11+) — so each unit carries
    * four forms. `lib/datetime` picks between them; getting this wrong is the
@@ -501,6 +517,21 @@ export const ar = {
       title: 'سجل المهمة',
       empty: 'لا توجد حركات مسجَّلة',
       system: 'النظام',
+      /** One line per `TaskActivityKind` (`modules/task/types.ts`). */
+      types: {
+        CREATED: 'إنشاء المهمة',
+        STATUS_CHANGED: 'تغيير الحالة',
+        ASSIGNED: 'تغيير المنفّذ',
+        WATCHER_ADDED: 'إضافة متابع',
+        WATCHER_REMOVED: 'إزالة متابع',
+        COMMENTED: 'إضافة تعليق',
+        DUE_DATE_CHANGED: 'تغيير موعد التسليم',
+        VALUE_CHANGED: 'تغيير قيمة المهمة',
+        UPDATED: 'تعديل بيانات المهمة',
+        DEPENDENCY_ADDED: 'إضافة اعتمادية',
+        DEPENDENCY_REMOVED: 'إزالة اعتمادية',
+        ELAPSED_RECOMPUTED: 'إعادة احتساب الزمن',
+      },
     },
 
     elapsed: {
@@ -521,7 +552,10 @@ export const ar = {
 
     overdue: 'متأخرة',
     unassigned: 'بدون منفّذ',
+    mine: 'مهامي',
     searchPlaceholder: 'ابحث في عناوين المهام…',
+    /** `{count}` is substituted at render time. */
+    truncatedNotice: 'تُعرض أول {count} مهمة فقط — ضيّق التصفية لرؤية الباقي',
 
     facets: {
       project: 'المشروع',

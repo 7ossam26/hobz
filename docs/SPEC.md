@@ -470,7 +470,11 @@ because someone prefers compact rows. The server reads the cookies while
 rendering `<html>`, so the first paint is already correct — no flash, no
 correcting `useEffect`, no client JS on first paint. The trade, named
 deliberately: the preference is per browser, so a second machine starts at the
-default.
+default. Phase 5's per-user task view preference (board/list/calendar,
+`agency_task_view`) follows the same cookie shape and the same trade, for the
+same reason — it is not business data, and there is no per-user preference
+table in the schema to put it in instead. The URL's `?view=` always wins when
+present, so the cookie is only what a fresh visit falls back to.
 
 **Table state lives in the URL.** Page, sort, facets, search and column
 visibility are inputs to a Prisma query that runs in a Server Component, so they

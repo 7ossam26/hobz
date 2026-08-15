@@ -1114,3 +1114,269 @@ than guessing a status the machine never authorised.
   flagged, so it looks like a config or version drift rather than a regression.
   Phase 4's own files are formatted; the pre-existing drift is left alone
   rather than buried inside an unrelated diff.
+
+---
+
+## Phase 5 — Task Experience
+
+**Date:** 2026-08-15 · **Model:** Sonnet 5
+
+### Built
+
+- **`/tasks`** — one route, three interchangeable views (board / list /
+  calendar) sharing one filter vocabulary (`task-filters.ts`'s
+  `toTaskQueryFilters`) and one detail sheet. The domain stayed exactly where
+  Phase 4 left it: every mutation in this phase calls an existing named
+  service function (`assignTask`, `updateTask`, `startTask`… ) or a new,
+  thin, additive one — `modules/task/service.ts`'s only behavioural addition
+  is the `dueThisWeek` facet, written as a direct copy of the `overdueOnly`
+  block beside it.
+- **Kanban board** — ten columns, one per `TaskStatus`, native HTML5 drag and
+  drop (no library, Phase 0/2's precedent). A drop is classified by
+  `task-transitions.ts`'s pure `classifyDrop(from, to, permissions)` before
+  anything touches state: `noop` / `illegal` / `forbidden` / `dialog` /
+  `direct`. Plain transitions (`IN_PROGRESS`, `SUBMITTED`, `IN_REVIEW`,
+  `DONE`) move the card optimistically and roll back with a toast on
+  rejection; the five that need more than a status
+  (`ASSIGNED` → assignee, `APPROVED` → rating, `REVISION_REQUESTED` →
+  reason + new date, `BLOCKED`/`CANCELLED` → reason) open the same dialogs
+  the detail sheet's status control uses, so a transition looks identical
+  wherever it is made. A card in `BLOCKED` or a final status is not
+  draggable at all — `BLOCKED → previous` depends on activity history a
+  board card does not carry, so it gets a dedicated "استئناف" action instead
+  of a predicted drop target.
+- **List view** — `DataTable` with seven facets (project, assignee, status,
+  priority, category, overdue-only, due-this-week), saved views (already
+  built into `DataTable`, nothing new needed), and a new row-selection column
+  driving three bulk actions (assign, change priority, change due date).
+  Bulk actions are new, thin orchestration in `actions.ts` — `Promise.
+  allSettled` over the existing, unmodified `assignTask`/`updateTask` — never
+  a new code path through the state machine or the ledger ports.
+- **Calendar view** — month (fixed 6-week/42-cell grid) and week, Sunday-
+  first, built from scratch in `calendar/date-grid.ts` (pure UTC-day
+  arithmetic; deliberately *not* `lib/calendar` — this is grid decoration,
+  not a lateness calculation, and SPEC §5.2/§5.3's business-day rules stay
+  Phase 6's alone).
+- **The detail sheet** — fetches on open, the one documented exception to
+  "`EntitySheet` never fetches": a board card or list row only ever carries
+  a `TaskSummaryDto`, so `getTaskSheetDataAction` (a new `requireAuth`
+  read, mirroring the command palette's `loadCommandDirectoryAction`
+  precedent) combines detail + comments + activity + dependency warnings +
+  the full dependency graph into one round trip. Inline fields save
+  optimistically field-by-field, always resending the *whole* `UpdateTaskInput`
+  core shape so an edit to priority can never silently wipe out a
+  `delayReason` the task already carried. The status control, watchers,
+  reassignment (with SPEC M4's "pay the previous assignee?" question),
+  dependencies (add/remove against a picker, warnings banner, and the
+  "dependents" direction), comments (`@mention` autocomplete against the
+  same user directory the command palette already fetches once), and the
+  activity feed (a human sentence per `TaskActivityKind`, user ids resolved
+  against that same directory) round out the seven required pieces.
+- **Quick-create** — one dialog, two entry points: the board column footer
+  (only on `BACKLOG` and `ASSIGNED`, the two statuses `createTask` can
+  actually land a new task in) and the command palette's new "مهمة جديدة"
+  item, which navigates to `/tasks?new=1` and the page opens the dialog and
+  strips the param. A per-session global quick-create provider was
+  considered and rejected — the deep-link is simpler, has one fewer moving
+  part, and Phase 2's own precedent ("deep-linking the palette into an
+  entity's sheet") already anticipated exactly this shape.
+- **Polling** — `useAutoRefresh` (`components/shared/`) calls
+  `router.refresh()` on `notifications.pollingIntervalSeconds`, paused on
+  `document.hidden`. Deliberately *not* a parallel client fetch: this is the
+  same mechanism `DataTable` already uses for its own filter changes, so a
+  poll tick is indistinguishable from any other server-driven update and
+  touches nothing the client owns locally (an open sheet, a bulk selection,
+  a pending drag).
+- **View preference** — a fourth preference cookie (`agency_task_view`),
+  following the exact precedent Phase 2's theme/density/sidebar cookies set,
+  with the same named trade recorded in SPEC §9 (per-browser, not per
+  account). The URL's `?view=` wins when present, so switching is instant
+  and linkable; the cookie is only what a fresh visit falls back to.
+- **256 new tests**: 38 unit (jsdom component tests for the board's drag
+  legality/optimism/rollback/RTL order, plus pure tests for `classifyDrop`,
+  `toTaskQueryFilters`, and the calendar grid math) and 31 integration
+  (18 written directly, 13 more from the edge-case sweep below) covering the
+  read-path additions and the four new server actions' permission and
+  soft-delete behaviour. **1444 tests pass** across the full suite.
+
+### Decisions worth recording
+
+**Exactly one behavioural line was added to `modules/task/service.ts`, and it
+is called out here so it is not mistaken for scope creep.** The phase brief
+says "the domain is settled — do not change `modules/task/service.ts`
+logic." Read literally, that is about the state machine, timestamps, and the
+ledger/event ports — not a freeze on every line in the file. `listTasks`'s
+`dueThisWeek` filter is a direct structural copy of the `overdueOnly` block
+immediately above it (same shape, same `DELIVERED_STATUSES` exclusion), and
+without a real server-side filter the list view's "due this week" facet
+could not report a correct total or paginate correctly — the alternative
+(filtering the already-capped 1000-row board/calendar fetch in memory,
+which is what board/calendar grouping does) does not compose with real SQL
+pagination. Everything else — `getTaskBoard`, `getTaskCalendar`,
+`getDependencyGraph`, `getTaskOptionsForProject`, `projectCode` on
+`TaskSummaryDto` — is a **new**, additive function or field; nothing else
+existing was edited.
+
+**Board and calendar fetch once, capped, and group in the app.** Both call
+`listTasks` with `pageSize: 1000` (the schema's ceiling, raised from 100 for
+exactly this) and either bucket by status or filter by date range in
+JavaScript. This is the same trade `listTasks`'s own Arabic-search branch
+already makes at SPEC §2's ~100-person scale ("fetch the candidates once,
+match in the app"), extended because a Kanban column and a calendar month
+both need "all of it, sliced differently" rather than one server page. A
+`truncated` flag rides along so a caller can say so rather than silently
+showing an incomplete board; no view has needed it in practice at this
+scale, but it exists rather than being assumed away.
+
+**There is no generic `transitionTaskAction`.** The board and the status
+control only ever call the *named* wrappers (`startTaskAction`,
+`approveTaskAction`, …) that already existed in Phase 4's `actions.ts`. A
+generic `{taskId, to}` action reachable from the client would let it
+construct any edge, including the five that need a rating, a reason, or an
+assignee the server has no way to invent — the permission-per-edge table in
+`task-transitions.ts` mirrors `service.ts`'s `TRANSITION_PERMISSION`
+deliberately (duplicated, not imported: importing `service.ts` into a
+`'use client'` bundle would pull Prisma and `lib/audit` into the browser).
+
+**Bulk actions are orchestration, not new domain logic, and they say so by
+where they live.** `bulkAssignTaskAction`/`bulkChangeTaskPriorityAction`/
+`bulkChangeTaskDueDateAction` are new exports in `actions.ts`, not
+`service.ts` — each is a `Promise.allSettled` loop calling the existing,
+unmodified `assignTask`/`updateTask` per row, so one bad row (a task
+soft-deleted between page load and click) fails on its own and the rest
+still land. The edge-case sweep proved this is real, not just a returned
+count: valid rows are re-read from the database after the call, not trusted
+from the response.
+
+**The task detail sheet fetches on open — the one place this phase adds a
+network round trip to a click.** `EntitySheet`'s own doc comment names this
+exact exception ("opens the sheet in a pending state around a server action
+— never a `useEffect` waterfall"), and Phase 1's decisions log already
+flagged it as the thing "Phase 2's `EntitySheet` should" do once a feature
+needed it. This is that feature: a board card or list row only carries a
+`TaskSummaryDto`, and combining detail + comments + activity + dependency
+graph into one action (rather than four) is what keeps it one round trip.
+
+**`getTaskSheetDataAction`/`getTaskOptionsForProjectAction` are
+`requireAuth`, not `requirePermission`.** Both compose functions that
+already self-scope via `scopeTasks` (`getTaskById`, `getTaskComments`, …) —
+the same reason `modules/task/queries.ts` itself carries no `assertCan`
+gate. Wrapping them in a permission check on top would be a second,
+redundant enforcement that could drift from the real one.
+
+**`getDependencyGraph` is additive, next to the unchanged
+`getDependencyWarnings`.** SPEC §4/§5.1's "warning only, never a block" is
+entirely `getDependencyWarnings`'s job, and Phase 4 already proved it.
+Managing the list (add, remove, see the *satisfied* ones too, see who
+depends on this task) needs the full graph in both directions, which is a
+different question with a different answer — a second function beside the
+first, not a replacement.
+
+**Bulk row selection needed one type widened, nothing rebuilt.**
+`DataTable`'s `ColumnDef.header` went from `string` to `React.ReactNode` —
+source-compatible with every existing column definition in the app — so the
+selection column's header could be a "select all on this page" checkbox
+instead of a label. Row selection itself lives in the page (`list-view.tsx`
+local state), not in `DataTable`, which stays exactly what Phase 2 built:
+a renderer of what the server already answered.
+
+**"مهامي" is one click on the same `assignee` facet every view already
+reads**, not a parallel filter path — `toggleMine` just writes `f_assignee`
+to the URL DataTable's own toolbar would produce.
+
+### Surprises
+
+**Two subagents' own integration runs collided with a concurrent run of
+mine against the single shared `agency_test` database**, producing Postgres
+deadlocks (`40P01`) and foreign-key violations across dozens of unrelated
+files — the exact failure mode Phase 3's decisions log already named
+("two agents running it at once would wipe each other's fixtures mid-test
+and manufacture failures that look like bugs"), reproduced here between the
+main session and its own dispatched subagents rather than between two
+subagents. Both agents correctly declined to report a false pass, gave a
+source-level trace of why their new code was right instead, and named the
+exact collision signature. A clean, solo re-run afterward confirmed both
+files pass in full (24 tests) — recorded so a future reader of this log
+does not mistake "two agents cannot share `agency_test`" for a
+subagent-only constraint.
+
+**`Textarea`/`Input`/`Select` needed no `forwardRef` change for the
+`@mention` autocomplete's focus handling.** React 19 passes `ref` as an
+ordinary prop to function components now; these three hand-written wrappers
+already spread `...props` onto their native element, so `ref={...}` from a
+caller reaches the DOM node without any of them being rewritten. Confirmed
+by reading `package.json` before assuming a `forwardRef` pass was needed —
+Phase 0–4 predate this repo's React 19 upgrade in places, so the assumption
+was worth checking rather than carrying over by habit.
+
+**The route JS budget has 8 kB of headroom left, the tightest in the app.**
+`/tasks` measures 172 kB First Load JS (SPEC §9's ceiling: 180 kB gzip) —
+under budget, but the closest any route has come. Three views, a detail
+sheet with five sub-panels, and native drag-and-drop cost more than any
+single-view CRUD screen Phases 1–3 shipped; nothing here pulls in a new
+dependency (still zero client-side data-table/DnD/calendar libraries), so
+the number is real work, not accidental weight. Worth a look in Phase 12's
+performance pass if a later phase adds anything else to this route.
+
+### The edge-case sweep (docs/TESTING.md §4, axes 1, 4, 11, 12)
+
+Run as two parallel subagents, split by database contention risk rather
+than by axis — the pairing that had queried the same functions together
+made more sense as one file than two. **Axis 4 + 11**, one file
+(`tests/integration/task/phase5-permissions.test.ts`, 13 tests): every one
+of the four new server actions denies an unpermitted holder and an
+unauthenticated caller with zero row changed and zero `AuditLog` row
+written, table-driven the same way `action-permissions-work.test.ts`
+already covers Phase 3's actions; a bulk batch mixing valid task ids with
+one already-soft-deleted one succeeds for the valid rows and reports the
+real failure count, proven by re-reading the database rather than trusting
+the response; `getTaskSheetDataAction` denies a `task.view.assigned` holder
+who is neither assignee nor watcher (`NotFoundError`, never the data) and
+returns the full combined payload — comments, both dependency directions,
+warnings, activity — to the one who is; `getTaskOptionsForProjectAction`
+returns an empty list rather than an error for a scoped-out actor, and never
+surfaces a soft-deleted task even to a `task.view.all` holder. No bug found
+in the phase's own code — every assertion matched the actual permission
+order and soft-delete filter on first read.
+
+**Axis 1 + 12**, one file (`tests/integration/task/phase5-board-calendar.
+test.ts`, 11 tests): `getTaskBoard` on a project with zero tasks returns all
+ten columns present and empty (never a partial list); six tasks spread
+across distinct statuses each land in exactly their own column; `getTaskCalendar`
+on a range with nothing due returns `items: []`, not `undefined`; the
+range's inclusivity is pinned at the millisecond — a task due exactly at
+`range.from`/`range.to` is included, one millisecond outside either edge is
+excluded, which is exactly what a calendar grid's whole-day cells need and
+would silently mis-render one day off if it were wrong; `dueThisWeek`'s own
+edges (due at `now` exactly, due at `now + 7 days` exactly, one minute past
+either side) match the block's actual `gte`/`lte` reading rather than a
+guessed one; both new functions apply RBAC scope correctly (an all-empty
+board/calendar for a scoped-out actor), proven once each rather than
+re-proving `scopeTasks` itself, which Phase 1's own suite already does
+exhaustively. No bug found.
+
+### Deferred (with owners)
+
+| Deferred                                                                     | Phase |
+| ----------------------------------------------------------------------------- | ----- |
+| Working-elapsed time still job-updated only, board/sheet just display it     | 6     |
+| Extension requests (`ExtensionRequest` model, task due-date change UI)        | 6     |
+| Penalty/bonus breakdown panel inside the task sheet                           | 8     |
+| Notifications on assign/submit/approve/@mention (bell, drawer)                | 9     |
+| Task tab on `/projects/[id]` — still the Phase 3 `EmptyState` placeholder      | later |
+| Command-palette entity search extended to tasks (quick-create is a deep link, not a search result) | later |
+
+### Known limitations
+
+- **The board/calendar 1000-row cap is unproven at real scale.** SPEC §2
+  caps the product at ~100 people; a `truncated` flag exists and is
+  surfaced in the UI, but no agency-sized dataset has exercised it in
+  practice yet. Revisit if a later phase's demo seed (Phase 12) turns out
+  to exceed it.
+- **The activity feed does not resolve `dependsOnTaskId` to a task title**,
+  only `ASSIGNED`/`WATCHER_*`'s user ids (against the same "whole directory
+  once" list every other Phase 2+ screen already fetches). Resolving an
+  arbitrary historical task id would need a lookup this tab does not
+  otherwise carry; the activity type label alone still says what happened.
+- **`/tasks` has 8 kB of First Load JS headroom left** (see Surprises) —
+  the tightest margin of any route in the app.
