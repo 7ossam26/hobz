@@ -289,10 +289,12 @@ any(non-final) → CANCELLED
 ### 5.3 Lateness
 
 - Measured at `submittedAt` vs `dueDate`. Time sitting in review **never** counts against the worker.
-- `lateWorkingDays = workingDaysBetween(dueDate + grace, min(now, submittedAt))`.
+- `lateWorkingDays = workingDaysBetween(dueDate + grace, min(now, submittedAt))`
+  **− the working days in that window the task spent `BLOCKED`.**
 - Grace: project override → global default.
 - An **approved extension** moves `dueDate`, keeps `originalDueDate`, and voids/recomputes any penalty accrued past the new date.
 - Approved leave never generates lateness.
+- **Time spent `BLOCKED` never generates lateness.**
 
 **How that formula is read (settled in Phase 6, `modules/lateness/service.ts`)**
 
@@ -320,12 +322,36 @@ any(non-final) → CANCELLED
 - **`CANCELLED` is always zero.** A cancelled task is not late; it is gone.
 - **`min(now, submittedAt)` is taken literally.** Clock skew between two
   containers must never manufacture days of lateness.
-- **`BLOCKED` does not pause the clock.** §5.4 computes from `lateWorkingDays`
-  and the profile, "nothing else", and §4 says `delayAttribution` is recorded
-  for reporting and explicitly does not feed the penalty engine. Pausing on
-  BLOCKED would be a new rule — a defensible and arguably fairer one when the
-  block is the agency's fault — and it belongs here before it belongs in code.
-  **Open question flagged in docs/DECISIONS.md (Phase 6) for the operator.**
+
+**`BLOCKED` pauses the clock — the operator's decision, taken in Phase 6.**
+A منفّذ who cannot work cannot be late for not working, and this product exists
+to make deductions defensible rather than merely automatic. The rule:
+
+- **The exclusion is by *interval*, never by current status.** A task blocked
+  for a week and then resumed still has that week excused; a task blocked today
+  after three weeks overdue still owes the three weeks. Both readings of
+  "skip it while `status === 'BLOCKED'`" are wrong, in opposite directions.
+- **The intervals come from `TaskActivity`** — the `STATUS_CHANGED → BLOCKED`
+  and `BLOCKED → …` rows §5.1 already makes load-bearing for `BLOCKED →
+  previous`. There is no `blockedMinutes` column, for the same reason there is
+  no `statusBeforeBlock` one.
+- **Mechanically it is a subtraction**, and both halves go through the same
+  `workingDaysBetween` with the same assignee. So a blocked Friday, a blocked
+  holiday and a blocked day of approved leave are each worth zero on *both*
+  sides and cannot be excused twice. Every other rule in this section survives
+  untouched, by construction rather than by special-casing.
+- **A day counts when its own start falls in the window**, so a block that
+  begins at 09:00 does not un-count the day that had already begun. The منفّذ
+  had that morning.
+- **A task blocked out of a delivered status stays delivered.** The open
+  interval carries the status it was blocked *from*, so blocking a task that is
+  sitting in review does not restart the worker's clock — which is what the
+  review rule above already forbids.
+- **`Task.isOverdue` in list views deliberately does not read this.** It is a
+  cheap "past the deadline and not yet delivered" flag on a row that has not
+  loaded an activity feed, and a blocked task genuinely *is* past its deadline
+  and worth showing as such. The money figure is `lateWorkingDays`, and the
+  task sheet shows both, with `blockedWorkingDays` naming the difference.
 
 **Extension requests (Phase 6).** The assignee raises one with a mandatory
 reason; `task.extend` decides it. `oldDueDate` is the optimistic-concurrency

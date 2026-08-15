@@ -399,6 +399,7 @@ function task(overrides: Partial<LatenessTaskInput> = {}): LatenessTaskInput {
     dueDate,
     originalDueDate: overrides.originalDueDate ?? dueDate,
     submittedAt: null,
+    blockedIntervals: [],
     ...overrides,
   }
 }

@@ -81,6 +81,7 @@ function latenessInput(overrides: Partial<LatenessTaskInput>, now: Date): Latene
       dueDate,
       originalDueDate: overrides.originalDueDate ?? dueDate,
       submittedAt: null,
+      blockedIntervals: [],
       ...overrides,
     },
     graceHours: DEFAULT_GRACE,

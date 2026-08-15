@@ -427,7 +427,7 @@ describe('modules/extension — الأثر على التأخير (SPEC §5.3)', 
       },
     })
     const result = await computeLateness(calendarFor(db), {
-      task: { ...row, status: row.status as 'IN_PROGRESS' },
+      task: { ...row, status: row.status as 'IN_PROGRESS', blockedIntervals: [] },
       graceHours: 0,
       now,
     })

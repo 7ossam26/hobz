@@ -1,8 +1,17 @@
+import type { Prisma } from '@prisma/client'
+
 import type { Calendar } from '@/lib/calendar'
 import { addHours } from '@/lib/calendar/cairo'
 import type { Db } from '@/lib/db'
 import { NotFoundError } from '@/lib/errors'
 import type { TaskStatus } from '@/modules/task/state-machine'
+
+import {
+  blockedIntervalsFromActivity,
+  blockedIntervalsIn,
+  type BlockedInterval,
+  type StatusChangeRow,
+} from './blocked'
 
 /**
  * modules/lateness/service.ts — SPEC §5.3, and nothing else.
@@ -41,15 +50,19 @@ import type { TaskStatus } from '@/modules/task/state-machine'
  * returning a positive number invites Phase 8 to deduct for work that was
  * called off.
  *
- * ── What is deliberately NOT here ─────────────────────────────────────────
+ * **4. BLOCKED time does not accrue lateness.** The operator's decision, taken
+ * after Phase 6 raised the question. A منفّذ who cannot work cannot be late for
+ * not working, and this product exists to make deductions defensible.
  *
- * **BLOCKED does not pause the clock.** SPEC §5.4 computes from
- * `lateWorkingDays` and the user's profile, "nothing else", and SPEC §4 says
- * `delayAttribution` is recorded for reporting and explicitly does not feed
- * the penalty engine. Pausing on BLOCKED would be a new rule — a defensible
- * one, and arguably a fairer one when the block is the agency's fault — but it
- * is a policy change and belongs in docs/SPEC.md §5.3 before it belongs here.
- * Raised in docs/DECISIONS.md rather than decided quietly.
+ * The exclusion is by **interval**, never by current status — see
+ * `blocked.ts`, which explains why the naive reading is wrong in both
+ * directions. Mechanically it is a subtraction: count the working days in the
+ * window as before, then take out the working days inside the blocked stretches
+ * that fall in the same window. Everything else survives untouched, because
+ * both halves go through the *same* `workingDaysBetween` with the *same*
+ * assignee — a blocked Friday, a blocked holiday and a blocked day of approved
+ * leave are all worth zero on both sides of the subtraction, so none of them
+ * can be excused twice.
  */
 
 /** The worker's clock has stopped: they delivered, and review time is not theirs. */
@@ -70,6 +83,16 @@ export interface LatenessTaskInput {
   submittedAt: Date | null
   /** Narrows the calendar by this person's approved leave. */
   assigneeId: string | null
+  /**
+   * Every stretch this task spent BLOCKED, from its activity feed.
+   *
+   * **Required, not optional with an empty default.** A task's blocked history
+   * is an input to a deduction, and a caller that forgot to pass it would
+   * silently get the pre-decision answer — a higher penalty, with nothing to
+   * show anyone why. `[]` is a claim ("this task was never blocked"), so it has
+   * to be made rather than assumed.
+   */
+  blockedIntervals: readonly BlockedInterval[]
 }
 
 export interface LatenessInput {
@@ -97,6 +120,13 @@ export interface LatenessResult {
   frozen: boolean
   /** True when an extension or a revision has moved the deadline. */
   extended: boolean
+  /**
+   * Working days inside the window that were excused because the task was
+   * BLOCKED. Already subtracted from `lateWorkingDays`; carried separately so
+   * the breakdown SPEC §8 shows the منفّذ can say "five days late, two of them
+   * excused" instead of quietly showing three.
+   */
+  blockedWorkingDays: number
 }
 
 /**
@@ -114,12 +144,32 @@ export function resolveGraceHours(
 }
 
 /**
+ * What the task would be doing if it were not suspended.
+ *
+ * BLOCKED is not a phase of the work; it is a pause in whatever phase the task
+ * was already in, which is why SPEC §5.1 resumes it to `previous` rather than
+ * to a fixed status. For lateness that distinction decides whether the clock is
+ * even running: a task blocked while SUBMITTED is still *delivered*, and review
+ * time is not the worker's (SPEC §5.3). Reading the current status literally
+ * would restart their clock the moment a manager blocked a task sitting in
+ * review — the opposite of what the rule says.
+ *
+ * The pre-block status comes from the open interval's `from`, i.e. from the
+ * same activity row the state machine reads to unblock.
+ */
+export function effectiveStatus(task: LatenessTaskInput): TaskStatus {
+  if (task.status !== 'BLOCKED') return task.status
+  const open = task.blockedIntervals.find((interval) => interval.end === null)
+  return open?.from ?? task.status
+}
+
+/**
  * The delivery that stopped the worker's clock, or `null` while it is still
  * running. One predicate, because `measurementEnd` and `frozen` disagreeing
  * about whether a task has been delivered is exactly the bug this prevents.
  */
 function deliveredAt(task: LatenessTaskInput): Date | null {
-  return task.submittedAt !== null && DELIVERED_STATUSES.includes(task.status)
+  return task.submittedAt !== null && DELIVERED_STATUSES.includes(effectiveStatus(task))
     ? task.submittedAt
     : null
 }
@@ -162,16 +212,55 @@ export async function computeLateness(
   }
 
   if (task.status === 'CANCELLED') {
-    return { ...base, lateWorkingDays: 0 }
+    return { ...base, lateWorkingDays: 0, blockedWorkingDays: 0 }
   }
 
-  const lateWorkingDays = await calendar.workingDaysBetween(
-    effectiveDueDate,
-    measuredAt,
-    task.assigneeId ?? undefined,
-  )
+  const userId = task.assigneeId ?? undefined
+  const total = await calendar.workingDaysBetween(effectiveDueDate, measuredAt, userId)
+  const blockedWorkingDays = await countBlockedWorkingDays(calendar, {
+    intervals: task.blockedIntervals,
+    from: effectiveDueDate,
+    to: measuredAt,
+    userId,
+  })
 
-  return { ...base, lateWorkingDays }
+  return {
+    ...base,
+    // `max(0, …)` cannot fire: the clipped blocked stretches live inside
+    // `[effectiveDueDate, measuredAt)`, so the days they contribute are a
+    // subset of the days `total` counted, and merging stops any of them being
+    // taken out twice. It is here so that a calendar answering inconsistently
+    // produces a zero rather than a negative deduction.
+    lateWorkingDays: Math.max(0, total - blockedWorkingDays),
+    blockedWorkingDays,
+  }
+}
+
+export interface BlockedWorkingDaysArgs {
+  intervals: readonly BlockedInterval[]
+  from: Date
+  to: Date
+  userId: string | undefined
+}
+
+/**
+ * Working days inside `[from, to)` that the task spent blocked.
+ *
+ * Deliberately measured with the **same** `workingDaysBetween` and the **same**
+ * assignee as the total it will be subtracted from. That is what keeps every
+ * other rule intact for free: a blocked Saturday, a blocked عيد and a blocked
+ * day of approved leave are each worth zero on both sides, so none of them is
+ * excused twice and none of them turns a real day of lateness into a negative.
+ */
+export async function countBlockedWorkingDays(
+  calendar: Calendar,
+  args: BlockedWorkingDaysArgs,
+): Promise<number> {
+  let days = 0
+  for (const interval of blockedIntervalsIn(args.intervals, args.from, args.to)) {
+    days += await calendar.workingDaysBetween(interval.start, interval.end, args.userId)
+  }
+  return days
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -191,7 +280,27 @@ export const LATENESS_TASK_SELECT = {
   submittedAt: true,
   assigneeId: true,
   project: { select: { gracePeriodHours: true } },
-} as const
+  /**
+   * The block/unblock rows, and only those. `TaskActivity` is where SPEC §5.1
+   * already keeps the fact that a task was blocked and what it was blocked out
+   * of, so lateness reads it rather than asking for a column of its own.
+   *
+   * Ordered `[createdAt, id]` — the tiebreak Phase 4 added because a frozen
+   * clock in a test writes two rows at the same instant, and pairing an entry
+   * with an exit depends on their order.
+   */
+  activity: {
+    where: {
+      type: 'STATUS_CHANGED',
+      OR: [{ to: 'BLOCKED' }, { from: 'BLOCKED' }],
+    },
+    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    select: { from: true, to: true, createdAt: true },
+  },
+  // `satisfies`, not `as const`: the nested `where`/`orderBy` need Prisma's own
+  // contextual types to narrow `'asc'` to `SortOrder`, and `as const` would
+  // freeze them into readonly tuples Prisma's mutable input types reject.
+} satisfies Prisma.TaskSelect
 
 export interface LatenessRow {
   id: string
@@ -201,6 +310,7 @@ export interface LatenessRow {
   submittedAt: Date | null
   assigneeId: string | null
   project: { gracePeriodHours: number | null }
+  activity: readonly StatusChangeRow[]
 }
 
 export function latenessInputFromRow(
@@ -216,6 +326,7 @@ export function latenessInputFromRow(
       originalDueDate: row.originalDueDate,
       submittedAt: row.submittedAt,
       assigneeId: row.assigneeId,
+      blockedIntervals: blockedIntervalsFromActivity(row.activity),
     },
     graceHours: resolveGraceHours(row.project.gracePeriodHours, defaultGraceHours),
     now,

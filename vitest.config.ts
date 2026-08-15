@@ -142,9 +142,11 @@ export default defineConfig({
         'src/lib/calendar/work-calendar.ts',
         'src/lib/calendar/source.ts',
         'src/lib/calendar/zod.ts',
-        // `escalation.ts` and `job.ts` live outside `service.ts` and are listed
-        // so their coverage is measured honestly rather than quietly excluded.
+        // `escalation.ts`, `blocked.ts` and `job.ts` live outside `service.ts`
+        // and are listed so their coverage is measured honestly rather than
+        // quietly excluded.
         'src/modules/lateness/escalation.ts',
+        'src/modules/lateness/blocked.ts',
         'src/modules/lateness/ports.ts',
         'src/modules/calendar/job.ts',
         'src/modules/leave/lookup.ts',
@@ -278,6 +280,14 @@ export default defineConfig({
           statements: 90,
         },
         'src/modules/lateness/escalation.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        // Which stretches of a task were BLOCKED is subtracted straight from a
+        // deduction (SPEC §5.3), so it carries the financial gate too.
+        'src/modules/lateness/blocked.ts': {
           lines: 90,
           functions: 90,
           branches: 90,

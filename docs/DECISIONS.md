@@ -1455,6 +1455,8 @@ exhaustively. No bug found.
   overdue in the list and showing zero in the penalty breakdown would be a
   support ticket every week. `REVISION_REQUESTED` therefore restarts the clock
   against the new due date with no special case, because it is not in that set.
+  *(Amended below: BLOCKED now pauses accrual, so the two sets differ for that
+  one status — deliberately, and the divergence is explained there.)*
 
 - **Escalation is stored on the task, not derived on read.** An escalation is an
   *event* — somebody gets notified, once. A value recomputed on every read has
@@ -1612,17 +1614,68 @@ What the 127 cases add beyond the implementation's own suite, in brief:
 | `dailyRate(user) = monthlySalary ÷ workingDaysPerMonth` — `Calendar.workCalendar()` exposes the divisor, nothing consumes it yet | 7 |
 | e2e flow #4 ("approve an extension before the due date → no penalty ever accrues") — needs Phase 8's penalty engine to be meaningful | 12 |
 
-### Open question for the operator
+### The open question, answered: BLOCKED time does not accrue lateness
 
-**Should a BLOCKED task keep accruing lateness?** It does today, because SPEC
-§5.4 computes from `lateWorkingDays` and the profile, "nothing else", and §4 is
-explicit that `delayAttribution` does not feed the penalty engine. But a task
-blocked by the agency's own dependency is exactly the case where automatic
-arithmetic feels unjust, and this product exists to make deductions feel like
-arithmetic *and* be defensible. Pausing on BLOCKED is a one-line change to
-`DELIVERED_STATUSES` in `modules/lateness/service.ts` plus a test — but it is a
-policy change, and it belongs in SPEC §5.3 before it belongs in code. Raised
-rather than decided quietly.
+Phase 6 shipped with a question raised rather than decided — whether a BLOCKED
+task should keep accruing lateness. **The operator's answer is no**, and
+docs/SPEC.md §5.3 now says so as a rule rather than as a note. A منفّذ who
+cannot work cannot be late for not working.
+
+The implementation is not the one-line change to `DELIVERED_STATUSES` that the
+question anticipated, and the reason is worth recording.
+
+**It had to be intervals, not the current status.** The one-line version — treat
+BLOCKED like SUBMITTED and freeze the clock — is wrong in both directions, and
+both are ordinary days at an agency:
+
+- a task blocked for a week and then **resumed** is no longer BLOCKED, so the
+  one-line rule charges the منفّذ for the week they could not work; and
+- a task blocked **today**, three weeks overdue, *is* BLOCKED, so the one-line
+  rule forgives all three weeks.
+
+So the unit is the interval, recovered from `TaskActivity` in
+`modules/lateness/blocked.ts`. That feed is already load-bearing — SPEC §5.1
+resolves `BLOCKED → previous` from it, and Phase 4 recorded why there is no
+`statusBeforeBlock` column: a second copy of a fact is a second thing that can
+be wrong. The same argument rules out a `blockedMinutes` column here.
+
+**It is a subtraction, and that is what preserves every other rule for free.**
+`lateWorkingDays` counts the window as before, then takes out the working days
+inside the blocked stretches clipped to the same window. Both halves call the
+*same* `workingDaysBetween` with the *same* assignee, so a blocked Friday, a
+blocked عيد and a blocked day of approved leave are each worth zero on both
+sides — none can be excused twice, and none can drive the result negative. Grace
+still applies first (it decides where the window starts); review time still
+freezes the endpoint; an extension still moves the deadline. Nothing else needed
+a special case, which is the sign the shape is right. The integration suite
+pins the property directly: the same scenario with and without a holiday inside
+the blocked stretch yields the *same* `lateWorkingDays`, and only
+`blockedWorkingDays` moves.
+
+**Three consequences worth naming.**
+
+1. **`blockedIntervals` is a required field on `LatenessTaskInput`, not optional
+   with an empty default.** A caller that forgot to pass it would silently get
+   the pre-decision answer — a higher deduction, with nothing to show anyone
+   why. `[]` is a claim, so it has to be made. Making it required flushed out
+   all eight construction sites at compile time.
+2. **A task blocked *out of* a delivered status stays delivered.** The open
+   interval carries its `from`, so `effectiveStatus()` reads it and a manager
+   blocking a task that sits in review does not restart the worker's clock.
+   This was latent before the change and is now correct: it is the same "time
+   in review is never the worker's" rule, applied to a status the literal
+   reading got wrong.
+3. **`LatenessResult` gained `blockedWorkingDays`.** Already subtracted, carried
+   separately, because SPEC §8 requires the منفّذ to see the full calculation
+   and "five days late, two excused while blocked" is a different sentence from
+   a bare three.
+
+**`Task.isOverdue` deliberately still ignores this.** It is a cheap flag on a
+list row that has loaded no activity feed, and a blocked task genuinely is past
+its deadline. Phase 6 recorded the two being the same set as deliberate; they
+now differ for exactly one status, and the divergence is the honest one — the
+board says "this is late and stuck", the money says nobody is being charged for
+the stuck part. The task sheet shows both figures with the difference named.
 
 ### Known limitations
 

@@ -86,6 +86,7 @@ function task(overrides: Partial<LatenessTaskInput> = {}): LatenessTaskInput {
     dueDate,
     originalDueDate: dueDate,
     submittedAt: null,
+    blockedIntervals: [],
     ...overrides,
   }
 }
@@ -376,6 +377,7 @@ describe('مهمة بأعمدة فارغة', () => {
       originalDueDate: SUNDAY_DUE,
       submittedAt: null,
       assigneeId: null,
+      activity: [],
       project: { gracePeriodHours: null },
     }
 

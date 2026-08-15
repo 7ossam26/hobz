@@ -393,6 +393,7 @@ describe('مهلة السماح مدة فعلية لا موعد على ساعة 
       originalDueDate: dueDate,
       submittedAt,
       assigneeId: WORKER,
+      blockedIntervals: [],
     }
     return computeLateness(agencyCalendar(), {
       task,
