@@ -1,12 +1,16 @@
-// Agency OS — Phase 0 schema.
+// Agency OS schema.
 //
-// SCOPE GUARD: this file contains ONLY the identity/access/audit/settings core
-// (SPEC §4 "Identity & access" + §7). Work, Calendar and Money models arrive in
-// their own phases. Do not add them here ahead of schedule.
+// Phase 0 laid the identity/access/audit/settings core (SPEC §4 "Identity &
+// access" + §7). Phase 3 adds the first slice of "Work" (SPEC §4): Client,
+// Project, ProjectMember, Milestone, ProjectTemplate. Task, Calendar and Money
+// models still arrive in their own phases — do not add them here ahead of
+// schedule.
 //
 // Structural invariants this schema must keep possible (CLAUDE.md):
 //  - Money columns are always Decimal(12,2), never Float.
-//  - Soft-delete via `deletedAt` on every user-owned entity.
+//  - Soft-delete via `deletedAt` on every user-owned entity — except a couple
+//    of junction tables the SPEC §4 listing itself omits it from
+//    (ProjectMember here, matching UserRole/RolePermission from Phase 0).
 //  - AuditLog is append-only: no `updatedAt`, no mutation paths in code.
 
 generator client {
@@ -26,17 +30,17 @@ enum PayType {
 }
 
 model User {
-  id                 String   @id @default(cuid())
-  username           String   @unique
+  id                 String  @id @default(cuid())
+  username           String  @unique
   passwordHash       String
   fullName           String
   /// E.164, normalised to +20… on write. Never used for email/SMS — WhatsApp
   /// deep links only (SPEC §8).
   phone              String?
-  isWorker           Boolean  @default(false)
-  isActive           Boolean  @default(true)
-  mustChangePassword Boolean  @default(false)
-  timezone           String   @default("Africa/Cairo")
+  isWorker           Boolean @default(false)
+  isActive           Boolean @default(true)
+  mustChangePassword Boolean @default(false)
+  timezone           String  @default("Africa/Cairo")
 
   payType             PayType  @default(PER_TASK)
   monthlySalary       Decimal? @db.Decimal(12, 2)
@@ -51,10 +55,14 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  roles              UserRole[]
-  auditEvents        AuditLog[] @relation("AuditActor")
-  auditImpersonated  AuditLog[] @relation("AuditImpersonator")
-  settingsTouched    Setting[]  @relation("SettingUpdatedBy")
+  roles             UserRole[]
+  auditEvents       AuditLog[] @relation("AuditActor")
+  auditImpersonated AuditLog[] @relation("AuditImpersonator")
+  settingsTouched   Setting[]  @relation("SettingUpdatedBy")
+
+  ownedProjects      Project[]         @relation("ProjectOwner")
+  projectMemberships ProjectMember[]
+  createdTemplates   ProjectTemplate[] @relation("ProjectTemplateCreatedBy")
 
   @@index([deletedAt])
   @@index([isWorker, isActive])
@@ -83,9 +91,9 @@ model Role {
 
 /// Seeded from the code catalog in lib/rbac. Never user-editable.
 model Permission {
-  key         String @id
+  key           String @id
   /// Domain prefix ("task", "payout") used to group the role editor UI.
-  domain      String
+  domain        String
   descriptionAr String
 
   roles RolePermission[]
@@ -122,21 +130,21 @@ model UserRole {
 /// `updatedAt` and no `deletedAt` — their absence is the schema-level statement
 /// of that invariant.
 model AuditLog {
-  id       String  @id @default(cuid())
+  id             String  @id @default(cuid())
   /// Null only for system/scheduler actions.
-  actorId  String?
+  actorId        String?
   /// The real SUPER_ADMIN behind an impersonated session (SPEC Phase 1 §5).
   /// A column rather than a key inside `after`, for two reasons: `after` stays
   /// a clean before/after diff, and "show me everything done while
   /// impersonating" becomes an indexed query instead of a JSON scan.
   impersonatorId String?
-  action   String
-  entity   String
-  entityId String
-  before   Json?
-  after    Json?
-  reason   String?
-  ip       String?
+  action         String
+  entity         String
+  entityId       String
+  before         Json?
+  after          Json?
+  reason         String?
+  ip             String?
 
   createdAt DateTime @default(now())
 
@@ -188,4 +196,187 @@ model Setting {
 
   @@index([group])
   @@map("settings")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Work — Phase 3 slice (SPEC §4 "Work"). Task and its satellites are Phase 4.
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Fixed per SPEC §4 enum list. The Arabic *label* per value is editable in
+/// Settings (`labels.projectStatus`); the values themselves are not (SPEC §2).
+enum ProjectStatus {
+  DRAFT
+  PROPOSED
+  ACTIVE
+  ON_HOLD
+  IN_REVIEW
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+/// Fixed per SPEC §4. Which of the four are offered per project is the
+/// Settings-configurable list (`projects.engagementTypes`) the phase brief
+/// refers to — the enum itself does not change (SPEC §2).
+enum EngagementType {
+  FIXED_PRICE
+  RETAINER
+  MILESTONE_BASED
+  HOURLY
+}
+
+/// RAG (SPEC §5.7). Also the shape of a manual override — see
+/// `Project.healthOverride`.
+enum ProjectHealth {
+  GREEN
+  AMBER
+  RED
+}
+
+/// A project's team role. Independent of the RBAC `Role` a user holds
+/// (CLAUDE.md architecture: permissions are global; this is per-project
+/// context only, e.g. for a future "who can approve on this project" rule).
+/// Not in the SPEC §4 enum list — a Phase 3 addition, recorded in
+/// docs/DECISIONS.md.
+enum ProjectMemberRole {
+  MANAGER
+  CONTRIBUTOR
+  VIEWER
+}
+
+/// Not in the SPEC §4 enum list either — recorded in docs/DECISIONS.md.
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  DELAYED
+}
+
+/// Lightweight label on a project (SPEC §2 Locked decisions: "Clients never
+/// log in... No money-in tracking"). Deliberately thin — CLAUDE.md forbids
+/// financial tracking, invoices or payments here.
+model Client {
+  id        String    @id @default(cuid())
+  name      String
+  /// E.164, normalised on write — the WhatsApp deep link input (SPEC §8).
+  phone     String?
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  projects Project[]
+
+  @@index([deletedAt])
+  @@map("clients")
+}
+
+model Project {
+  id String @id @default(cuid())
+
+  /// Auto-generated on create (`modules/project/code.ts`), editable after.
+  code String @unique
+  name String
+
+  clientId String?
+  ownerId  String
+
+  engagementType EngagementType
+  status         ProjectStatus  @default(DRAFT)
+
+  /// Required per the SPEC §4 listing (no `?` on either field there, unlike
+  /// `clientId?`/`healthOverride?`/etc. next to them).
+  startDate DateTime
+  dueDate   DateTime
+
+  /// Overrides Settings `penalty.defaultGraceHours` when set (SPEC §5.3:
+  /// "Grace: project override → global default").
+  gracePeriodHours         Int?
+  /// Overrides Settings `penalty.penalizeRevisionLateness` when set (SPEC T4).
+  penalizeRevisionLateness Boolean?
+
+  /// Manual RAG override (SPEC §5.7). `healthReason` is mandatory whenever
+  /// `healthOverride` is non-null — enforced in `modules/project/schema.ts`
+  /// and `service.ts`, not at the DB level, so a *clearing* write (both null)
+  /// is still a valid row.
+  healthOverride ProjectHealth?
+  healthReason   String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  client     Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  owner      User            @relation("ProjectOwner", fields: [ownerId], references: [id])
+  members    ProjectMember[]
+  milestones Milestone[]
+
+  @@index([deletedAt])
+  @@index([clientId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("projects")
+}
+
+/// A project's team, each with a per-project role (SPEC §4: "members with
+/// per-project role"). No `deletedAt` — the SPEC §4 listing omits it here
+/// exactly as it does for `UserRole`/`RolePermission`; membership is added and
+/// removed outright, like a role assignment.
+///
+/// `scopeProjects()` (lib/rbac) reads this table by its `members` relation
+/// name and `userId` field — both fixed by the contract
+/// `tests/integration/rbac/scoped-reads.test.ts` already asserts.
+model ProjectMember {
+  projectId String
+  userId    String
+  role      ProjectMemberRole @default(CONTRIBUTOR)
+  addedAt   DateTime          @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+/// SPEC §4: "name, due date, order, status". No `deletedAt` in the SPEC
+/// listing — removed outright, cascading with the project.
+model Milestone {
+  id        String          @id @default(cuid())
+  projectId String
+  name      String
+  dueDate   DateTime?
+  order     Int
+  status    MilestoneStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, order])
+  @@map("milestones")
+}
+
+/// SPEC §4: "spawns milestones+tasks". `payload` carries the milestone shape
+/// today; a `tasks` array is reserved in the payload type
+/// (`modules/project-template/types.ts`) and stays empty until Phase 4 gives
+/// this module a real `Task` to capture — the same "define the interface now,
+/// no-op the seam" shape Phase 1 used for `OpenTaskLookup`.
+model ProjectTemplate {
+  id      String @id @default(cuid())
+  name    String
+  payload Json
+
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  createdBy User? @relation("ProjectTemplateCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([deletedAt])
+  @@map("project_templates")
 }

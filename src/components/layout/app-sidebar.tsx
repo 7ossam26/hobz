@@ -1,8 +1,10 @@
 'use client'
 
 import {
+  Building2,
   ChevronLeft,
   ChevronRight,
+  FolderKanban,
   LayoutDashboard,
   ScrollText,
   Settings,
@@ -44,6 +46,8 @@ import { cn } from '@/lib/utils'
 
 const ICONS: Record<string, LucideIcon> = {
   'layout-dashboard': LayoutDashboard,
+  'folder-kanban': FolderKanban,
+  'building-2': Building2,
   users: Users,
   shield: Shield,
   settings: Settings,

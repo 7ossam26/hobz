@@ -91,6 +91,33 @@ export const HEALTH_HUE = {
 export type Health = keyof typeof HEALTH_HUE
 
 /**
+ * Milestone status (Phase 3 addition — not a SPEC §4 enum, see
+ * docs/DECISIONS.md). Mirrors the task-status pipeline's cold→warm→green read:
+ * nothing has happened yet is neutral, trouble is red.
+ */
+export const MILESTONE_STATUS_HUE = {
+  PENDING: 'neutral',
+  IN_PROGRESS: 'sky',
+  DONE: 'emerald',
+  DELAYED: 'red',
+} as const satisfies Record<string, Hue>
+
+export type MilestoneStatus = keyof typeof MILESTONE_STATUS_HUE
+
+/**
+ * A project member's per-project role (Phase 3 addition — not a SPEC §4 enum).
+ * Identity-ish rather than a pipeline, so a cooler, flatter set: the manager
+ * is the one saturated mark, contributor and viewer stay quiet.
+ */
+export const PROJECT_MEMBER_ROLE_HUE = {
+  MANAGER: 'fuchsia',
+  CONTRIBUTOR: 'sky',
+  VIEWER: 'neutral',
+} as const satisfies Record<string, Hue>
+
+export type ProjectMemberRole = keyof typeof PROJECT_MEMBER_ROLE_HUE
+
+/**
  * Ledger entry types (SPEC §4). Fixed here in Phase 2 rather than in Phase 7,
  * because the moment two screens invent their own colour for PENALTY the
  * product has started lying about the thing it exists to explain.
@@ -158,6 +185,12 @@ export const priorityHue = (priority: string): Hue =>
 
 export const healthHue = (health: string): Hue =>
   HEALTH_HUE[health as Health] ?? 'neutral'
+
+export const milestoneStatusHue = (status: string): Hue =>
+  MILESTONE_STATUS_HUE[status as MilestoneStatus] ?? 'neutral'
+
+export const projectMemberRoleHue = (role: string): Hue =>
+  PROJECT_MEMBER_ROLE_HUE[role as ProjectMemberRole] ?? 'neutral'
 
 export const ledgerTypeHue = (type: string): Hue =>
   LEDGER_TYPE_HUE[type as LedgerType] ?? 'neutral'

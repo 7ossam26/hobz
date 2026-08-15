@@ -119,7 +119,8 @@ export async function createUser(
     data: {
       username: options.username ?? `user${n}`,
       passwordHash,
-      fullName: options.fullName ?? (ARABIC_FULL_NAMES[n % ARABIC_FULL_NAMES.length] ?? 'مستخدم'),
+      fullName:
+        options.fullName ?? ARABIC_FULL_NAMES[n % ARABIC_FULL_NAMES.length] ?? 'مستخدم',
       phone:
         options.phone === undefined
           ? (EGYPT_PHONES[n % EGYPT_PHONES.length]?.e164 ?? null)
@@ -162,4 +163,135 @@ export async function createSuperAdmin(
   const existing = await db.role.findUnique({ where: { nameEn: SUPER_ADMIN_ROLE } })
   const role = existing ?? (await createSuperAdminRole(db))
   return createUser(db, { ...options, roleIds: [role.id] })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Work — Phase 3 (Client, Project, ProjectMember, Milestone, ProjectTemplate)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface CreateClientOptions {
+  name?: string
+  phone?: string | null
+  notes?: string | null
+  deletedAt?: Date | null
+}
+
+export async function createClient(
+  db: PrismaClient,
+  options: CreateClientOptions = {},
+): Promise<{ id: string; name: string }> {
+  const n = next()
+  return db.client.create({
+    data: {
+      name: options.name ?? `عميل ${n}`,
+      phone: options.phone ?? null,
+      notes: options.notes ?? null,
+      deletedAt: options.deletedAt ?? null,
+    },
+    select: { id: true, name: true },
+  })
+}
+
+export interface CreateProjectOptions {
+  code?: string
+  name?: string
+  clientId?: string | null
+  ownerId: string
+  engagementType?: 'FIXED_PRICE' | 'RETAINER' | 'MILESTONE_BASED' | 'HOURLY'
+  status?:
+    | 'DRAFT'
+    | 'PROPOSED'
+    | 'ACTIVE'
+    | 'ON_HOLD'
+    | 'IN_REVIEW'
+    | 'COMPLETED'
+    | 'CANCELLED'
+    | 'ARCHIVED'
+  startDate?: Date
+  dueDate?: Date
+  gracePeriodHours?: number | null
+  penalizeRevisionLateness?: boolean | null
+  healthOverride?: 'GREEN' | 'AMBER' | 'RED' | null
+  healthReason?: string | null
+  memberIds?: readonly string[]
+  deletedAt?: Date | null
+}
+
+export async function createProject(
+  db: PrismaClient,
+  options: CreateProjectOptions,
+): Promise<{ id: string; code: string; name: string }> {
+  const n = next()
+  return db.project.create({
+    data: {
+      code: options.code ?? `PRJ-TEST-${n}`,
+      name: options.name ?? `مشروع ${n}`,
+      clientId: options.clientId ?? null,
+      ownerId: options.ownerId,
+      engagementType: options.engagementType ?? 'FIXED_PRICE',
+      status: options.status ?? 'ACTIVE',
+      startDate: options.startDate ?? new Date('2026-01-01T00:00:00Z'),
+      dueDate: options.dueDate ?? new Date('2026-06-01T00:00:00Z'),
+      gracePeriodHours: options.gracePeriodHours ?? null,
+      penalizeRevisionLateness: options.penalizeRevisionLateness ?? null,
+      healthOverride: options.healthOverride ?? null,
+      healthReason: options.healthReason ?? null,
+      deletedAt: options.deletedAt ?? null,
+      members: {
+        create: (options.memberIds ?? []).map((userId) => ({
+          userId,
+          role: 'CONTRIBUTOR',
+        })),
+      },
+    },
+    select: { id: true, code: true, name: true },
+  })
+}
+
+export interface CreateMilestoneOptions {
+  projectId: string
+  name?: string
+  dueDate?: Date | null
+  order?: number
+  status?: 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'DELAYED'
+}
+
+export async function createMilestone(
+  db: PrismaClient,
+  options: CreateMilestoneOptions,
+): Promise<{ id: string; order: number }> {
+  const n = next()
+  return db.milestone.create({
+    data: {
+      projectId: options.projectId,
+      name: options.name ?? `مرحلة ${n}`,
+      dueDate: options.dueDate === undefined ? null : options.dueDate,
+      order: options.order ?? n,
+      status: options.status ?? 'PENDING',
+    },
+    select: { id: true, order: true },
+  })
+}
+
+export interface CreateProjectTemplateOptions {
+  name?: string
+  payload?: unknown
+  createdById?: string | null
+  deletedAt?: Date | null
+}
+
+export async function createProjectTemplate(
+  db: PrismaClient,
+  options: CreateProjectTemplateOptions = {},
+): Promise<{ id: string; name: string }> {
+  const n = next()
+  return db.projectTemplate.create({
+    data: {
+      name: options.name ?? `قالب ${n}`,
+      payload: (options.payload ?? { milestones: [], tasks: [] }) as never,
+      createdById: options.createdById ?? null,
+      deletedAt: options.deletedAt ?? null,
+    },
+    select: { id: true, name: true },
+  })
 }

@@ -28,7 +28,24 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
-  { href: '/dashboard', labelKey: 'dashboard', icon: 'layout-dashboard', permissions: [] },
+  {
+    href: '/dashboard',
+    labelKey: 'dashboard',
+    icon: 'layout-dashboard',
+    permissions: [],
+  },
+  {
+    href: '/projects',
+    labelKey: 'projects',
+    icon: 'folder-kanban',
+    permissions: ['project.view.all', 'project.view.assigned'],
+  },
+  {
+    href: '/clients',
+    labelKey: 'clients',
+    icon: 'building-2',
+    permissions: ['client.view'],
+  },
   {
     href: '/users',
     labelKey: 'users',
@@ -74,6 +91,8 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<{
   prefix: string
   permissions: readonly Permission[]
 }> = [
+  { prefix: '/projects', permissions: ['project.view.all', 'project.view.assigned'] },
+  { prefix: '/clients', permissions: ['client.view'] },
   { prefix: '/users', permissions: ['user.view'] },
   { prefix: '/roles', permissions: ['role.view'] },
   { prefix: '/settings', permissions: ['settings.view'] },

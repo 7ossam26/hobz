@@ -2,8 +2,18 @@ import * as React from 'react'
 
 import { Chip, type ChipProps } from '@/components/data/chip'
 import { ar } from '@/i18n/ar'
-import { ledgerTypeHue, projectStatusHue, taskStatusHue } from '@/lib/palette'
-import type { LedgerType, ProjectStatus, TaskStatus } from '@/lib/palette'
+import {
+  ledgerTypeHue,
+  milestoneStatusHue,
+  projectStatusHue,
+  taskStatusHue,
+} from '@/lib/palette'
+import type {
+  LedgerType,
+  MilestoneStatus,
+  ProjectStatus,
+  TaskStatus,
+} from '@/lib/palette'
 
 /**
  * Status, as a chip.
@@ -53,10 +63,27 @@ export function ProjectStatusChip({
  * `PENALTY` being red on one screen and orange on another — in the product
  * whose entire promise is that the money is explainable.
  */
-export function LedgerTypeChip({ type, label, ...props }: LabelledChipProps & { type: string }) {
+export function LedgerTypeChip({
+  type,
+  label,
+  ...props
+}: LabelledChipProps & { type: string }) {
   return (
     <Chip hue={ledgerTypeHue(type)} {...props}>
       {label ?? ar.enums.ledgerType[type as LedgerType] ?? type}
+    </Chip>
+  )
+}
+
+/** A project milestone's status (Phase 3 addition — see docs/DECISIONS.md). */
+export function MilestoneStatusChip({
+  status,
+  label,
+  ...props
+}: LabelledChipProps & { status: string }) {
+  return (
+    <Chip hue={milestoneStatusHue(status)} {...props}>
+      {label ?? ar.enums.milestoneStatus[status as MilestoneStatus] ?? status}
     </Chip>
   )
 }

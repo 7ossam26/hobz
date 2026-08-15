@@ -4,6 +4,9 @@ import { ForbiddenError, UnauthenticatedError } from '@/lib/errors'
 import { isEmptyScope, scopeProjects, scopeTasks } from '@/lib/rbac'
 
 import {
+  createClient,
+  createMilestone,
+  createProject,
   createRole,
   createSuperAdmin,
   createUser,
@@ -18,9 +21,11 @@ vi.mock('@/lib/auth/session', () => import('../../helpers/session-mock'))
 
 const { getUserById, getUsers, getOwnProfile } = await import('@/modules/user/queries')
 const { getRoleById, getRoles } = await import('@/modules/role/queries')
-const { getAuditEntries, getAuditEntryById, getAuditFacets } = await import(
-  '@/modules/audit/queries'
-)
+const { getAuditEntries, getAuditEntryById, getAuditFacets } =
+  await import('@/modules/audit/queries')
+const { getClientById, getClients } = await import('@/modules/client/queries')
+const { getProjectById, getProjects } = await import('@/modules/project/queries')
+const { getMilestones } = await import('@/modules/milestone/queries')
 
 const db = testDb()
 
@@ -61,6 +66,19 @@ describe('القراءة بالمعرّف المباشر — لا تتجاوز �
 
     await expect(getRoleById(role.id)).rejects.toBeInstanceOf(ForbiddenError)
     await expect(getRoles()).rejects.toBeInstanceOf(ForbiddenError)
+  })
+
+  it('يمنع قراءة عميل بالمعرّف المباشر دون صلاحية العرض', async () => {
+    // `client.view` is all-or-nothing, like `user.view` — there is no
+    // `client.view.assigned` in the SPEC §6 catalog, so the denial here is a
+    // thrown `ForbiddenError`, not a silently empty scope.
+    await seedPermissionCatalog(db)
+    const client = await createClient(db, { name: 'عميل خاص' })
+    const stranger = await createUserWithPermissions(db, ['task.comment'])
+    setSessionActor(await actorFor(db, stranger.id))
+
+    await expect(getClientById(client.id)).rejects.toBeInstanceOf(ForbiddenError)
+    await expect(getClients()).rejects.toBeInstanceOf(ForbiddenError)
   })
 
   it('يمنع قراءة سجل تدقيق بالمعرّف المباشر دون صلاحية العرض', async () => {
@@ -191,5 +209,142 @@ describe('نطاق المشاريع والمهام — العقد الذي تر�
     expect(await db.rolePermission.count()).toBe(0)
     expect(scopeProjects(actor)).toEqual({ deletedAt: null })
     expect(scopeTasks(actor)).toEqual({ deletedAt: null })
+  })
+})
+
+/**
+ * Phase 3's promised extension of this file: the read paths that actually
+ * ship for `Project`, plus its `Client` label and `Milestone` satellite.
+ * The phase brief, verbatim: "a view.assigned user must never see a project
+ * they aren't on, including by direct URL."
+ */
+describe('نطاق المشاريع — القراءة الفعلية عبر modules/project/queries', () => {
+  it('يقصر القائمة على ما يملكه أو يشارك فيه صاحب العرض المحدود', async () => {
+    await seedPermissionCatalog(db)
+    const owner = await createUserWithPermissions(db, ['project.view.assigned'], {
+      username: 'owner.scoped',
+    })
+    const stranger = await createUser(db, { username: 'stranger.owner' })
+    const mine = await createProject(db, { ownerId: owner.id, code: 'PRJ-MINE' })
+    await createProject(db, { ownerId: stranger.id, code: 'PRJ-THEIRS' })
+
+    setSessionActor(await actorFor(db, owner.id))
+    const page = await getProjects()
+    expect(page.items.map((p) => p.id)).toEqual([mine.id])
+  })
+
+  it('يمنع قراءة مشروع بالمعرّف المباشر لا يملكه ولا يشارك فيه — دون أي خطأ يفصح عن وجوده', async () => {
+    await seedPermissionCatalog(db)
+    const owner = await createUser(db, { username: 'private.project.owner' })
+    const project = await createProject(db, { ownerId: owner.id, code: 'PRJ-PRIVATE' })
+
+    const outsider = await createUserWithPermissions(db, ['project.view.assigned'], {
+      username: 'outsider',
+    })
+    setSessionActor(await actorFor(db, outsider.id))
+
+    // The id is known — copied from a URL. It must buy nothing: the failure
+    // is indistinguishable from a project that never existed.
+    await expect(getProjectById(project.id)).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+
+  it('يسمح للعضو المُسنَد إلى المشروع بقراءته رغم أنه ليس مالكه', async () => {
+    await seedPermissionCatalog(db)
+    const owner = await createUser(db, { username: 'owner.with.team' })
+    const member = await createUserWithPermissions(db, ['project.view.assigned'], {
+      username: 'team.member',
+    })
+    const project = await createProject(db, {
+      ownerId: owner.id,
+      code: 'PRJ-TEAM',
+      memberIds: [member.id],
+    })
+
+    setSessionActor(await actorFor(db, member.id))
+    const detail = await getProjectById(project.id)
+    expect(detail.id).toBe(project.id)
+
+    const page = await getProjects()
+    expect(page.items.map((p) => p.id)).toContain(project.id)
+  })
+
+  it('يمنح صاحب العرض الشامل رؤية كل المشاريع بصرف النظر عن الملكية', async () => {
+    await seedPermissionCatalog(db)
+    const someone = await createUser(db, { username: 'irrelevant.owner' })
+    await createProject(db, { ownerId: someone.id, code: 'PRJ-ANY-1' })
+    await createProject(db, { ownerId: someone.id, code: 'PRJ-ANY-2' })
+
+    const admin = await createUserWithPermissions(db, ['project.view.all'], {
+      username: 'sees.all.projects',
+    })
+    setSessionActor(await actorFor(db, admin.id))
+
+    const page = await getProjects()
+    expect(page.total).toBeGreaterThanOrEqual(2)
+  })
+
+  it('لا يرى أي مشروع من لا يملك أي صلاحية عرض مشاريع، دون أن يفشل الاستدعاء', async () => {
+    // No `assertCan` throw here — the scope is the enforcement, and an
+    // unpermitted user simply sees nothing (lib/rbac's documented contract).
+    await seedPermissionCatalog(db)
+    const someone = await createUser(db, { username: 'yet.another.owner' })
+    await createProject(db, { ownerId: someone.id, code: 'PRJ-HIDDEN' })
+
+    const nobody = await createUserWithPermissions(db, ['task.comment'], {
+      username: 'no.project.access',
+    })
+    setSessionActor(await actorFor(db, nobody.id))
+
+    const page = await getProjects()
+    expect(page.items).toEqual([])
+  })
+
+  it('يخفي المشاريع المحذوفة ناعمًا عن القائمة والقراءة المباشرة', async () => {
+    await seedPermissionCatalog(db)
+    const owner = await createUserWithPermissions(db, ['project.view.all'], {
+      username: 'sees.all.for.softdelete',
+    })
+    const gone = await createProject(db, {
+      ownerId: owner.id,
+      code: 'PRJ-GONE',
+      deletedAt: new Date('2026-01-01'),
+    })
+
+    setSessionActor(await actorFor(db, owner.id))
+    const page = await getProjects()
+    expect(page.items.map((p) => p.id)).not.toContain(gone.id)
+    await expect(getProjectById(gone.id)).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+})
+
+describe('نطاق المراحل — تابعة لنطاق المشروع الذي تنتمي إليه', () => {
+  it('يمنع قراءة مراحل مشروع لا يملكه المستخدم ولا يشارك فيه', async () => {
+    await seedPermissionCatalog(db)
+    const owner = await createUser(db, { username: 'milestone.owner' })
+    const project = await createProject(db, { ownerId: owner.id, code: 'PRJ-MS-DENY' })
+    await createMilestone(db, { projectId: project.id, name: 'مرحلة أولى' })
+
+    const outsider = await createUserWithPermissions(db, ['project.view.assigned'], {
+      username: 'milestone.outsider',
+    })
+    setSessionActor(await actorFor(db, outsider.id))
+
+    await expect(getMilestones(project.id)).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+
+  it('يسمح بقراءة المراحل لمن يملك صلاحية العرض الشامل', async () => {
+    await seedPermissionCatalog(db)
+    const owner = await createUser(db, { username: 'milestone.owner.2' })
+    const project = await createProject(db, { ownerId: owner.id, code: 'PRJ-MS-ALLOW' })
+    await createMilestone(db, { projectId: project.id, name: 'مرحلة التصميم', order: 0 })
+    await createMilestone(db, { projectId: project.id, name: 'مرحلة التطوير', order: 1 })
+
+    const viewer = await createUserWithPermissions(db, ['project.view.all'], {
+      username: 'milestone.viewer',
+    })
+    setSessionActor(await actorFor(db, viewer.id))
+
+    const milestones = await getMilestones(project.id)
+    expect(milestones.map((m) => m.name)).toEqual(['مرحلة التصميم', 'مرحلة التطوير'])
   })
 })

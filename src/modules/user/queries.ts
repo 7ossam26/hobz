@@ -1,6 +1,6 @@
 import { requireActor } from '@/lib/auth/session'
 import { prisma } from '@/lib/db'
-import { assertCan } from '@/lib/rbac'
+import { assertCan, can } from '@/lib/rbac'
 
 import { listUsersSchema, type ListUsersInput } from './schema'
 import { getUser, listUsers } from './service'
@@ -35,4 +35,31 @@ export async function getUserById(id: string): Promise<UserDetailDto> {
 export async function getOwnProfile(): Promise<UserDetailDto> {
   const actor = await requireActor()
   return getUser(prisma, actor.id)
+}
+
+export interface UserOptionDto {
+  id: string
+  fullName: string
+  username: string
+}
+
+/**
+ * The lean picker list a project's owner/team fields need. Mirrors the
+ * command palette's "the whole directory, once" reasoning
+ * (`modules/search/queries.ts`, SPEC §2's ~100-user cap) but degrades instead
+ * of dead-ending: a `project.create` holder without `user.view` can still
+ * always name *themselves* the owner — the alternative is a required field
+ * with nothing to put in it.
+ */
+export async function getUserOptions(): Promise<UserOptionDto[]> {
+  const actor = await requireActor()
+
+  if (!can(actor, 'user.view')) {
+    return [{ id: actor.id, fullName: actor.fullName, username: actor.username }]
+  }
+
+  const page = await listUsers(prisma, { page: 1, pageSize: 100 })
+  return page.items
+    .filter((user) => user.isActive)
+    .map((user) => ({ id: user.id, fullName: user.fullName, username: user.username }))
 }

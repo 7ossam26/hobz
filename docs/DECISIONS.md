@@ -157,7 +157,7 @@ signature (`getSetting('penalty.defaultGraceHours')` → `number`) stays exact.
 - **Auth.js v5**, Credentials provider, JWT session, bcrypt cost 12. No email,
   no self-signup, no user-initiated reset — the only reset path is an admin one.
 - **Login throttling in two layers**: an in-process map and a `login_throttles`
-  table. Keyed on username *and* IP. Limits read from Settings.
+  table. Keyed on username _and_ IP. Limits read from Settings.
 - **`lib/rbac`** completed: `scopeProjects` / `scopeTasks` returning Prisma
   where-fragments, `can` / `assertCan`, and `requirePermission` /
   `requireAuth` wrappers for server actions.
@@ -216,7 +216,7 @@ the expiry exists for. The lock is also set, never extended, so an attacker
 cannot hold a colleague out indefinitely by continuing to hammer.
 
 **Impersonation is gated three times.** The `user.impersonate` permission, an
-explicit `isSuperAdmin` check (the brief says SUPER_ADMIN *only*, and a role
+explicit `isSuperAdmin` check (the brief says SUPER_ADMIN _only_, and a role
 could be granted the permission by mistake), and a third re-check against the
 database inside the `jwt` callback when the token is minted. An action that
 forgot the first two still could not produce an impersonated token. Nesting is
@@ -229,7 +229,7 @@ instead of a JSON scan.
 
 **Deactivation's open-task guard shipped now, behind a port.** `Task` is a Phase
 4 table, so `OpenTaskLookup` is injected and Phase 1's implementation answers
-"none". The *rule* — blocked, audited, with the Arabic error naming the tasks —
+"none". The _rule_ — blocked, audited, with the Arabic error naming the tasks —
 is written and tested against a lookup that returns real tasks. Writing the guard
 later alongside the table is how a rule ends up existing only in the brief.
 
@@ -252,7 +252,7 @@ the check that counts.
    seconds and silently drops the millisecond component, which folded into the
    computed offset — so every audit date filter quietly included the first second
    of the following day.
-2. The sidebar used `border-s`. Under RTL the sidebar sits at the inline *start*
+2. The sidebar used `border-s`. Under RTL the sidebar sits at the inline _start_
    (the right), so `border-s` drew a line down the outer edge of the screen and
    left the two panes touching. It needed `border-e`. The e2e assertion on
    computed border widths is what caught it.
@@ -302,7 +302,7 @@ key, and twenty neighbouring pairs (`penalty.create` → `penalty.reverse`,
 `payout.approve` → `payout.markPaid`, `view.assigned` → `view.all`) stay
 separate. Then the cases only a database can express — permission revoked
 mid-session, role removed, union across two roles — and the impersonation
-boundary: an impersonated actor gets the *target's* permissions, cannot nest,
+boundary: an impersonated actor gets the _target's_ permissions, cannot nest,
 and holding `user.impersonate` without being SUPER_ADMIN is refused.
 
 **Axis 11 (soft-delete).** Extended past the first pass into the counts derived
@@ -328,27 +328,27 @@ no actor, no reason, no IP and no payload.
    editing a user, and one assignable role holds every permission implicitly
    (SPEC §2) — so an editor could promote themselves to SUPER_ADMIN, or demote
    every administrator and take over a product with nobody left able to undo it.
-   `assertMayChangeSuperAdminRole` now requires the actor to *be* a SUPER_ADMIN
+   `assertMayChangeSuperAdminRole` now requires the actor to _be_ a SUPER_ADMIN
    to grant or revoke that one role. Deliberately narrow: it fires only when the
    SUPER_ADMIN membership actually changes, so ordinary role edits are untouched.
 
 3. **A test factory footgun.** `createUser` used `options.defaultTaskRate ??
-   '500.00'`, so a test asking for a worker with explicitly *no* rate silently
+'500.00'`, so a test asking for a worker with explicitly _no_ rate silently
    got one and proved nothing. `=== undefined` now distinguishes "not specified"
    from "specified as null" — the same distinction the `phone` option already
    made.
 
 ### Deferred (with owners)
 
-| Deferred                                                                     | Phase |
-| ---------------------------------------------------------------------------- | ----- |
+| Deferred                                                                      | Phase |
+| ----------------------------------------------------------------------------- | ----- |
 | `scopeProjects` / `scopeTasks` proven against real `Project` / `Task` rows    | 3 / 4 |
 | The real `OpenTaskLookup` query behind the deactivation guard                 | 4     |
 | `PenaltyProfile` FK behind `User.penaltyProfileId` (a free-form string today) | 8     |
 | Users list server-side pagination UI (the query paginates; the page asks 100) | 2     |
 | Real sheet/dialog primitives — Phase 1 ships a minimal hand-written `Sheet`   | 2     |
 | Toasts and optimistic updates (Phase 1 uses inline alerts + `router.refresh`) | 2     |
-| e2e flows #2–#6                                                              | 4–12  |
+| e2e flows #2–#6                                                               | 4–12  |
 
 ### Known limitations
 
@@ -356,7 +356,7 @@ no actor, no reason, no IP and no payload.
   because `Project` and `Task` do not exist yet and `prisma/schema.prisma`
   carries an explicit guard against adding them early. They are covered
   exhaustively as pure functions, and the direct-ID principle the brief asks
-  about is proven against every read path that *does* ship
+  about is proven against every read path that _does_ ship
   (`tests/integration/rbac/scoped-reads.test.ts`). Phase 3 inherits that file's
   shape for `Project`.
 - **Tests for `lib/rbac` were written after the implementation, not before.**
@@ -422,7 +422,7 @@ no actor, no reason, no IP and no payload.
   instead of eleven. There is no `color` prop anywhere in the library.
 - **The contrast claim is a test.** `tests/unit/design/palette-contrast.test.ts`
   parses the stylesheet — not a TypeScript copy of it — and measures 58
-  pairings. The palette was *solved for* rather than eyeballed: a search found
+  pairings. The palette was _solved for_ rather than eyeballed: a search found
   the lightest text lightness per hue that still clears 4.7:1 against its own
   chip tint, which is the darkest ground that text ever sits on.
 - **Ten hues, none of them violet.** The accent occupies 275–300°; the data hues
@@ -452,7 +452,7 @@ no actor, no reason, no IP and no payload.
 - **The header's page action is a portal.** A layout cannot read its child page's
   props, and the header has to survive `loading.tsx` and `error.tsx`. The cost is
   one frame of hydration for a button, on routes that are all dynamic anyway.
-- **A modal focuses the first control in its *body*.** The first focusable
+- **A modal focuses the first control in its _body_.** The first focusable
   element in DOM order is the close button, and landing a keyboard user on
   "close" is the opposite of why the sheet opened.
 - **`lib/search.ts` is exempted from the no-Arabic-literals rule.** That rule
@@ -476,7 +476,7 @@ no actor, no reason, no IP and no payload.
   `Sheet` had been carrying `inset-block-0` since it was written. It did nothing,
   and an `h-full` was quietly holding the panel together.
 - **Two sources of truth for column visibility is one too many.** The first cut
-  had `defaultHidden` on the column *and* `hidden` in the URL, which made a
+  had `defaultHidden` on the column _and_ `hidden` in the URL, which made a
   default-hidden column impossible to switch back on. `hidden` is now the whole
   truth, and the page seeds it with `defaultHiddenColumns(columns)`.
 - **The search debounce fired twice per query.** The effect depended on the
@@ -538,3 +538,291 @@ the routes that render it.
   after mount. That is deliberate — it is what avoids a hydration mismatch and
   what keeps a long-open dashboard honest — but it does mean the first paint
   shows a timestamp rather than "منذ دقيقتين".
+
+---
+
+## Phase 3 — Clients, Projects & Milestones
+
+**Date:** 2026-08-15 · **Model:** Sonnet 5
+
+### Built
+
+- **`Client`** — name, phone, notes only. No financial field exists on the
+  model, which is the enforcement mechanism for SPEC §2's "no money-in
+  tracking": a `client.manage` holder cannot touch money through this module
+  because there is none in it.
+- **`Project`** — code (auto-generated `PRJ-0001…`, editable, retried once on a
+  generation race), name, client, owner, `engagementType` (validated against
+  the Settings-enabled subset of the fixed enum, not just the enum itself),
+  status, required `startDate`/`dueDate`, optional `gracePeriodHours` /
+  `penalizeRevisionLateness` overrides (both `null` = "use the Settings
+  default"), and the health override pair.
+- **`ProjectMember`** — per-project role (`MANAGER`/`CONTRIBUTOR`/`VIEWER`,
+  a Phase 3 addition, not a SPEC §4 enum), added/changed/removed one at a time
+  from the project's Team tab.
+- **`Milestone`** — name, due date, order, status; drag-to-reorder in the UI
+  with up/down-button and keyboard fallbacks (native HTML5 drag has no
+  keyboard story on its own).
+- **Project health (SPEC §5.7)** — `modules/project/health.ts`: a pure
+  `computeProjectHealth()` over `{status, dueDate, now, signals, thresholds}`,
+  a `TaskHealthLookup` port exactly like Phase 1's `OpenTaskLookup` (`Task`
+  doesn't exist until Phase 4, so `noTaskHealthSignals` answers "zero overdue,
+  zero blocked" honestly rather than guessing), and a `healthWhereFragment()`
+  that expresses the same logic as a Prisma `where` so the `/projects` health
+  facet is a real indexed filter, not a fetch-everything-then-filter
+  shortcut. Manual override (`healthOverride`/`healthReason`) always wins,
+  requires a reason in **both** directions — setting one and clearing one back
+  to automatic — and both are audited.
+- **Project templates** — `saveProjectAsTemplate` captures a project's
+  milestones as day-offsets from its `startDate` (not absolute dates, so one
+  template fits any start date); `createProjectFromTemplate` spawns a new
+  project via the normal `createProject` path and instantiates the milestones
+  against the new `startDate`, always reset to `PENDING`. The payload's
+  `tasks` field is typed `never[]` and stays empty — the same "define the
+  interface now, no-op the seam" shape Phase 1 used for `OpenTaskLookup`,
+  ready for Phase 4 to fill in.
+- **RBAC**: `scopeProjects(actor)` (already implemented and unit-tested since
+  Phase 1) is now exercised against real `Project` rows for the first time.
+  Read paths (`getProjects`, `getProjectById`, `getMilestones`) apply the scope
+  and never throw for a missing view permission — an unpermitted signed-in user
+  simply sees nothing, because the scope fragment itself is the enforcement
+  (see `lib/rbac/scope.ts`'s own docs). `getClients`/`getClientById` are the
+  all-or-nothing case (`client.view`, no `.assigned` split in the SPEC §6
+  catalog) and throw `ForbiddenError` like `user.view` does. `project.edit` /
+  `project.delete` / `project.create` are global once granted — there is no
+  `.assigned` variant for them in the catalog, so a `view.assigned` project
+  member does not automatically gain edit rights on it; a separate permission
+  is required, matching how `user.edit` works today.
+- **UI**: `/clients` and `/projects` are the first screens actually built on
+  `DataTable` + `EntitySheet` (Phase 1 shipped `/users`/`/roles` on hand-written
+  markup before those primitives existed; Phase 2's decisions log flagged the
+  rebuild for "whichever phase next touches their data" — this is that phase).
+  `/projects/[id]` is a full page with tabs (Overview / Tasks placeholder /
+  Team / Timeline) — see the note below on why, given SPEC §9 otherwise
+  reserves full pages for lists/dashboards/settings/reports.
+- **258 new tests**: 113 written directly (26 unit for health boundaries, 5
+  unit for code generation, 82 integration for RBAC scoping, health-override
+  audit, and CRUD across all four modules) plus 145 from the edge-case sweep
+  below. **1133 tests pass** across the whole suite (unit + integration).
+  Coverage gates hold: `project/health.ts` at the same 90% tier as
+  `money`/`rbac`/`settings` (100% achieved), global coverage 98.33%.
+
+### Decisions worth recording
+
+**The project detail page breaks SPEC §9's "full pages only for lists,
+dashboards, settings, reports" rule, on purpose, per an explicit instruction.**
+The phase brief (verbatim, in `docs/PHASES.md` and repeated in the session
+prompt) asks for "project detail page with tabs (Overview, Tasks placeholder,
+Team, Timeline)" — a page, not a sheet. CLAUDE.md says to stop and raise a
+conflict rather than silently diverge; this is flagged here rather than
+silently resolved either way, and the literal instruction was followed because
+it is doubly confirmed (the phase-planning doc and the live prompt agree) and
+a project is exactly the kind of multi-faceted entity SPEC's own "sheet vs
+page" reasoning would plausibly exempt if asked. Within the page, the
+sheet-first rule still holds for every _edit_ — the tabs are content, not
+routes, and every mutation happens in a sheet or dialog over the page.
+
+**`ProjectMemberRole` and `MilestoneStatus` are Phase 3 additions, not SPEC §4
+enums.** The SPEC lists `Milestone id, projectId, name, dueDate, order,
+status` and `ProjectMember projectId, userId, roleInProject` without spelling
+out the enum values for either "status" or "role". Rather than leaving them as
+free-form strings (which the rest of the product's "fixed enums, editable
+labels" pattern argues against), each got a small fixed enum:
+`ProjectMemberRole = MANAGER | CONTRIBUTOR | VIEWER`,
+`MilestoneStatus = PENDING | IN_PROGRESS | DONE | DELAYED`. Flagged here for
+override the same way SPEC §2's own "Decisions I made on your behalf" section
+flags T4/M4/R2/B6.
+
+**`startDate`/`dueDate` are required, not optional.** The SPEC §4 listing marks
+`clientId?`, `healthOverride?`, `healthReason?`, `gracePeriodHours?`, and
+`penalizeRevisionLateness?` with `?` but not `startDate, dueDate` — read
+literally (the same "read literally, and deliberately so" stance `lib/rbac`
+already takes on the scoping sentence and `assertMayChangeSuperAdminRole`
+takes on the SUPER_ADMIN restriction), that means both dates are mandatory at
+creation, even for a `DRAFT`. This also simplifies health computation
+considerably: `dueDate` is never null.
+
+**Milestones and `ProjectMember` are hard-deleted, not soft-deleted.** The SPEC
+§4 listing gives `Client`, `Project`, and every identity model an explicit
+`deletedAt`, but the `Milestone` and `ProjectMember` lines don't carry one —
+matching the junction-table precedent `UserRole`/`RolePermission` already set
+in Phase 0. Removing a milestone or a team member is a real `DELETE`.
+
+**The `/projects` health facet is SQL, not an in-memory filter — with a caveat
+recorded where it will be found.** `healthWhereFragment()` reconstructs
+`computeProjectHealth()`'s RED/AMBER/GREEN logic as a Prisma `where`, which
+only stays correct because Phase 3's task signals are always zero
+(`noTaskHealthSignals`). A code comment on `healthWhereFragment` and a unit
+test that asserts the two implementations agree across a boundary matrix are
+both there specifically so Phase 4 — which will wire real overdue-task and
+blocked-day signals — cannot miss that this needs revisiting.
+
+**Project code generation retries once, not indefinitely.** `PRJ-0001…` is a
+plain running count, not a database sequence; two managers creating a project
+in the same instant can race past the availability check. `createProject`
+retries the whole insert once against a freshly generated code, which is
+sufficient at SPEC §2's "up to ~100 people" scale and cheaper than a real
+sequence table or an advisory lock for a field that is explicitly editable
+immediately after creation anyway.
+
+**The owner/team picker degrades instead of dead-ending.** `getUserOptions()`
+(`modules/user/queries.ts`) mirrors the command palette's "the whole directory,
+once" reasoning (Phase 2, SPEC §2's ~100-user cap) for populating the
+owner/member `<select>`s, but a `project.create` holder who lacks `user.view`
+gets back a list containing only themselves rather than an empty, unusable
+dropdown — `ownerId` is a required field, and a required field with nothing to
+put in it is worse than a narrowed one.
+
+**Health-override clearing is audited as its own action, and requires its own
+reason.** SPEC §5.7 only says the override needs a reason; clearing one back
+to automatic is a separate decision and CLAUDE.md invariant 7 audits every
+status change regardless of direction, so
+`setProjectHealthOverrideSchema` requires a reason unconditionally.
+`Project.healthReason` itself clears to `null` alongside `healthOverride`
+(it describes the _current_ override, not a log of the last thing that
+happened) — the reason given for clearing lives on the audit row's `reason`
+column, which is where "why was this cleared" belongs once there is no live
+override left to attach it to. A first draft of this got the two directions
+backwards (stored the clearing reason into the live `healthReason` column);
+the integration test written to prove the audit trail caught it before commit.
+
+### Surprises
+
+**The two DB connectivity gaps Phase 0/1/2 recorded were both resolved
+mid-phase.** No Docker on the build machine (still true), but a native
+PostgreSQL 18 service was already listening on `:5432` — with different
+credentials than `docker-compose.yml` assumes, which read as the same
+"unreachable" failure at first. Once given working credentials, the full
+migration history (`20260813000000_init` through this phase's
+`20260815000000_work_clients_projects_milestones`) applied cleanly to a real
+database for the first time, and the entire integration suite — Phase 3's new
+tests and all prior phases' — ran and passed against it. Phase 1/2's
+"unverified end to end" caveat can be retired.
+
+**`prisma migrate dev` needs a live database even to _generate_ a migration
+against a migrations history; a schema-to-schema diff does not.** With no
+usable `DATABASE_URL` yet, `prisma migrate diff --from-schema-datamodel
+<git-HEAD's schema.prisma> --to-schema-datamodel prisma/schema.prisma --script`
+produced the same SQL a live `migrate dev` would have, using the previous
+commit's schema as the "from" side instead of a shadow database. Written up
+here because Phase 0 hit the analogous problem and used `migrate diff` too,
+but against `--from-migrations`, which (this phase learned) still needs a
+shadow database — only the schema-datamodel-to-schema-datamodel form is fully
+offline.
+
+**bcrypt at cost 12 started timing out under `--coverage`.** `tests/unit/auth/{password,authenticate}.test.ts` (Phase 1) budget close to vitest's 5s
+default per bcrypt call; v8's coverage instrumentation adds enough overhead,
+combined with Phase 3's larger and more parallel suite, that two different
+cost-12 hashes timed out in back-to-back full-coverage runs. Not a regression
+in Phase 1's tests — a thin, pre-existing margin that a bigger suite finally
+exhausted. Fixed by raising the **unit** project's `testTimeout` to 15s in
+`vitest.config.ts` (the integration project already had an explicit 30s for
+the same class of concern); the tests themselves are unchanged.
+
+### The edge-case sweep (docs/TESTING.md §4, axes 1, 4, 10, 11)
+
+Run as four parallel subagents, one per axis, each writing directly into
+new test files rather than editing shared ones — the collision-avoidance
+lesson Phase 1's log recorded ("the first attempt at spawning them exhausted
+the session before any produced output") did not repeat here: all four
+finished, added **145 further tests**, and three of them independently
+converged on the same real bug.
+
+**Axis 1 (boundaries).** 26 tests across 5 new files: milestone `order` at 0,
+1, and 20 items with a mid-list deletion (confirms the next `order` is
+`max+1`, never a reused gap); `startDate === dueDate` accepted as a legal
+one-day project; `gracePeriodHours: 0` proven distinct from `null` at both the
+schema and the persisted-row level; `nextProjectCode` at the 9999→10000
+padding-width transition; a health-override reason at exactly the 500-char
+limit; pagination at the exact page-size boundary for both `listClients` and
+`listProjects`; a milestone due exactly on its project's `startDate` (offset
+0) round-tripping through save/create-from-template. No bugs found — Phase 3's
+first-pass implementation already held every one of these.
+
+**Axis 4 (permissions).** One new file, 102 tests, table-driven over all 16
+Phase 3 write actions (`client`/`project`/`milestone`/`project-template`):
+denial + no-mutation for an unrelated-permission holder, an unpermitted
+holder, and an unauthenticated caller; success for the permission holder and
+for `createSuperAdmin` (with zero stored `RolePermission` rows); a coverage
+guard asserting every exported `*Action` is represented, so a future action
+added without a matching case fails loudly; and the axis's named scoping
+case — a `project.view.assigned` holder, as both the project's owner and as a
+team member, is still denied every `project.edit`-gated action, proving view
+scope never substitutes for edit permission. No permission-bypass bug found.
+
+**Axis 10 (Arabic).** Confirmed a real gap, then fixed it. `listClients` and
+`listProjects`' search used Prisma `contains`/`mode: 'insensitive'` — Postgres
+`ILIKE`, which case-folds but does not fold Arabic orthographic variants
+(alef/hamza, ya/alef-maksura, ta-marbuta). Searching `احمد` (no hamza, how
+most people type) never found a client stored as `أحمد للمقاولات` — the exact
+failure `lib/search.ts` exists to prevent for the command palette. Fixed with
+the same precedent Phase 2 set for that palette (SPEC §2's capped ~100-entity
+scale): when a search term is present, fetch the scope-and-filter-narrowed
+candidate rows once and match/paginate them with `normalizeArabic()` in
+application code instead of pushing the term into `WHERE`. Every other filter
+(status, owner, client, health, RBAC scope) still runs as real SQL — only the
+final text match moved. 4 new tests prove the fold-tolerant match in both
+directions and a correct negative match; a fifth proves `localeCompare(...,
+'ar')` (already used for facet/member sort order) places an alef-wasla name
+correctly rather than by raw code point.
+
+**Axis 11 (soft-delete) — a real bug, found and fixed.**
+`getProjectFacetOptions`'s client (and, it turned out, owner) facet derived
+its distinct-value list by `select`-ing the `client`/`owner` relation off
+scope-matching projects with no `deletedAt: null` on the relation itself.
+Prisma has no soft-delete middleware in this codebase (every exclusion is a
+manual `deletedAt: null` in each query's own `where`), so a client — or a
+user — soft-deleted while still referenced by a live project kept appearing
+in the `/projects` toolbar's filter menu forever: a dropdown naming an entity
+that, everywhere else in the product, no longer officially exists. Two other
+sweep agents (axis 10 and axis 4, incidentally, while verifying their own
+changes against the full suite) independently hit the same failing assertion
+and correctly declined to fix a function outside their assigned scope,
+reporting it instead — three independent confirmations of one bug is about as
+sure as a bug gets without a production incident. Fixed by adding
+`owner: { deletedAt: null }` / `client: { deletedAt: null }` to the two
+facet-deriving queries, which filters the *parent project* out of that
+specific distinct-value computation without touching anything else about how
+the project reads elsewhere (a soft-deleted client's name still correctly
+shows on the *project* that references it — see the axis 11 test file — this
+fix only closes the filter-menu leak). 7 further tests (2 new files) also
+proved: exclusion survives being the only match for a search/owner filter;
+`getProject` on a deleted id throws `NotFoundError` even under a scope with
+zero ownership restriction (`project.view.all`'s `{ deletedAt: null }`),
+proving the exclusion is `deletedAt`-driven and not an accident of scope
+narrowing; `Milestone.project`'s `onDelete: Cascade` never fires because
+`deleteProject` only ever `UPDATE`s `deletedAt`, confirmed by asserting
+milestones survive a soft-deleted project; and both `client.created`/
+`client.deleted` and `project.created`/`project.deleted` audit rows are fully
+readable after their subject is gone.
+
+### Deferred (with owners)
+
+| Deferred                                                                               | Phase |
+| -------------------------------------------------------------------------------------- | ----- |
+| Real `overdueTaskCount`/`maxBlockedDays` signals behind `TaskHealthLookup`             | 4     |
+| `healthWhereFragment`'s SQL revisited once real task signals exist                     | 4     |
+| `ProjectTemplatePayload.tasks` — currently always `[]`, typed `never[]`                | 4     |
+| Task tab on `/projects/[id]` — currently an `EmptyState` placeholder                   | 5     |
+| Dependency warning banners, task board/list/calendar views                             | 5     |
+| Milestone due dates driving anything in the lateness/penalty engine                    | 6/8   |
+| A `deleteProjectTemplate` path (templates are soft-delete-ready; nothing calls it yet) | later |
+| Command-palette entity search extended to projects/clients                             | later |
+
+### Known limitations
+
+- **The `/projects` list fetches its full scoped-and-filtered row set for the
+  health facet's SQL to stay simple**, per the note above — correct and
+  indexed at today's scale, revisit alongside the Phase 4 task-signal wiring.
+- **`ProjectMemberRole`/`MilestoneStatus` labels are not Settings-editable**,
+  unlike `taskStatus`/`projectStatus`/`priority`. SPEC §7's "Arabic status
+  labels" Settings group only names the SPEC §4 enums; these two are Phase 3
+  additions and were left as fixed `ar.enums` entries rather than expanding
+  the Settings catalog for enums the SPEC never anticipated. Worth folding in
+  if Phase 12's Settings UI pass finds it cheap.
+- **No delete guard on `Project`** analogous to Phase 1's `OpenTaskLookup` for
+  user deactivation — deleting a project with active milestones or a team is
+  currently unconditional given `project.delete`. `Task` doesn't exist yet to
+  make "does this project have open work" answerable, so — like Phase 1's
+  guard — the rule belongs with Phase 4, not invented early against a lookup
+  with nothing real to check.

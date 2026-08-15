@@ -48,6 +48,14 @@ export default defineConfig({
           // Component tests opt into jsdom per file with:
           //   // @vitest-environment jsdom
           setupFiles: ['tests/setup/unit.ts'],
+          // bcrypt at cost 12 (lib/auth/password) genuinely takes 1-4s per
+          // call under `--coverage`'s v8 instrumentation, against vitest's
+          // 5s default — margin thin enough that `tests/unit/auth/*.test.ts`
+          // started timing out under Phase 3's larger, more parallel suite.
+          // Widened once here rather than per-test, matching the integration
+          // project's own explicit `testTimeout` a few lines down for the
+          // same class of concern (slow-but-correct crypto/IO, not a hang).
+          testTimeout: 15_000,
         },
       },
       {
@@ -104,6 +112,13 @@ export default defineConfig({
         'src/lib/palette.ts',
         'src/lib/preferences.ts',
         'src/components/shared/data-table/state.ts',
+        // Phase 3. `project/health.ts` carries the 90% gate below for the same
+        // reason `money`/`search`/`datetime` do: a silently wrong RAG reads as
+        // a correct one until a manager acts on it. `project/code.ts` is
+        // listed (no elevated gate) so its coverage is measured honestly
+        // rather than quietly excluded because it lives outside `service.ts`.
+        'src/modules/project/health.ts',
+        'src/modules/project/code.ts',
       ],
       thresholds: {
         // Global gate (docs/TESTING.md §3).
@@ -175,6 +190,12 @@ export default defineConfig({
           statements: 90,
         },
         'src/components/shared/data-table/state.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/modules/project/health.ts': {
           lines: 90,
           functions: 90,
           branches: 90,

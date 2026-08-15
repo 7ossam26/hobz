@@ -1,6 +1,8 @@
 'use client'
 
 import {
+  Building2,
+  FolderKanban,
   Loader2,
   Moon,
   PanelRight,
@@ -119,6 +121,8 @@ interface CommandItem {
 
 const NAV_ICONS: Record<string, LucideIcon> = {
   'layout-dashboard': PanelRight,
+  'folder-kanban': FolderKanban,
+  'building-2': Building2,
   users: Users,
   shield: Shield,
   settings: Settings,
