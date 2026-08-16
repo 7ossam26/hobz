@@ -4,11 +4,7 @@ import type { Db } from '@/lib/db'
 import { AppError } from '@/lib/errors'
 import { isZero, toMoney } from '@/lib/money'
 import { getSetting } from '@/lib/settings'
-import type {
-  TaskApprovedEvent,
-  TaskCancelledEvent,
-  TaskEventBus,
-} from '@/modules/task/ports'
+import type { TaskEventBus } from '@/modules/task/ports'
 
 import { appendEntry, isUniqueViolation, reverseEntry } from './service'
 import type { LedgerEntryDto } from './types'
@@ -229,32 +225,38 @@ export async function reverseTaskEarning(
 export function createLedgerTaskEvents(args: LedgerTaskEventsArgs): TaskEventBus {
   return {
     async emit(db, event) {
+      // Explicit per-type narrowing, not an if/else-fallthrough: Phase 9 added
+      // four more `TaskDomainEvent` variants (assigned, submitted, revision
+      // requested, mentioned), and a bare `else` here would have cast one of
+      // them to `TaskCancelledEvent` and tried to reverse an earning that was
+      // never approved. This bus answers to exactly two event types and
+      // ignores the rest — that is its whole contract.
       if (event.type === 'TaskApproved') {
-        const approved = event as TaskApprovedEvent
         await recordTaskEarning(db, {
-          taskId: approved.taskId,
-          assigneeId: approved.assigneeId,
-          taskValue: approved.taskValue,
-          approvedAt: approved.approvedAt,
-          approvedById: approved.approvedById ?? null,
+          taskId: event.taskId,
+          assigneeId: event.assigneeId,
+          taskValue: event.taskValue,
+          approvedAt: event.approvedAt,
+          approvedById: event.approvedById ?? null,
           cycleDay: args.cycleDay,
         })
         return
       }
 
-      const cancelled = event as TaskCancelledEvent
-      // Only an approved task ever had an earning to answer for. The event
-      // carries that fact precisely so the ledger does not have to re-derive
-      // it from a status that has already moved on.
-      if (!cancelled.wasApproved) return
+      if (event.type === 'TaskCancelled') {
+        // Only an approved task ever had an earning to answer for. The event
+        // carries that fact precisely so the ledger does not have to
+        // re-derive it from a status that has already moved on.
+        if (!event.wasApproved) return
 
-      await reverseTaskEarning(db, {
-        taskId: cancelled.taskId,
-        cancelledAt: cancelled.cancelledAt,
-        cancelledById: cancelled.cancelledById ?? null,
-        reason: cancelled.reason,
-        cycleDay: args.cycleDay,
-      })
+        await reverseTaskEarning(db, {
+          taskId: event.taskId,
+          cancelledAt: event.cancelledAt,
+          cancelledById: event.cancelledById ?? null,
+          reason: event.reason,
+          cycleDay: args.cycleDay,
+        })
+      }
     },
   }
 }

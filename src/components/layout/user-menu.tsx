@@ -1,6 +1,6 @@
 'use client'
 
-import { KeyRound, LogOut } from 'lucide-react'
+import { Bell, KeyRound, LogOut } from 'lucide-react'
 import Link from 'next/link'
 import * as React from 'react'
 
@@ -64,6 +64,13 @@ export function UserMenu({
       <AppearanceControls />
 
       <PopoverSeparator />
+
+      <PopoverItem asChild>
+        <Link href="/notifications/preferences">
+          <Bell className="size-4 shrink-0" aria-hidden />
+          {ar.notifications.preferencesLink}
+        </Link>
+      </PopoverItem>
 
       <PopoverItem asChild>
         <Link href="/change-password">

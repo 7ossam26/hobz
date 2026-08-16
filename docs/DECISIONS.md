@@ -2147,3 +2147,227 @@ pins its grace on the project instead — with a comment saying why.
   control on the page.** The query supports it; the UI ships worker, kind,
   automatic and reversed. A project filter belongs next to Phase 10's reporting
   work rather than as a fifth dropdown here.
+
+---
+
+## Phase 9 — Notifications
+
+**Date:** 2026-08-16 · **Model:** Sonnet 5
+
+### Built
+
+- **`Notification` + `NotificationPreference`** (`20260820000000_notifications`).
+  A missing preference row means "enabled" — the same missing-means-default
+  reasoning `lib/settings` uses for the agency catalog, so a brand-new user
+  needs no seed rows to have every non-mandatory type on. `Notification`
+  carries `dedupeKey` (`@@unique([userId, type, dedupeKey])`) so a
+  threshold-crossing or scheduled delivery — `TASK_DUE_SOON`, `TASK_OVERDUE`,
+  `MANAGER_DIGEST` — is safe to attempt twice; Postgres treats every `NULL` as
+  distinct, so the thirteen one-shot event types pass no key and rely on their
+  own domain event firing once, exactly as Phase 7/8 already made "approving
+  twice" and "reversing twice" impossible at their own layer.
+- **`modules/notification/`** — `service.ts` (delivery, preference
+  enforcement, read/mark-read, all scoped to the caller's own inbox — there is
+  no `notification.view.all` key in SPEC §6, so there is no such scope),
+  `messages.ts` (every event → Arabic title/body, the one file that owns the
+  wording, mirroring `modules/penalty/breakdown.ts`), `recipients.ts` (event
+  subject → who hears about it), `bus.ts` (the five real `*EventBus`
+  implementations), `digest.ts` + `job.ts` (the daily manager digest),
+  `queries.ts` / `actions.ts` for the bell and the preferences page.
+- **Central subscription, not scattered `notify()` calls.** Every domain
+  module already had (or now has) a `ports.ts` boundary a phase stubbed with a
+  no-op bus: `TaskEventBus` (Phase 4), `MoneyEventBus` (Phase 8),
+  `LatenessEventBus` (Phase 6), plus two this phase added —
+  `modules/extension/ports.ts` and `modules/payout/ports.ts`, in the same
+  shape. `modules/notification/bus.ts` is the one real implementation of all
+  five, wired in at each module's existing composition root
+  (`task/actions.ts`, `penalty/port.ts`, `penalty/job.ts`, `calendar/job.ts`,
+  `extension/actions.ts`, `payout/actions.ts`) — never inside a `service.ts`,
+  so the dependency runs one way, from the root inward, and no service file
+  learned to import the notification module. Where a bus already had a real
+  subscriber (`ledgerTaskEvents` on `TaskApproved`/`TaskCancelled`), the new
+  one is composed alongside it with `lib/events.ts`'s `fanOut`, ledger first,
+  so a notification describing a payment never fires before the payment
+  exists.
+- **Four task events Phase 4 had no port for.** `TaskAssigned` (fired for a
+  first assignment and a reassignment alike — from the new assignee's side
+  both mean "this is now mine"), `TaskSubmitted`, `TaskRevisionRequested`, and
+  `TaskMentioned` (one event per resolved `@handle`, never per comment — two
+  people mentioned in one message are two people who need to hear about it,
+  and a self-mention tells nobody anything they do not know). All four went
+  into the existing `TaskDomainEvent` union in `modules/task/ports.ts`, which
+  required fixing a latent bug in `modules/ledger/earnings.ts`'s subscriber —
+  see Surprises.
+- **`TaskDueSoon` / `TaskOverdue` joined `LatenessEventBus`.** `TaskOverdue`
+  fires on the edge into lateness (`overdueWorkingDays` 0 → >0), reusing the
+  exact comparison `modules/calendar/job.ts` already made for the escalation
+  check — the same "an edge, not a level" rule that already makes ten runs
+  send one escalation notification. `TaskDueSoon` is new Settings surface,
+  `notifications.dueSoonHours` (default 24), and fires only for a task not yet
+  delivered and not yet late.
+- **`recipients.ts`'s "manager" is a decision made on your behalf, flagged per
+  CLAUDE.md.** Neither SPEC §8 nor the permission catalog names a manager
+  role. The digest and ADMIN-level escalation read "manager" as *whoever holds
+  `project.view.all`* — the one permission that means "sees the whole
+  agency's work" — because SUPER_ADMIN holds it implicitly and a query for
+  "who holds this permission" has to account for that the same way
+  `lib/rbac.can()` already does. PM-level escalation, task-submitted and
+  extension-requested notifications go to the *project owner* instead — the
+  narrower, per-project answer. Override in `docs/SPEC.md` §8 if the agency
+  wants a role-based definition.
+- **The daily digest is one summary, computed once, delivered once per
+  manager.** `deliverManagerDigest` counts overdue tasks
+  (`overdueWorkingDays > 0`, excluding `DONE`/`CANCELLED`), tasks awaiting
+  approval (`status: 'IN_REVIEW'` — SPEC §5.1's state between a delivery and a
+  decision), and at-risk projects (not `GREEN`, override included — the exact
+  computation `/projects` renders per row, counted rather than listed). The
+  job (`notifications.managerDigest`, hourly tick) reads
+  `notifications.digestHourCairo` inside the handler rather than baking it
+  into the cron string — the same "operator changes a Setting, it takes effect
+  on the next tick, not the next redeploy" shape `payout.closeCycle` already
+  uses for `payout.cycleDay`.
+- **WhatsApp templates, actually consumed.** The Settings catalog and
+  `components/data/user-chip.tsx`'s `whatsappMessage` prop existed since
+  Phase 2/8, unused — the task detail sheet explicitly passed
+  `showWhatsapp={false}` on the assignee chip. `lib/whatsapp.ts`'s
+  `fillWhatsappTemplate` fills `{name}`/`{task}`/`{due}`/`{amount}` from
+  `whatsapp.templates`, threaded down to the task sheet (assignee), the
+  payouts register (`payoutPaid`) and the penalties register
+  (`penaltyApplied`, added to the catalog's defaults this phase). The client
+  record — SPEC §8's fourth surface — gets a plain button with no template:
+  a client is not a منفّذ, and the sentence a manager sends one is theirs to
+  type.
+- **Preferences enforcement is one function, called from both ends.**
+  `setPreference` throws `DomainError('notifications.errors.mandatoryType')`
+  for `TASK_ASSIGNED`/`TASK_OVERDUE` regardless of caller — the server action
+  and a direct integration-test call hit the identical check, because
+  CLAUDE.md invariant 3 puts the enforcement in the service, not the
+  greyed-out checkbox (`/notifications/preferences`, unlisted in
+  `lib/navigation.ts` exactly like `/change-password` — a personal preference,
+  not agency configuration).
+
+### Decisions worth recording
+
+**A missing Settings *page* is not this phase's gap to close.** SPEC §8 says
+WhatsApp templates are "configurable in Settings," and they are — every
+catalog key added here goes through the existing generic
+`modules/setting/actions.ts` write path unmodified. There is still no `/settings`
+route anywhere in the app; Phase 2 and Phase 3's decision logs both flagged
+building it as Phase 12's. Building a generic Settings UI now, for one phase's
+two new keys, would be exactly the kind of half-built screen Phase 2 warned
+against reworking later. Flagged here rather than silently worked around.
+
+**`MONEY_REVERSED` is a ninth event beyond SPEC §8's literal list, kept
+in.** The list names "penalty applied, bonus granted," not "reversed" — but
+`MoneyReversedEvent` already existed as a Phase 8 domain event with nobody
+subscribed to it, and CLAUDE.md's own thesis ("make deductions and payments
+feel like arithmetic") argues for telling a منفّذ when money that was taken
+comes back, not only when it is taken. Silently dropping an existing domain
+event when asked to "wire all events, emitted by existing domain events" would
+have been the quieter and the wronger choice.
+
+**`ledgerTaskEvents`'s dispatcher had a latent bug this phase's union
+extension would have triggered.** It was `if (type === 'TaskApproved') {…}
+else { cast to TaskCancelledEvent }` — correct while the union had exactly two
+members, and silently wrong the moment a third arrived: a `TaskAssigned` event
+would have been cast to `TaskCancelledEvent` and asked
+`reverseTaskEarning` to reverse an earning that was never approved.
+Caught before it shipped by reading the subscriber before extending the type
+it switches on, not by a failing test — fixed to explicit per-type narrowing,
+which is what let this phase add four more variants safely.
+
+**`fanOut` lives in `lib/`, not in the notification module.** It composes any
+`{ emit(db, event) }` shape, generic over the event type, so it works
+unmodified for all five bus interfaces and belongs beside `lib/scheduler` and
+`lib/advisory-lock` as shared infrastructure rather than as something the
+notification module exports for everyone else to depend on.
+
+**Mark-read is not the same question as dismissable.** SPEC §5.4 says a
+penalty notification is "non-dismissable" and the منفّذ "cannot contest
+in-system." Read that narrowly: it governs whether the drawer offers a hide
+action (it does not offer one at all, for any type, in this phase) and is
+surfaced as a small "لا يمكن إخفاء هذا الإشعار" tag for transparency — it does
+not block marking the notification read, which is a receipt, not a dispute.
+
+### Surprises
+
+**The axis-5 sweep's own fixture proved the `TaskOverdue` addition correct
+by breaking three pre-existing assertions.** `tests/integration/calendar/
+job.test.ts` asserted `bus.events` by exact array equality against
+`TaskEscalated` alone. A task recomputed for the first time after going
+overdue crosses two thresholds in the same sweep — `overdueWorkingDays` 0 →
+`PM_AFTER` *and* that figure already past the PM threshold — so `TaskOverdue`
+and `TaskEscalated` now legitimately fire together on that one run. Fixed by
+updating the three assertions to the correct, larger event set (never by
+loosening `toHaveLength` into `toBeGreaterThan`) — the failures were the
+sweep doing its job, not a regression.
+
+**`loadTask` in `modules/task/service.ts` did not select `title`.** Every
+caller before this phase already had the task loaded elsewhere by the time it
+needed a title for an audit row or a UI string. Four new events all needed
+`taskTitle` in the payload — a notification is composed long after the
+triggering call, on its own read, and cannot join back to `tasks` to ask. Added
+`title: true` to the one shared select rather than a second per-event fetch.
+
+**The edge-case sweep (two parallel subagents, timezone/concurrency and
+permission/soft-delete/empty) found one real defect: `recipients.ts.
+projectOwnerId` filtered the *project's* `deletedAt`, never the owner user
+row's own `deletedAt`/`isActive`.** A project whose owner had since left the
+agency kept receiving every new submission/extension/escalation targeting
+their old project, indefinitely — `managerIds` (via `usersWithPermission`)
+already filtered correctly and `projectOwnerId` had quietly drifted from it.
+Fixed by adding `owner: { deletedAt: null, isActive: true }` to the same
+query, matching the precedent Phase 3 set for `getProjectFacetOptions`'s
+identical class of bug (a soft-deleted party still surfacing through a
+relation nobody thought to re-check).
+
+**Both sweep agents also independently reproduced an intermittent,
+pre-existing flake** — random FK-constraint violations and "no record found"
+errors in ordinary factory calls, only ever surfacing when several test
+*files* ran together, never within one file alone. Root cause, found on
+request after the sweep flagged it rather than fixing it:
+`vitest.config.ts`'s integration project set `pool: 'forks'` +
+`poolOptions.forks.singleFork: true`, on the comment "a single fork
+serialises the whole integration project" — true of the OS process count and
+false of what actually mattered. Traced into Vitest 3.2.7's own compiled
+source (`@vitest/runner`'s forks-pool `runWithFiles`,
+`node_modules/vitest/dist/chunks/coverage.DfSpMS-b.js`): a `singleFork`
+project's *entire* file list is handed to its one worker process in a single
+batched `runFiles(...)` call, and it is that worker's own internal loop —
+gated by the separate `fileParallelism` option (default `true`, and
+inapplicable per-project — Vitest's own `ProjectConfig` type explicitly
+excludes it, `tsc` caught the first attempt at setting it on the project
+block) — that decides whether the files in that batch run one at a time or
+concurrently. `singleFork` bought one process; it never bought serial file
+execution inside it. Two files' `beforeEach(resetDatabase)` `TRUNCATE`s could
+therefore still race a third file's in-flight query, each with its own
+isolated module registry and therefore its own `testDb()` singleton
+`PrismaClient` (`tests/setup/reset.ts`), all pointed at the same physical
+database. Fixed with root-level `test.fileParallelism: false` in
+`vitest.config.ts` (the only place the type allows it). Confirmed with three
+consecutive clean full integration runs after the change (78 files, 1103
+tests each) against a run before the fix that had shown one flaky failure.
+
+### Deferred
+
+- **A full `/notifications` list page.** The drawer holds the twenty most
+  recent and paginates in place; "view all" is not a separate route. Worth
+  adding once a منفّذ's history genuinely outgrows a scrollable popover.
+- **Watcher notification on `TaskAssigned`/`TaskMentioned`/`TaskDueSoon`/
+  `TaskOverdue`.** Watchers are notified on submit, revision-request and
+  approve (SPEC §4: "watchers … are notified about it"); the four types above
+  go to the assignee/mentioned user only, on the reasoning that a watcher
+  already knows who a task is assigned to and does not need a due-date
+  reminder for someone else's deadline. Revisit if a watcher-heavy workflow
+  proves that reasoning wrong.
+
+### Known limitations
+
+- **`atRiskProjectCount` is O(projects) round trips**, the same shape
+  `/projects`' own health facet already accepts (Phase 4's note on
+  `healthWhereFragment`) — correct and indexed-per-query at SPEC §2's
+  ~100-person scale, on a job that runs once an hour and no-ops every tick but
+  one.
+- **Digest recipients are recomputed, not cached, across the loop that
+  delivers to them.** At agency scale this is one query either way; revisit if
+  the manager set ever needs to be large enough for that to matter.

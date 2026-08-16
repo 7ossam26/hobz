@@ -28,13 +28,15 @@ export async function register(): Promise<void> {
     const { registerCalendarJobs } = await import('@/modules/calendar/job')
     const { registerPayoutJobs } = await import('@/modules/payout/job')
     const { registerPenaltyJobs } = await import('@/modules/penalty/job')
+    const { registerNotificationJobs } = await import('@/modules/notification/job')
 
     // Jobs register themselves here as phases land:
-    //   Phase 6 — calendar.recomputeSchedule (03:00 Cairo)  ← registered below
-    //   Phase 7 — payout.closeCycle          (23:59 Cairo, closes on
-    //             settings.payout.cycleDay)                 ← registered below
-    //   Phase 8 — penalty.recompute          (03:00 Cairo)  ← registered below
-    //   Phase 9 — notifications.dailyDigest  (08:00 Cairo)
+    //   Phase 6 — calendar.recomputeSchedule    (03:00 Cairo)     ← below
+    //   Phase 7 — payout.closeCycle             (23:59 Cairo, closes on
+    //             settings.payout.cycleDay)                       ← below
+    //   Phase 8 — penalty.recompute             (03:00 Cairo)     ← below
+    //   Phase 9 — notifications.managerDigest   (hourly tick, fires on
+    //             settings.notifications.digestHourCairo)         ← below
     //
     // `calendar.recomputeSchedule` and `penalty.recompute` share a time and
     // nothing else: one writes derived columns on `tasks`, the other writes to
@@ -44,6 +46,7 @@ export async function register(): Promise<void> {
     registerCalendarJobs()
     registerPayoutJobs()
     registerPenaltyJobs()
+    registerNotificationJobs()
 
     startScheduler()
   }

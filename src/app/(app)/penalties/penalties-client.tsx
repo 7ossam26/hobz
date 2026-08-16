@@ -8,6 +8,7 @@ import * as React from 'react'
 import { Chip } from '@/components/data/chip'
 import { DateText } from '@/components/data/date-text'
 import { MoneyText } from '@/components/data/money-text'
+import { WhatsappButton } from '@/components/data/user-chip'
 import { Dialog } from '@/components/shared/dialog'
 import { EmptyState } from '@/components/shared/empty-state'
 import { FormField } from '@/components/shared/form-field'
@@ -25,6 +26,7 @@ import {
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { ar } from '@/i18n/ar'
+import { fillWhatsappTemplate } from '@/lib/whatsapp'
 import {
   createPenaltyAction,
   grantBonusAction,
@@ -48,6 +50,8 @@ interface Props {
   /** Null when the caller lacks `settings.view` — the formulas are not theirs to read. */
   profiles: PenaltyProfileDto[] | null
   canEditProfiles: boolean
+  /** SPEC §8 — Settings `whatsapp.templates`. */
+  whatsappTemplates: Record<string, string>
 }
 
 /**
@@ -71,6 +75,7 @@ export function PenaltiesClient({
   canCreateBonus,
   profiles,
   canEditProfiles,
+  whatsappTemplates,
 }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -222,7 +227,24 @@ export function PenaltiesClient({
                     </Chip>
                   </div>
                 </TableCell>
-                <TableCell>{row.userFullName}</TableCell>
+                <TableCell>
+                  <span className="flex items-center gap-1.5">
+                    {row.userFullName}
+                    {row.kind === 'PENALTY' && row.userPhone ? (
+                      <WhatsappButton
+                        user={{ fullName: row.userFullName, phone: row.userPhone }}
+                        message={
+                          whatsappTemplates.penaltyApplied
+                            ? fillWhatsappTemplate(whatsappTemplates.penaltyApplied, {
+                                task: row.taskTitle ?? '',
+                                amount: row.amount,
+                              })
+                            : undefined
+                        }
+                      />
+                    ) : null}
+                  </span>
+                </TableCell>
                 <TableCell className="max-w-40 truncate">
                   {row.taskTitle ?? ar.common.none}
                 </TableCell>

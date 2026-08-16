@@ -77,7 +77,39 @@ export interface TaskEscalatedEvent {
   at: Date
 }
 
-export type LatenessDomainEvent = TaskEscalatedEvent
+/**
+ * SPEC §8's "due soon" — fired once per `dueDate` (via `Notification`'s
+ * `dedupeKey`, not a column here), for a task not yet late but due within
+ * `settings.notifications.dueSoonHours`.
+ */
+export interface TaskDueSoonEvent {
+  type: 'TaskDueSoon'
+  taskId: string
+  projectId: string
+  taskTitle: string
+  assigneeId: string | null
+  dueDate: Date
+  at: Date
+}
+
+/**
+ * SPEC §8's "overdue" — fired on the transition into lateness (0 → >0 working
+ * days late), not on every recompute of an already-overdue task. The nightly
+ * job already computes exactly this comparison for `overdueWorkingDays`;
+ * `modules/calendar/job.ts` reuses it rather than tracking a second flag.
+ */
+export interface TaskOverdueEvent {
+  type: 'TaskOverdue'
+  taskId: string
+  projectId: string
+  taskTitle: string
+  assigneeId: string | null
+  dueDate: Date
+  lateWorkingDays: number
+  at: Date
+}
+
+export type LatenessDomainEvent = TaskEscalatedEvent | TaskDueSoonEvent | TaskOverdueEvent
 
 export interface LatenessEventBus {
   emit(db: Db, event: LatenessDomainEvent): Promise<void>

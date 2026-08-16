@@ -172,6 +172,8 @@ export const SETTINGS_CATALOG = {
     8,
   ),
   'notifications.pollingIntervalSeconds': define('notifications', positiveInt, 30),
+  /** A task not yet late, due within this many hours, gets one reminder. */
+  'notifications.dueSoonHours': define('notifications', positiveInt, 24),
 
   // ── Task & project taxonomy ──────────────────────────────────────────────
   'tasks.categories': define('tasks', taxonomyList, [...ar.defaults.taskCategories]),

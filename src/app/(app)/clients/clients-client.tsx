@@ -4,7 +4,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
 
-import { PhoneText } from '@/components/data/user-chip'
+import { PhoneText, WhatsappButton } from '@/components/data/user-chip'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { DataTable } from '@/components/shared/data-table/data-table'
 import type { ColumnDef, TableState } from '@/components/shared/data-table/types'
@@ -126,7 +126,15 @@ export function ClientsClient({ state, page, canManage }: Props) {
     {
       id: 'phone',
       header: ar.clients.phone,
-      cell: (row) => <PhoneText phone={row.phone} />,
+      // SPEC §8: "every user card, task assignee chip, and client record
+      // renders a WhatsApp button." A client has no template — the phrase a
+      // manager sends a client is theirs to type, not a Settings default.
+      cell: (row) => (
+        <span className="flex items-center gap-1.5">
+          <PhoneText phone={row.phone} />
+          <WhatsappButton user={{ fullName: row.name, phone: row.phone }} />
+        </span>
+      ),
     },
     {
       id: 'notes',

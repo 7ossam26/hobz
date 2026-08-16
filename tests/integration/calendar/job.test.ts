@@ -110,12 +110,23 @@ describe('calendar.recomputeSchedule — الحساب', () => {
     expect(row.overdueWorkingDays).toBe(PM_AFTER)
     expect(row.escalationLevel).toBe('PM')
     expect(row.escalatedAt).toEqual(now)
+    // This task's first-ever recompute crosses two thresholds in the same
+    // sweep: it goes overdue (0 → PM_AFTER working days) *and* that figure is
+    // already past the PM threshold, so both a `TaskOverdue` and a
+    // `TaskEscalated` fire together — the same "unrelated tests never share a
+    // fixture that hides one of them" reasoning as every other axis-5 case
+    // here, just with two events landing on the one run instead of one.
     expect(bus.events).toEqual([
       expect.objectContaining({
         type: 'TaskEscalated',
         taskId: task.id,
         from: 'NONE',
         to: 'PM',
+        lateWorkingDays: PM_AFTER,
+      }),
+      expect.objectContaining({
+        type: 'TaskOverdue',
+        taskId: task.id,
         lateWorkingDays: PM_AFTER,
       }),
     ])
@@ -285,9 +296,13 @@ describe('calendar.recomputeSchedule — عدم التأثر بالتكرار (a
     }
     expect(await taskRow(task.id)).toEqual(afterFirst)
 
-    // One level change, so one audit row and one notification — not ten.
+    // One level change, so one audit row — not ten. Two notifications, not
+    // twenty: the first run's `TaskEscalated` *and* the `TaskOverdue` that
+    // fires alongside it on the same 0 → PM_AFTER transition (see the
+    // "يصعّد لمدير المشروع" case above); the nine repeats after it write
+    // nothing further, which is the axis-5 guarantee this test is for.
     expect(await db.auditLog.count({ where: { action: 'task.escalated' } })).toBe(1)
-    expect(bus.events).toHaveLength(1)
+    expect(bus.events).toHaveLength(2)
   })
 
   it('التشغيل المتكرر لا يضيف سطور نشاط لوقت لم يتغيّر', async () => {
@@ -329,7 +344,12 @@ describe('calendar.recomputeSchedule — عدم التأثر بالتكرار (a
       // Cleared with the flag: "escalated since" must not outlive it.
       escalatedAt: null,
     })
-    expect(bus.events).toHaveLength(2)
+    // Run 1: `TaskEscalated` (NONE → PM) and `TaskOverdue` (0 → PM_AFTER),
+    // the same paired transition as the two cases above. Run 2: the extension
+    // clears the lateness, so only `TaskEscalated` (PM → NONE) fires — a
+    // de-escalation is not a second "overdue" event, there is nothing new to
+    // report about a deadline that no longer applies.
+    expect(bus.events).toHaveLength(3)
   })
 })
 

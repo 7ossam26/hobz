@@ -37,6 +37,18 @@ export default defineConfig({
     // plain `pnpm test` would fail on an empty project rather than on a real
     // problem. The coverage gate is what keeps the unit suite honest.
     passWithNoTests: true,
+    // Root-only: Vitest's own `ProjectConfig` type explicitly excludes
+    // `fileParallelism` (along with `maxWorkers`/`minWorkers`) from what a
+    // project may set — file-level scheduling is decided once, for the whole
+    // run, not per project. It has to live here rather than on the
+    // "integration" project below for that reason; see the note on that
+    // project's `pool`/`poolOptions` for *why* it matters (a shared Postgres
+    // database, not a speed preference). The unit project pays the same
+    // sequential-files cost for no correctness reason of its own — it has no
+    // shared external resource — but it is a ~40s suite either way, and a
+    // second `vitest.config.ts` just to give it back file parallelism is not
+    // worth the duplication.
+    fileParallelism: false,
     projects: [
       {
         plugins: [tsconfigPaths(), react()],
@@ -70,7 +82,17 @@ export default defineConfig({
           globalSetup: ['tests/setup/global-setup.ts'],
           // A shared Postgres database cannot be truncated by parallel workers:
           // one worker's TRUNCATE would delete another's fixtures mid-test.
-          // A single fork serialises the whole integration project.
+          // `singleFork` alone only pins this project to one OS process —
+          // Vitest still schedules multiple test *files* concurrently within
+          // that one process by default, each with its own isolated module
+          // registry and therefore its own `testDb()` singleton
+          // `PrismaClient`, all pointed at the same physical database. Two
+          // such files' `beforeEach(resetDatabase)` TRUNCATEs can then race a
+          // third file's in-flight query, which is exactly the "no record
+          // found" / FK-violation flake the Phase 9 edge-case sweep caught.
+          // The root `test.fileParallelism: false` above is the setting that
+          // actually serialises file execution — `singleFork` only keeps
+          // that serial execution inside one process rather than several.
           pool: 'forks',
           poolOptions: { forks: { singleFork: true } },
           testTimeout: 30_000,

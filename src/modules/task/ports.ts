@@ -149,7 +149,73 @@ export interface TaskCancelledEvent {
   reason: string
 }
 
-export type TaskDomainEvent = TaskApprovedEvent | TaskCancelledEvent
+/**
+ * SPEC §8's "assigned" — Phase 9's one mandatory, never-disable-able
+ * notification alongside `TASK_OVERDUE`. Fired for a first assignment *and* a
+ * reassignment; from the new assignee's side both are "this is now mine".
+ */
+export interface TaskAssignedEvent {
+  type: 'TaskAssigned'
+  taskId: string
+  projectId: string
+  taskTitle: string
+  assigneeId: string
+  previousAssigneeId: string | null
+  dueDate: Date
+  assignedById: string
+  at: Date
+}
+
+/** SPEC §8's "submitted" — told to whoever reviews, not to the assignee. */
+export interface TaskSubmittedEvent {
+  type: 'TaskSubmitted'
+  taskId: string
+  projectId: string
+  taskTitle: string
+  assigneeId: string | null
+  submittedById: string
+  at: Date
+}
+
+/**
+ * SPEC §8's "revision requested" — told to the assignee, carrying the reason
+ * and the new deadline SPEC T4 sets (§5.1's `newDueDate` on this same edge).
+ */
+export interface TaskRevisionRequestedEvent {
+  type: 'TaskRevisionRequested'
+  taskId: string
+  projectId: string
+  taskTitle: string
+  assigneeId: string | null
+  reason: string
+  newDueDate: Date
+  requestedById: string
+  at: Date
+}
+
+/**
+ * SPEC §8's "mention" — one event per resolved `@handle` in a comment
+ * (`modules/task/mentions.ts`), never per comment: two people mentioned in one
+ * message are two people who need to hear about it.
+ */
+export interface TaskMentionedEvent {
+  type: 'TaskMentioned'
+  taskId: string
+  projectId: string
+  taskTitle: string
+  commentId: string
+  mentionedUserId: string
+  authorId: string
+  at: Date
+}
+
+export type TaskDomainEvent =
+  | TaskApprovedEvent
+  | TaskCancelledEvent
+  | TaskAssignedEvent
+  | TaskSubmittedEvent
+  | TaskRevisionRequestedEvent
+  | TaskMentionedEvent
 
 export interface TaskEventBus {
   emit(db: Db, event: TaskDomainEvent): Promise<void>

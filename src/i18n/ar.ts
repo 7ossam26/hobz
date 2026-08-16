@@ -1363,6 +1363,7 @@ export const ar = {
       'notifications.escalateToAdminAfterDays': 'تصعيد لمدير النظام بعد (أيام)',
       'notifications.digestHourCairo': 'ساعة الملخص اليومي',
       'notifications.pollingIntervalSeconds': 'فترة تحديث البيانات (ثانية)',
+      'notifications.dueSoonHours': 'التذكير قبل الموعد النهائي (بالساعات)',
       'tasks.categories': 'تصنيفات المهام',
       'projects.engagementTypes': 'أنواع التعاقد',
       'labels.taskStatus': 'مسميات حالات المهام',
@@ -1526,6 +1527,7 @@ export const ar = {
         'السلام عليكم {name}، تم إسناد مهمة "{task}" إليك، موعد التسليم {due}.',
       taskOverdue: 'تذكير: مهمة "{task}" تجاوزت موعد التسليم {due}.',
       payoutPaid: 'تم صرف مستحقاتك بمبلغ {amount}.',
+      penaltyApplied: 'تنبيه: تم خصم {amount} من مستحقاتك بخصوص مهمة "{task}".',
     },
   },
 
@@ -1631,6 +1633,145 @@ export const ar = {
     /** `{name}` is substituted at render time. */
     openWith: 'مراسلة {name} عبر واتساب',
     noPhone: 'لا يوجد رقم موبايل مسجّل',
+  },
+
+  /**
+   * Notifications (SPEC §8, Phase 9) — the bell's drawer, the preferences
+   * page, and the Arabic prose composed onto every `Notification` row at the
+   * moment it is delivered (`modules/notification/messages.ts`).
+   */
+  notifications: {
+    title: 'الإشعارات',
+    empty: 'لا توجد إشعارات',
+    emptyHint: 'ستظهر هنا إشعارات المهام والمستحقات.',
+    markAllRead: 'تعليم الكل كمقروء',
+    markRead: 'تعليم كمقروء',
+    /** `{count}` is substituted at render time. */
+    unreadCount: '{count} غير مقروء',
+    viewAll: 'عرض كل الإشعارات',
+    preferencesLink: 'إعدادات الإشعارات',
+    nonDismissable: 'لا يمكن إخفاء هذا الإشعار',
+
+    /** Drawer/list group labels, by notification type. */
+    types: {
+      TASK_ASSIGNED: 'إسناد مهمة',
+      TASK_DUE_SOON: 'اقتراب موعد التسليم',
+      TASK_OVERDUE: 'تجاوز موعد التسليم',
+      TASK_SUBMITTED: 'تسليم مهمة',
+      TASK_REVISION_REQUESTED: 'طلب تعديل',
+      TASK_APPROVED: 'اعتماد مهمة',
+      TASK_ESCALATED: 'تصعيد مهمة',
+      TASK_MENTIONED: 'إشارة في تعليق',
+      PENALTY_APPLIED: 'خصم',
+      BONUS_GRANTED: 'مكافأة',
+      MONEY_REVERSED: 'إلغاء حركة مالية',
+      PAYOUT_APPROVED: 'اعتماد مستحقات',
+      PAYOUT_PAID: 'صرف مستحقات',
+      EXTENSION_REQUESTED: 'طلب تمديد',
+      EXTENSION_DECIDED: 'قرار تمديد',
+      MANAGER_DIGEST: 'ملخص يومي',
+    },
+
+    /**
+     * Title/body pairs, composed once per delivery. `{placeholders}` are
+     * filled from the event payload — never assembled by string
+     * concatenation, so the wording stays in one file (CLAUDE.md: "no Arabic
+     * string literals in JSX").
+     */
+    messages: {
+      taskAssigned: {
+        title: 'تم إسناد مهمة إليك',
+        body: 'أُسندت إليك مهمة "{task}"، موعد التسليم {due}.',
+      },
+      taskDueSoon: {
+        title: 'اقتراب موعد التسليم',
+        body: 'مهمة "{task}" مطلوب تسليمها بحلول {due}.',
+      },
+      taskOverdue: {
+        title: 'مهمة متأخرة',
+        body: 'مهمة "{task}" تجاوزت موعد التسليم {due}.',
+      },
+      taskSubmitted: {
+        title: 'تم تسليم مهمة',
+        body: 'سلّم {name} مهمة "{task}" وهي بانتظار المراجعة.',
+      },
+      taskRevisionRequested: {
+        title: 'طُلب تعديل على مهمتك',
+        body: 'طُلب تعديل على مهمة "{task}"، الموعد الجديد {due}: {reason}',
+      },
+      taskApproved: {
+        title: 'تم اعتماد مهمتك',
+        body: 'تم اعتماد مهمة "{task}".',
+      },
+      taskEscalatedPm: {
+        title: 'مهمة تحتاج متابعة',
+        body: 'مهمة "{task}" تجاوزت {days} يوم عمل تأخيرًا وتحتاج متابعتك.',
+      },
+      taskEscalatedAdmin: {
+        title: 'مهمة متعثّرة',
+        body: 'مهمة "{task}" تجاوزت {days} يوم عمل تأخيرًا وصُعّدت للإدارة.',
+      },
+      taskMentioned: {
+        title: 'أشار إليك {name}',
+        body: 'أشار إليك {name} في تعليق على مهمة "{task}".',
+      },
+      penaltyApplied: {
+        title: 'تم خصم مبلغ من مستحقاتك',
+        body: 'خُصم {amount} بخصوص مهمة "{task}": {formula}',
+      },
+      penaltyAppliedManual: {
+        title: 'تم خصم مبلغ من مستحقاتك',
+        body: 'خُصم {amount} من مستحقاتك.',
+      },
+      bonusGranted: {
+        title: 'حصلت على مكافأة',
+        body: 'مُنحت مكافأة بقيمة {amount}: {reason}',
+      },
+      moneyReversed: {
+        title: 'تم إلغاء حركة مالية',
+        body: 'أُلغيت حركة بقيمة {amount}: {reason}',
+      },
+      payoutApproved: {
+        title: 'تم اعتماد مستحقاتك',
+        body: 'اعتُمدت مستحقات بقيمة {amount}.',
+      },
+      payoutPaid: {
+        title: 'تم صرف مستحقاتك',
+        body: 'صُرف مبلغ {amount} من مستحقاتك.',
+      },
+      extensionRequested: {
+        title: 'طلب تمديد جديد',
+        body: 'طلب {name} تمديد موعد مهمة "{task}" إلى {due}.',
+      },
+      extensionApproved: {
+        title: 'تم اعتماد طلب التمديد',
+        body: 'اعتُمد تمديد مهمة "{task}" إلى {due}.',
+      },
+      extensionRejected: {
+        title: 'تم رفض طلب التمديد',
+        body: 'رُفض طلب تمديد مهمة "{task}".',
+      },
+      managerDigest: {
+        title: 'الملخص اليومي',
+        body: '{overdue} مهمة متأخرة، {awaiting} بانتظار الاعتماد، {atRisk} مشروع متعثر.',
+      },
+    },
+
+    /** The `/notifications/preferences` page. */
+    preferences: {
+      title: 'إعدادات الإشعارات',
+      subtitle: 'اختر الإشعارات التي تريد استقبالها داخل النظام.',
+      mandatory: 'إلزامي',
+      mandatoryHint: 'لا يمكن إيقاف هذا الإشعار — يخص إسناد أو تأخر مهامك مباشرة.',
+      enabled: 'مفعّل',
+      disabled: 'موقوف',
+      saved: 'تم حفظ الإعدادات',
+    },
+
+    errors: {
+      mandatoryType: 'لا يمكن إيقاف هذا النوع من الإشعارات',
+      notFound: 'الإشعار غير موجود',
+    },
   },
 
   /** The dev-only /design-system route. Not part of the product surface. */

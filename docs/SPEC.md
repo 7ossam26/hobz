@@ -711,6 +711,39 @@ approval, at-risk projects.
 WhatsApp button → `https://wa.me/<phone>?text=<url-encoded Arabic template>`.
 Templates configurable in Settings. No API, no integration.
 
+**How this is read (settled in Phase 9, `modules/notification/`)**
+
+- **"Managers" means whoever holds `project.view.all`** — flagged for
+  override. Neither this section nor the permission catalog (§6) names a
+  manager role; `project.view.all` is the one key that means "sees the whole
+  agency's work," which is what a digest of overdue tasks, approvals and
+  at-risk projects is for, and it is also what ADMIN-level task escalation
+  notifies. PM-level escalation, "task submitted," and "extension requested"
+  go to the narrower answer instead — the *project owner* — because those are
+  about one project, not the agency.
+- **Every event is delivered once per recipient, and de-duplicated where a
+  job could ask twice.** The thirteen state-transition events (assigned,
+  submitted, approved, …) are one-shot by construction — the state machine
+  already refuses re-entering a status, so the event cannot fire twice for the
+  same transition. The three that a scheduled or nightly job could raise
+  again for an unchanged fact — `TASK_DUE_SOON`, `TASK_OVERDUE`,
+  `MANAGER_DIGEST` — carry a `dedupeKey` (the due date, or the Cairo day) so a
+  redeploy or a manual re-run cannot page anybody twice.
+- **`TASK_OVERDUE` fires on the transition into lateness, not on every night a
+  task stays overdue.** The same "an edge, not a level" rule §5.4's idempotent
+  penalty engine and this section's own escalation ladder already use.
+  `TASK_DUE_SOON` is new Settings surface, `notifications.dueSoonHours`
+  (default 24), and only fires for work not yet delivered and not yet late.
+- **`MONEY_REVERSED` is delivered too, though this section's event list does
+  not name it.** `modules/penalty/ports.ts`'s `MoneyReversedEvent` already
+  existed (Phase 8) with nobody subscribed; telling a منفّذ when a deduction
+  is undone is the same transparency this section asks for the deduction
+  itself, from the other side.
+- **A task's watchers hear about it on submit, revision-request and approve** —
+  literally, per §4's `TaskWatcher` note ("are notified about it"). They do
+  not additionally hear "assigned," "due soon," or "overdue" for someone
+  else's deadline.
+
 ---
 
 ## 9. UI/UX direction

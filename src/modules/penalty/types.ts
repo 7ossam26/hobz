@@ -101,6 +101,8 @@ export interface MoneyRegisterRowDto {
   kind: MoneyRegisterKind
   userId: string
   userFullName: string
+  /** E.164, as stored. SPEC §8's WhatsApp button on the register row. */
+  userPhone: string | null
   taskId: string | null
   taskTitle: string | null
   amount: string

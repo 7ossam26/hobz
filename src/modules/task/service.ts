@@ -244,6 +244,7 @@ async function loadTask(db: Db, id: string) {
     select: {
       id: true,
       projectId: true,
+      title: true,
       status: true,
       assigneeId: true,
       taskValue: true,
@@ -868,6 +869,7 @@ export interface AssignTaskArgs extends TaskMutationArgs {
   ledger?: LedgerPort
   /** Approved-leave lookup for the non-blocking warning (Phase 6). */
   leave?: LeaveLookup
+  events?: TaskEventBus
 }
 
 /**
@@ -912,6 +914,7 @@ export async function assignTask(
   const now = nowOf(args)
   const ledger = args.ledger ?? noopLedgerPort
   const leave = args.leave ?? noLeaveLookup
+  const events = args.events ?? noopTaskEvents
 
   const task = await loadTask(db, input.taskId)
   const previousAssigneeId = task.assigneeId
@@ -1048,6 +1051,21 @@ export async function assignTask(
       ...(args.ip ? { ip: args.ip } : {}),
     })
   }
+
+  // SPEC §8: "assigned" — the one mandatory notification, fired for a first
+  // assignment and a reassignment alike, because from the new assignee's side
+  // both mean the same thing: this is now theirs.
+  await events.emit(db, {
+    type: 'TaskAssigned',
+    taskId: task.id,
+    projectId: task.projectId,
+    taskTitle: task.title,
+    assigneeId: assignee.id,
+    previousAssigneeId,
+    dueDate: task.dueDate,
+    assignedById: args.actor.id,
+    at: now,
+  })
 
   return { task: await detail(db, task.id, now), leaveWarnings }
 }
@@ -1331,6 +1349,7 @@ export async function removeDependency(db: Db, args: DependencyArgs): Promise<vo
 
 export interface AddCommentArgs extends TaskMutationArgs {
   input: AddCommentInput
+  events?: TaskEventBus
 }
 
 /**
@@ -1343,6 +1362,7 @@ export interface AddCommentArgs extends TaskMutationArgs {
 export async function addComment(db: Db, args: AddCommentArgs): Promise<TaskCommentDto> {
   const { input } = args
   const now = nowOf(args)
+  const events = args.events ?? noopTaskEvents
   const task = await loadTask(db, input.taskId)
 
   const handles = parseMentions(input.body)
@@ -1394,6 +1414,23 @@ export async function addComment(db: Db, args: AddCommentArgs): Promise<TaskComm
     after: { commentId: comment.id, mentions },
     ...(args.ip ? { ip: args.ip } : {}),
   })
+
+  // SPEC §8's "mention" — one event per resolved handle, never per comment.
+  // Self-mention (writing your own @handle) tells nobody anything they do not
+  // already know.
+  for (const mentionedUserId of mentions) {
+    if (mentionedUserId === args.actor.id) continue
+    await events.emit(db, {
+      type: 'TaskMentioned',
+      taskId: task.id,
+      projectId: task.projectId,
+      taskTitle: task.title,
+      commentId: comment.id,
+      mentionedUserId,
+      authorId: args.actor.id,
+      at: now,
+    })
+  }
 
   return { ...comment, mentions: [...comment.mentions] }
 }
@@ -1637,6 +1674,32 @@ export async function transitionTask(
       cancelledAt: now,
       cancelledById: args.actor.id,
       reason: input.reason ?? '',
+    })
+  }
+
+  if (to === 'SUBMITTED') {
+    await events.emit(db, {
+      type: 'TaskSubmitted',
+      taskId: task.id,
+      projectId: task.projectId,
+      taskTitle: task.title,
+      assigneeId: task.assigneeId,
+      submittedById: args.actor.id,
+      at: now,
+    })
+  }
+
+  if (to === 'REVISION_REQUESTED' && args.newDueDate) {
+    await events.emit(db, {
+      type: 'TaskRevisionRequested',
+      taskId: task.id,
+      projectId: task.projectId,
+      taskTitle: task.title,
+      assigneeId: task.assigneeId,
+      reason: input.reason ?? '',
+      newDueDate: args.newDueDate,
+      requestedById: args.actor.id,
+      at: now,
     })
   }
 

@@ -10,6 +10,10 @@ import { prisma } from '@/lib/db'
 import { can } from '@/lib/rbac'
 import { getSettings } from '@/lib/settings'
 import { recomputeTaskSchedule } from '@/modules/calendar/job'
+import {
+  notificationExtensionEvents,
+  notificationLatenessEvents,
+} from '@/modules/notification/bus'
 import { prismaPenaltyPort } from '@/modules/penalty/port'
 
 import { decideExtensionSchema, requestExtensionSchema } from './schema'
@@ -37,6 +41,7 @@ export const requestExtensionAction = requireAuth(
       actor,
       input,
       mayRequestForOthers: can(actor, 'task.extend'),
+      events: notificationExtensionEvents,
       ip: await ip(),
     })
     revalidatePath('/tasks')
@@ -61,6 +66,7 @@ export const decideExtensionAction = requirePermission(
         actor,
         input,
         penalty: prismaPenaltyPort,
+        events: notificationExtensionEvents,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )
@@ -75,6 +81,7 @@ export const decideExtensionAction = requirePermission(
         'penalty.defaultGraceHours',
         'notifications.escalateToPmAfterDays',
         'notifications.escalateToAdminAfterDays',
+        'notifications.dueSoonHours',
       ])
       await recomputeTaskSchedule(prisma, {
         taskId: request.taskId,
@@ -84,7 +91,9 @@ export const decideExtensionAction = requirePermission(
           pmAfterDays: settings['notifications.escalateToPmAfterDays'],
           adminAfterDays: settings['notifications.escalateToAdminAfterDays'],
         },
+        dueSoonHours: settings['notifications.dueSoonHours'],
         now: new Date(),
+        events: notificationLatenessEvents,
       })
     }
 

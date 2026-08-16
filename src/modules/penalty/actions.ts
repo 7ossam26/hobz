@@ -9,6 +9,7 @@ import { calendarFor } from '@/lib/calendar'
 import { prisma } from '@/lib/db'
 import { DomainError } from '@/lib/errors'
 import { assertCan } from '@/lib/rbac'
+import { notificationMoneyEvents } from '@/modules/notification/bus'
 
 import {
   assignPenaltyProfile,
@@ -71,6 +72,7 @@ export const createPenaltyAction = requirePermission(
         reason: input.reason,
         actor,
         cycleDay: settings.cycleDay,
+        events: notificationMoneyEvents,
         ...(input.taskId ? { taskId: input.taskId } : {}),
         ...(clientIp ? { ip: clientIp } : {}),
       }),
@@ -95,6 +97,7 @@ export const grantBonusAction = requirePermission(
         reason: input.reason,
         actor,
         cycleDay: settings.cycleDay,
+        events: notificationMoneyEvents,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )
@@ -133,6 +136,7 @@ export const reversePenaltyAction = requirePermission(
         reason: input.reason,
         actor,
         cycleDay: settings.cycleDay,
+        events: notificationMoneyEvents,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )
@@ -168,6 +172,7 @@ export const recomputeTaskPenaltyAction = requirePermission(
         cause: 'manual',
         now: new Date(),
         actor,
+        events: notificationMoneyEvents,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )

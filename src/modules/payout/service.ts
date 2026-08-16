@@ -25,6 +25,7 @@ import { appendEntry, isUniqueViolation, moneyOf } from '@/modules/ledger/servic
 import type { LedgerType } from '@/modules/ledger/sign'
 
 import { ensureOpenCycle, CYCLE_SELECT, type CycleRow } from './cycle'
+import { noopPayoutEvents, type PayoutEventBus } from './ports'
 import type {
   CloseCycleResult,
   PayoutCycleDto,
@@ -722,10 +723,12 @@ export interface ApprovePayoutArgs {
   actor: AuditActorRef | null
   now?: Date
   ip?: string
+  events?: PayoutEventBus
 }
 
 export async function approvePayout(db: Db, args: ApprovePayoutArgs): Promise<PayoutDto> {
   const now = args.now ?? new Date()
+  const events = args.events ?? noopPayoutEvents
   const payout = await loadPayout(db, args.payoutId)
 
   if (payout.status !== 'DRAFT') {
@@ -762,6 +765,15 @@ export async function approvePayout(db: Db, args: ApprovePayoutArgs): Promise<Pa
     ...(args.ip ? { ip: args.ip } : {}),
   })
 
+  await events.emit(db, {
+    type: 'PayoutApproved',
+    payoutId: payout.id,
+    userId: row.userId,
+    net: toStorageString(moneyOf(row.net)),
+    approvedById: args.actor?.id ?? null,
+    at: now,
+  })
+
   return toPayoutDto(row)
 }
 
@@ -779,6 +791,7 @@ export interface MarkPayoutPaidArgs {
   cycleDay: number
   now?: Date
   ip?: string
+  events?: PayoutEventBus
 }
 
 /**
@@ -798,6 +811,7 @@ export async function markPayoutPaid(
   args: MarkPayoutPaidArgs,
 ): Promise<PayoutDto> {
   const now = args.now ?? new Date()
+  const events = args.events ?? noopPayoutEvents
   const payout = await loadPayout(db, args.payoutId)
 
   if (payout.status === 'DRAFT') {
@@ -935,6 +949,21 @@ export async function markPayoutPaid(
   })
 
   if (status === 'PAID') await settleCycleIfComplete(db, payout.cycleId, args.actor)
+
+  // Only a real payment is news. A zero-amount call is only reachable to close
+  // out an already-floored payout (the check above), and "you were paid
+  // nothing" is not a notification.
+  if (isPositive(amount)) {
+    await events.emit(db, {
+      type: 'PayoutPaid',
+      payoutId: payout.id,
+      userId: payout.userId,
+      amount: toStorageString(amount),
+      fullyPaid: status === 'PAID',
+      paidById: args.actor?.id ?? null,
+      at: now,
+    })
+  }
 
   return toPayoutDto(row)
 }

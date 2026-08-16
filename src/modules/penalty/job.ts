@@ -6,6 +6,7 @@ import {
 } from '@/lib/calendar'
 import type { Db } from '@/lib/db'
 import { registerJob, type JobDefinition } from '@/lib/scheduler'
+import { notificationMoneyEvents } from '@/modules/notification/bus'
 
 import { PENALTY_STATUSES } from './assess'
 import { noopMoneyEvents, type MoneyEventBus } from './ports'
@@ -184,7 +185,10 @@ export const penaltyRecomputeJob: JobDefinition = {
   // A ledger write per late task, over an agency-sized backlog.
   timeoutMs: 10 * 60_000,
   handler: async (ctx) => {
-    const outcome = await runPenaltyRecompute(ctx.db, { now: ctx.runAt })
+    const outcome = await runPenaltyRecompute(ctx.db, {
+      now: ctx.runAt,
+      events: notificationMoneyEvents,
+    })
     console.info(
       `[${PENALTY_RECOMPUTE_JOB_NAME}] scanned=${outcome.scanned} applied=${outcome.applied} recalculated=${outcome.recalculated} cleared=${outcome.cleared} unchanged=${outcome.unchanged} skipped=${outcome.skipped} locked=${outcome.locked} failed=${outcome.failed}`,
     )

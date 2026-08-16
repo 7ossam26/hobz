@@ -22,6 +22,7 @@ import {
   LATENESS_TASK_SELECT,
   type LatenessRow,
 } from '@/modules/lateness/service'
+import { notificationLatenessEvents } from '@/modules/notification/bus'
 import { recomputeElapsed } from '@/modules/task/service'
 
 /**
@@ -84,6 +85,7 @@ const RECOMPUTABLE_STATUSES = [
 const TASK_SELECT = {
   ...LATENESS_TASK_SELECT,
   projectId: true,
+  title: true,
   assignedAt: true,
   overdueWorkingDays: true,
   escalationLevel: true,
@@ -91,10 +93,20 @@ const TASK_SELECT = {
 
 interface ScheduleRow extends LatenessRow {
   projectId: string
+  title: string
   assignedAt: Date | null
   overdueWorkingDays: number
   escalationLevel: string
 }
+
+/** Statuses a due-soon reminder makes sense for — work still ahead of delivery. */
+const PRE_DELIVERY_STATUSES: readonly string[] = [
+  'BACKLOG',
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'REVISION_REQUESTED',
+  'BLOCKED',
+]
 
 export interface TaskScheduleResult {
   taskId: string
@@ -111,6 +123,8 @@ export interface RecomputeTaskScheduleArgs {
   calendar: Calendar
   defaultGraceHours: number
   thresholds: EscalationThresholds
+  /** Settings `notifications.dueSoonHours` (CLAUDE.md invariant 4). */
+  dueSoonHours: number
   now: Date
   events?: LatenessEventBus
 }
@@ -200,6 +214,45 @@ export async function recomputeTaskSchedule(
     })
   }
 
+  // SPEC §8's "overdue" — fired on the transition into lateness, never on an
+  // already-overdue task's nightly recompute. Mirrors the escalation rule
+  // immediately above: an edge, not a level, is what makes ten runs send one
+  // notification (CLAUDE.md invariant 6).
+  if (row.overdueWorkingDays === 0 && lateness.lateWorkingDays > 0) {
+    await events.emit(db, {
+      type: 'TaskOverdue',
+      taskId: row.id,
+      projectId: row.projectId,
+      taskTitle: row.title,
+      assigneeId: row.assigneeId,
+      dueDate: row.dueDate,
+      lateWorkingDays: lateness.lateWorkingDays,
+      at: args.now,
+    })
+  }
+
+  // SPEC §8's "due soon" — a task not yet late, due within
+  // `notifications.dueSoonHours`, and not yet delivered. `Notification`'s
+  // `dedupeKey` (keyed on the due date) is what stops this firing every night
+  // for the same deadline — there is no column here tracking "already told".
+  const hoursUntilDue = (row.dueDate.getTime() - args.now.getTime()) / (60 * 60 * 1000)
+  if (
+    PRE_DELIVERY_STATUSES.includes(row.status) &&
+    lateness.lateWorkingDays === 0 &&
+    hoursUntilDue > 0 &&
+    hoursUntilDue <= args.dueSoonHours
+  ) {
+    await events.emit(db, {
+      type: 'TaskDueSoon',
+      taskId: row.id,
+      projectId: row.projectId,
+      taskTitle: row.title,
+      assigneeId: row.assigneeId,
+      dueDate: row.dueDate,
+      at: args.now,
+    })
+  }
+
   return {
     taskId: row.id,
     elapsedMinutesRaw: elapsed.raw,
@@ -240,6 +293,7 @@ export async function runScheduleRecompute(
     'penalty.defaultGraceHours',
     'notifications.escalateToPmAfterDays',
     'notifications.escalateToAdminAfterDays',
+    'notifications.dueSoonHours',
   ])
   const thresholds: EscalationThresholds = {
     pmAfterDays: settings['notifications.escalateToPmAfterDays'],
@@ -313,6 +367,7 @@ export async function runScheduleRecompute(
           calendar,
           defaultGraceHours: settings['penalty.defaultGraceHours'],
           thresholds,
+          dueSoonHours: settings['notifications.dueSoonHours'],
           now: args.now,
           ...(args.events ? { events: args.events } : {}),
         })
@@ -344,7 +399,10 @@ export const scheduleRecomputeJob: JobDefinition = {
   // A whole-table recompute on a slow night should not lose the lock halfway.
   timeoutMs: 10 * 60_000,
   handler: async (ctx) => {
-    const outcome = await runScheduleRecompute(ctx.db, { now: ctx.runAt })
+    const outcome = await runScheduleRecompute(ctx.db, {
+      now: ctx.runAt,
+      events: notificationLatenessEvents,
+    })
     console.info(
       `[${SCHEDULE_RECOMPUTE_JOB_NAME}] scanned=${outcome.scanned} changed=${outcome.changed} escalated=${outcome.escalated} failed=${outcome.failed}`,
     )

@@ -88,6 +88,9 @@ model User {
   payoutsPaid          Payout[]      @relation("PayoutPaidBy")
   cyclesClosed         PayoutCycle[] @relation("PayoutCycleClosedBy")
 
+  notifications           Notification[]           @relation("NotificationRecipient")
+  notificationPreferences NotificationPreference[]  @relation("NotificationPreferenceOwner")
+
   penaltyProfile PenaltyProfile? @relation(fields: [penaltyProfileId], references: [id], onDelete: SetNull)
 
   @@index([deletedAt])
@@ -1138,6 +1141,108 @@ model Payout {
   @@index([cycleId, status])
   @@index([userId, status])
   @@map("payouts")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Notifications — Phase 9 (SPEC §8).
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Every event SPEC §8 names, plus the two the codebase already had a domain
+/// event for and this phase is the first subscriber to (`MONEY_REVERSED` from
+/// Phase 8's `MoneyEventBus`, `TASK_ESCALATED` from Phase 6's
+/// `LatenessEventBus`). `TASK_ASSIGNED` and `TASK_OVERDUE` are the two SPEC §8
+/// says cannot be disabled — enforced in `modules/notification/service.ts`,
+/// not by a schema constraint, because "cannot be disabled" is a rule about a
+/// write path and Prisma has no way to express it declaratively.
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_DUE_SOON
+  TASK_OVERDUE
+  TASK_SUBMITTED
+  TASK_REVISION_REQUESTED
+  TASK_APPROVED
+  TASK_ESCALATED
+  TASK_MENTIONED
+  PENALTY_APPLIED
+  BONUS_GRANTED
+  MONEY_REVERSED
+  PAYOUT_APPROVED
+  PAYOUT_PAID
+  EXTENSION_REQUESTED
+  EXTENSION_DECIDED
+  MANAGER_DIGEST
+}
+
+/// One row per delivered notification. Mutable (`isRead`/`readAt`), unlike
+/// `LedgerEntry` and `AuditLog` — a notification is a to-do, not a permanent
+/// record, and CLAUDE.md's append-only invariant is about money, not inbox
+/// state. The permanent record of *why* it fired is the domain event's own
+/// audit row, written by the module that raised the event.
+model Notification {
+  id     String           @id @default(cuid())
+  userId String
+  type   NotificationType
+
+  /// Arabic prose, composed once at delivery from `i18n/ar` templates and the
+  /// event payload (`modules/notification/messages.ts`) — so the bell, the
+  /// drawer and the digest summary can never show a different sentence for the
+  /// same event.
+  title String
+  body  String
+
+  /// What the deep link resolves to. Both null for `MANAGER_DIGEST`, whose
+  /// action is "open the drawer and read the summary", not "go to one entity".
+  entityType String?
+  entityId   String?
+
+  /// The structured payload behind `body` — a penalty's breakdown, a digest's
+  /// counts — kept for a future re-render or a summary view, the same reason
+  /// `PenaltyAppliedEvent` carries a whole `PenaltyBreakdownDto` rather than an
+  /// id pair (`modules/penalty/ports.ts`).
+  payload Json?
+
+  /// SPEC §5.4: a penalty notification is non-dismissable. Carried on the row
+  /// rather than derived from `type` at render time, because whether a
+  /// specific delivery may be dismissed is the emitting module's decision
+  /// (see `PenaltyAppliedEvent.dismissable`), not a lookup table here.
+  dismissable Boolean @default(true)
+
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  /// De-duplicates a threshold-crossing or scheduled delivery so a job replay
+  /// or a redeploy cannot send the same notification twice — e.g.
+  /// `${taskId}:${dueDate.toISOString()}` for `TASK_DUE_SOON`, a Cairo date key
+  /// for `MANAGER_DIGEST`. Null for one-shot events that are already unique by
+  /// their own domain rule (a task is approved once). Null values do not
+  /// collide under Postgres unique-index semantics, so one-shot deliveries are
+  /// never blocked by this column.
+  dedupeKey String?
+
+  createdAt DateTime @default(now())
+
+  user User @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, dedupeKey])
+  @@index([userId, isRead, createdAt])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+/// Per-user overrides only — a missing row means "enabled", the same
+/// missing-means-default reasoning `lib/settings` uses for the agency-wide
+/// catalog. `TASK_ASSIGNED` and `TASK_OVERDUE` may never be written `false`;
+/// enforced in `modules/notification/service.ts.setPreference`.
+model NotificationPreference {
+  id      String           @id @default(cuid())
+  userId  String
+  type    NotificationType
+  enabled Boolean
+
+  user User @relation("NotificationPreferenceOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@map("notification_preferences")
 }
 
 // ─────────────────────────────────────────────────────────────────────────

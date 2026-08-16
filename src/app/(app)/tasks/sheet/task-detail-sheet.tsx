@@ -55,6 +55,7 @@ export function TaskDetailSheet({
               userOptions={userOptions}
               categories={categories}
               permissions={permissions}
+              whatsappTemplates={data?.whatsappTemplates ?? {}}
               onMutated={onMutated}
             />
           ),

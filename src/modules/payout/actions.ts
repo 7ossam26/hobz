@@ -7,6 +7,7 @@ import { clientIpFromHeaders } from '@/lib/auth/ip'
 import { requirePermission } from '@/lib/auth/session'
 import { prisma } from '@/lib/db'
 import { getSettings } from '@/lib/settings'
+import { notificationPayoutEvents } from '@/modules/notification/bus'
 
 import { closeCycleUnderLock } from './job'
 import { closeCycleSchema, markPayoutPaidSchema, payoutIdSchema } from './schema'
@@ -80,6 +81,7 @@ export const approvePayoutAction = requirePermission(
         payoutId: input.payoutId,
         actor,
         now: new Date(),
+        events: notificationPayoutEvents,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )
@@ -106,6 +108,7 @@ export const markPayoutPaidAction = requirePermission(
         actor,
         cycleDay: settings['payout.cycleDay'],
         now: new Date(),
+        events: notificationPayoutEvents,
         ...(input.method ? { method: input.method } : {}),
         ...(input.reference ? { reference: input.reference } : {}),
         ...(input.note ? { note: input.note } : {}),

@@ -33,9 +33,10 @@ export default async function PayoutsPage({
   const cycles = await getPayoutCycles(24)
   const selected = cycles.find((cycle) => cycle.id === requested) ?? cycles[0] ?? null
 
-  const [payouts, paymentMethods] = await Promise.all([
+  const [payouts, paymentMethods, whatsappTemplates] = await Promise.all([
     selected ? getPayouts({ cycleId: selected.id }) : Promise.resolve([]),
     getSetting('payout.paymentMethods'),
+    getSetting('whatsapp.templates'),
   ])
 
   return (
@@ -44,6 +45,7 @@ export default async function PayoutsPage({
       selectedCycleId={selected?.id ?? null}
       payouts={payouts}
       paymentMethods={[...paymentMethods]}
+      whatsappTemplates={whatsappTemplates}
       canGenerate={can(actor, 'payout.generate')}
       canApprove={can(actor, 'payout.approve')}
       canMarkPaid={can(actor, 'payout.markPaid')}

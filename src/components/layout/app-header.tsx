@@ -6,6 +6,8 @@ import { HEADER_SLOT_IDS } from '@/components/layout/header-slot-ids'
 import { NotificationBell } from '@/components/layout/notification-bell'
 import { UserMenu } from '@/components/layout/user-menu'
 import { ar } from '@/i18n/ar'
+import { getSetting } from '@/lib/settings'
+import { getMyNotifications } from '@/modules/notification/queries'
 
 /**
  * The sticky contextual header (SPEC §9).
@@ -24,11 +26,21 @@ import { ar } from '@/i18n/ar'
  * glassmorphism SPEC §9 bans, and it costs a compositor layer on every scroll
  * frame for the privilege of making the text underneath harder to read.
  */
-export function AppHeader({
+export async function AppHeader({
   user,
 }: {
   user: { id: string; fullName: string; username: string }
 }) {
+  // A Server Component fetch, not a client waterfall (CLAUDE.md): the bell
+  // opens already holding its first page, and only the 30-second poll
+  // (`useAutoRefresh` inside `NotificationBell`) re-renders this header after
+  // that, via `router.refresh()` — the same mechanism every other polled
+  // surface in the app uses.
+  const [notifications, pollingIntervalSeconds] = await Promise.all([
+    getMyNotifications({ page: 1, pageSize: 8 }),
+    getSetting('notifications.pollingIntervalSeconds'),
+  ])
+
   return (
     <header className="bg-background sticky top-0 z-30 flex h-(--shell-header-h) shrink-0 items-center gap-3 border-b px-4 md:px-6">
       <Breadcrumb />
@@ -40,7 +52,11 @@ export function AppHeader({
           className="flex items-center gap-2"
         />
         <CommandPaletteTrigger />
-        <NotificationBell />
+        <NotificationBell
+          notifications={notifications.items}
+          unreadCount={notifications.unreadCount}
+          pollingIntervalSeconds={pollingIntervalSeconds}
+        />
         <UserMenu user={user} />
       </div>
     </header>

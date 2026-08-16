@@ -1,34 +1,65 @@
 'use client'
 
-import { Bell } from 'lucide-react'
+import { Bell, Check, Settings2 } from 'lucide-react'
+import Link from 'next/link'
 import * as React from 'react'
 
+import { RelativeTime } from '@/components/data/relative-time'
 import { EmptyState } from '@/components/shared/empty-state'
-import { Popover } from '@/components/shared/popover'
+import { Popover, PopoverSeparator } from '@/components/shared/popover'
+import { useAutoRefresh } from '@/components/shared/use-auto-refresh'
 import { Button } from '@/components/ui/button'
 import { ar } from '@/i18n/ar'
+import { cn } from '@/lib/utils'
+import {
+  markAllNotificationsReadAction,
+  markNotificationReadAction,
+} from '@/modules/notification/actions'
+import type { NotificationDto } from '@/modules/notification/types'
 
 /**
- * The notification bell — a placeholder, and deliberately an *honest* one.
+ * The notification bell — SPEC §8: "Bell + drawer + unread count." Phase 2
+ * shipped the honest placeholder ("no invented count and no sample
+ * notification"); this is the data it was waiting for.
  *
- * Phase 9 builds notifications: the events, the per-user preferences, the two
- * that cannot be disabled, and the 30-second poll (SPEC §8). What this phase
- * owes that phase is the shape it will land in — the bell's position in the
- * header, the unread badge's geometry, the drawer's width — so that Phase 9 is
- * a data change rather than a layout change.
- *
- * What it must not do is fake it. There is no invented count and no sample
- * notification: a placeholder that looks like real data is how a demo becomes a
- * bug report. It opens, and it says there is nothing yet.
+ * A Server Component (`AppHeader`) fetches the first page and the unread
+ * count once per render, so opening the drawer is instant rather than a
+ * client-side fetch — the same "no client waterfall" rule every other list in
+ * the app follows. `useAutoRefresh` is what keeps it live after that: SPEC
+ * §2's "polling every 30s (configurable)" calls `router.refresh()`, which
+ * re-runs `AppHeader` on the server and streams new props down here.
  */
-export function NotificationBell({ unreadCount = 0 }: { unreadCount?: number }) {
+export function NotificationBell({
+  notifications,
+  unreadCount,
+  pollingIntervalSeconds,
+}: {
+  notifications: NotificationDto[]
+  unreadCount: number
+  pollingIntervalSeconds: number
+}) {
+  useAutoRefresh(pollingIntervalSeconds)
+
+  const [pending, startTransition] = React.useTransition()
   const hasUnread = unreadCount > 0
+
+  function markOneRead(id: string) {
+    startTransition(async () => {
+      await markNotificationReadAction({ id })
+    })
+  }
+
+  function markAllRead() {
+    startTransition(async () => {
+      await markAllNotificationsReadAction()
+    })
+  }
 
   return (
     <Popover
       align="end"
       label={ar.shell.notifications}
-      className="w-80"
+      className="w-96 p-0"
       trigger={({ toggle, ...triggerProps }) => (
         <Button
           type="button"
@@ -37,7 +68,7 @@ export function NotificationBell({ unreadCount = 0 }: { unreadCount?: number }) 
           onClick={toggle}
           aria-label={
             hasUnread
-              ? `${ar.shell.notifications} — ${ar.shell.unreadCount.replace(
+              ? `${ar.shell.notifications} — ${ar.notifications.unreadCount.replace(
                   '{count}',
                   String(unreadCount),
                 )}`
@@ -57,13 +88,121 @@ export function NotificationBell({ unreadCount = 0 }: { unreadCount?: number }) 
         </Button>
       )}
     >
-      <div className="p-1">
+      <div className="flex items-center justify-between gap-2 px-3 py-2.5">
+        <p className="text-sm font-semibold">{ar.notifications.title}</p>
+        {hasUnread ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={markAllRead}
+            className="text-accent-solid hover:underline disabled:pointer-events-none disabled:opacity-50 text-xs font-medium"
+          >
+            {ar.notifications.markAllRead}
+          </button>
+        ) : null}
+      </div>
+
+      <PopoverSeparator />
+
+      {notifications.length === 0 ? (
         <EmptyState
           className="border-0 px-2 py-8"
-          title={ar.shell.notificationsEmpty}
-          description={ar.shell.notificationsHint}
+          title={ar.notifications.empty}
+          description={ar.notifications.emptyHint}
         />
+      ) : (
+        <ul className="max-h-96 overflow-y-auto py-1" role="list">
+          {notifications.map((n) => (
+            <li key={n.id}>
+              <NotificationRow notification={n} pending={pending} onMarkRead={markOneRead} />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <PopoverSeparator />
+
+      <div className="p-1">
+        <Link
+          href="/notifications/preferences"
+          className="hover:bg-accent flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors"
+        >
+          <Settings2 className="size-4 shrink-0" aria-hidden />
+          {ar.notifications.preferencesLink}
+        </Link>
       </div>
     </Popover>
+  )
+}
+
+function NotificationRow({
+  notification,
+  pending,
+  onMarkRead,
+}: {
+  notification: NotificationDto
+  pending: boolean
+  onMarkRead: (id: string) => void
+}) {
+  const content = (
+    <div
+      className={cn(
+        'flex items-start gap-2 px-3 py-2.5',
+        !notification.isRead && 'bg-muted/60',
+      )}
+    >
+      <span
+        data-hue={notification.isRead ? undefined : 'red'}
+        aria-hidden
+        className={cn(
+          'mt-1.5 size-1.5 shrink-0 rounded-full',
+          notification.isRead ? 'bg-transparent' : 'bg-hue-solid',
+        )}
+      />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{notification.title}</p>
+        <p className="text-fg-muted line-clamp-2 text-xs">{notification.body}</p>
+        <div className="mt-1 flex items-center gap-2">
+          <RelativeTime
+            value={notification.createdAt}
+            className="text-fg-subtle text-[0.6875rem]"
+          />
+          {!notification.dismissable ? (
+            <span className="text-fg-subtle text-[0.6875rem]">
+              · {ar.notifications.nonDismissable}
+            </span>
+          ) : null}
+        </div>
+      </div>
+      {!notification.isRead ? (
+        <button
+          type="button"
+          disabled={pending}
+          aria-label={ar.notifications.markRead}
+          title={ar.notifications.markRead}
+          onClick={(event) => {
+            event.preventDefault()
+            onMarkRead(notification.id)
+          }}
+          className="hover:bg-accent shrink-0 rounded-md p-1 disabled:pointer-events-none disabled:opacity-50"
+        >
+          <Check className="size-3.5" aria-hidden />
+        </button>
+      ) : null}
+    </div>
+  )
+
+  if (!notification.href) return content
+
+  return (
+    <Link
+      href={notification.href}
+      onClick={() => {
+        if (!notification.isRead) onMarkRead(notification.id)
+      }}
+      className="hover:bg-accent block transition-colors"
+    >
+      {content}
+    </Link>
   )
 }

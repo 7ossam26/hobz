@@ -7,13 +7,16 @@ import { clientIpFromHeaders } from '@/lib/auth/ip'
 import { requireAuth, requirePermission } from '@/lib/auth/session'
 import { calendarFor } from '@/lib/calendar'
 import { prisma } from '@/lib/db'
+import { fanOut } from '@/lib/events'
 import { getSetting } from '@/lib/settings'
 import { prismaLeaveLookup } from '@/modules/leave/lookup'
 import { ledgerTaskEvents } from '@/modules/ledger/earnings'
 import { prismaLedgerPort } from '@/modules/ledger/port'
+import { notificationTaskEvents } from '@/modules/notification/bus'
 import { prismaPenaltyPort } from '@/modules/penalty/port'
 import { getTaskPenaltyPanel } from '@/modules/penalty/queries'
 import type { TaskPenaltyPanelDto } from '@/modules/penalty/types'
+import type { TaskEventBus } from '@/modules/task/ports'
 
 import {
   getTaskActivity,
@@ -96,6 +99,18 @@ import type {
  * permission. Cancellation is how a task stops existing for its worker.
  */
 
+/**
+ * SPEC §5.1's EARNING/REVERSAL and SPEC §8's notification both react to
+ * `TaskApproved`/`TaskCancelled` — two subscribers on one bus, composed once
+ * here rather than at each call site (CLAUDE.md: "subscribe to events
+ * centrally"). The ledger runs first, so a notification describing a payment
+ * never fires before the payment exists.
+ */
+const approvalAndCancellationEvents: TaskEventBus = fanOut([
+  ledgerTaskEvents,
+  notificationTaskEvents,
+])
+
 async function ip(): Promise<string | undefined> {
   return clientIpFromHeaders(await headers())
 }
@@ -155,6 +170,7 @@ export const assignTaskAction = requirePermission(
         input,
         leave: prismaLeaveLookup,
         ledger: prismaLedgerPort,
+        events: notificationTaskEvents,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )
@@ -236,6 +252,7 @@ export const submitTaskAction = requirePermission(
         // the moment of delivery (SPEC §5.2).
         calendar: calendarFor(tx),
         penalty: prismaPenaltyPort,
+        events: notificationTaskEvents,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )
@@ -274,7 +291,7 @@ export const approveTaskAction = requirePermission(
       approveTask(tx, {
         actor,
         input,
-        events: ledgerTaskEvents,
+        events: approvalAndCancellationEvents,
         penalty: prismaPenaltyPort,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
@@ -299,6 +316,7 @@ export const requestRevisionAction = requirePermission(
         actor,
         input,
         penalty: prismaPenaltyPort,
+        events: notificationTaskEvents,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )
@@ -372,7 +390,7 @@ export const cancelTaskAction = requirePermission(
       cancelTask(tx, {
         actor,
         input,
-        events: ledgerTaskEvents,
+        events: approvalAndCancellationEvents,
         penalty: prismaPenaltyPort,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
@@ -387,7 +405,12 @@ export const addTaskCommentAction = requirePermission(
   'task.comment',
   async (actor, raw: unknown) => {
     const input = addCommentSchema.parse(raw)
-    const comment = await addComment(prisma, { actor, input, ip: await ip() })
+    const comment = await addComment(prisma, {
+      actor,
+      input,
+      events: notificationTaskEvents,
+      ip: await ip(),
+    })
     revalidateTask(input.taskId)
     return comment
   },
@@ -411,6 +434,12 @@ export interface TaskSheetDataDto {
    * منفّذ without `ledger.view.own` still gets their task sheet.
    */
   penalty: TaskPenaltyPanelDto | null
+  /**
+   * SPEC §8's WhatsApp templates, fetched once for the whole sheet rather than
+   * by the assignee chip reaching for Settings itself — the chip is a shared,
+   * data-only component (`components/data/user-chip.tsx`) and stays that way.
+   */
+  whatsappTemplates: Record<string, string>
 }
 
 /**
@@ -427,18 +456,20 @@ export interface TaskSheetDataDto {
  */
 export const getTaskSheetDataAction = requireAuth(
   async (_actor, taskId: string): Promise<TaskSheetDataDto> => {
-    const [task, comments, activity, warnings, graph, penalty] = await Promise.all([
-      getTaskById(taskId),
-      getTaskComments(taskId),
-      getTaskActivity(taskId),
-      getTaskDependencyWarnings(taskId),
-      getTaskDependencyGraph(taskId),
-      // Reading a penalty must never *create* one, and it does not:
-      // `taskPenaltyPanel` assesses without writing. A caller who may not see
-      // it gets `null` rather than an error, so one missing key does not take
-      // the whole sheet down.
-      getTaskPenaltyPanel({ taskId }).catch(() => null),
-    ])
+    const [task, comments, activity, warnings, graph, penalty, whatsappTemplates] =
+      await Promise.all([
+        getTaskById(taskId),
+        getTaskComments(taskId),
+        getTaskActivity(taskId),
+        getTaskDependencyWarnings(taskId),
+        getTaskDependencyGraph(taskId),
+        // Reading a penalty must never *create* one, and it does not:
+        // `taskPenaltyPanel` assesses without writing. A caller who may not see
+        // it gets `null` rather than an error, so one missing key does not take
+        // the whole sheet down.
+        getTaskPenaltyPanel({ taskId }).catch(() => null),
+        getSetting('whatsapp.templates'),
+      ])
     return {
       task,
       comments,
@@ -447,6 +478,7 @@ export const getTaskSheetDataAction = requireAuth(
       dependencies: graph.dependencies,
       dependents: graph.dependents,
       penalty,
+      whatsappTemplates,
     }
   },
 )
@@ -509,6 +541,7 @@ export const bulkAssignTaskAction = requirePermission(
           // (`moneySchema`'s transform), since this call bypasses the schema
           // and constructs the already-parsed `AssignTaskInput` directly.
           input: { taskId, assigneeId: input.assigneeId, taskValue: null },
+          events: notificationTaskEvents,
           ip: requestIp,
         }),
       ),

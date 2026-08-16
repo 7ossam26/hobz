@@ -5,6 +5,7 @@ import type { Actor } from '@/lib/rbac'
 import { noopPenaltyPort, type PenaltyPort } from '@/modules/lateness/ports'
 import type { TaskStatus } from '@/modules/task/state-machine'
 
+import { noopExtensionEvents, type ExtensionEventBus } from './ports'
 import type {
   DecideExtensionInput,
   ListExtensionsInput,
@@ -136,6 +137,7 @@ export interface RequestExtensionArgs extends ExtensionMutationArgs {
    * the phase brief's "assignee requests with a reason".
    */
   mayRequestForOthers?: boolean
+  events?: ExtensionEventBus
 }
 
 export async function requestExtension(
@@ -144,6 +146,7 @@ export async function requestExtension(
 ): Promise<ExtensionRequestDto> {
   const { input } = args
   const now = nowOf(args)
+  const events = args.events ?? noopExtensionEvents
 
   const task = await loadTask(db, input.taskId)
 
@@ -203,6 +206,18 @@ export async function requestExtension(
     ...(args.ip ? { ip: args.ip } : {}),
   })
 
+  await events.emit(db, {
+    type: 'ExtensionRequested',
+    extensionId: row.id,
+    taskId: task.id,
+    taskTitle: task.title,
+    requestedById: args.actor.id,
+    oldDueDate: task.dueDate,
+    newDueDate: input.newDueDate,
+    reason: input.reason,
+    at: now,
+  })
+
   return toDto(row as ExtensionRow)
 }
 
@@ -210,6 +225,7 @@ export interface DecideExtensionArgs extends ExtensionMutationArgs {
   input: DecideExtensionInput
   /** Where the "this deduction is now wrong" command goes. Phase 8 replaces it. */
   penalty?: PenaltyPort
+  events?: ExtensionEventBus
 }
 
 export async function decideExtension(
@@ -219,6 +235,7 @@ export async function decideExtension(
   const { input } = args
   const now = nowOf(args)
   const penalty = args.penalty ?? noopPenaltyPort
+  const events = args.events ?? noopExtensionEvents
 
   const before = await db.extensionRequest.findUnique({
     where: { id: input.id },
@@ -265,7 +282,20 @@ export async function decideExtension(
     ...(args.ip ? { ip: args.ip } : {}),
   })
 
-  if (!approving) return toDto(row as ExtensionRow)
+  if (!approving) {
+    await events.emit(db, {
+      type: 'ExtensionDecided',
+      extensionId: row.id,
+      taskId: task.id,
+      taskTitle: task.title,
+      requestedById: before.requestedBy.id,
+      decision: 'REJECTED',
+      newDueDate: before.newDueDate,
+      decidedById: args.actor.id,
+      at: now,
+    })
+    return toDto(row as ExtensionRow)
+  }
 
   // SPEC §5.3: the extension moves `dueDate` and leaves `originalDueDate`
   // exactly where it was. That column is the only surviving record of what was
@@ -317,6 +347,18 @@ export async function decideExtension(
     cause: 'extensionApproved',
     at: now,
     requestedById: args.actor.id,
+  })
+
+  await events.emit(db, {
+    type: 'ExtensionDecided',
+    extensionId: row.id,
+    taskId: task.id,
+    taskTitle: task.title,
+    requestedById: before.requestedBy.id,
+    decision: 'APPROVED',
+    newDueDate: before.newDueDate,
+    decidedById: args.actor.id,
+    at: now,
   })
 
   return toDto(row as ExtensionRow)

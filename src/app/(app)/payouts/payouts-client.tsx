@@ -24,6 +24,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ar } from '@/i18n/ar'
+import { fillWhatsappTemplate } from '@/lib/whatsapp'
 import {
   approvePayoutAction,
   closeCycleAction,
@@ -37,6 +38,8 @@ interface Props {
   selectedCycleId: string | null
   payouts: PayoutDto[]
   paymentMethods: string[]
+  /** SPEC §8 — Settings `whatsapp.templates`. */
+  whatsappTemplates: Record<string, string>
   canGenerate: boolean
   canApprove: boolean
   canMarkPaid: boolean
@@ -52,6 +55,7 @@ export function PayoutsClient({
   selectedCycleId,
   payouts,
   paymentMethods,
+  whatsappTemplates,
   canGenerate,
   canApprove,
   canMarkPaid,
@@ -191,7 +195,17 @@ export function PayoutsClient({
                     <TableRow key={payout.id}>
                       <TableCell>
                         {payout.user ? (
-                          <UserChip user={payout.user} />
+                          <UserChip
+                            user={payout.user}
+                            whatsappMessage={
+                              whatsappTemplates.payoutPaid
+                                ? fillWhatsappTemplate(whatsappTemplates.payoutPaid, {
+                                    name: payout.user.fullName,
+                                    amount: payout.net,
+                                  })
+                                : undefined
+                            }
+                          />
                         ) : (
                           <span className="text-muted-foreground">{ar.common.none}</span>
                         )}

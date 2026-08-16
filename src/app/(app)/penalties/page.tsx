@@ -6,6 +6,7 @@ import { ar } from '@/i18n/ar'
 import { requireActor } from '@/lib/auth/session'
 import { prisma } from '@/lib/db'
 import { can } from '@/lib/rbac'
+import { getSetting } from '@/lib/settings'
 import { getMoneyRegister, getPenaltyProfiles } from '@/modules/penalty/queries'
 
 import { PenaltiesClient } from './penalties-client'
@@ -62,6 +63,8 @@ export default async function PenaltiesPage({
     select: { id: true, fullName: true },
     take: 200,
   })
+
+  const whatsappTemplates = await getSetting('whatsapp.templates')
 
   return (
     <div className="flex flex-col gap-6">
@@ -133,6 +136,7 @@ export default async function PenaltiesPage({
         canCreateBonus={can(actor, 'bonus.create')}
         profiles={profiles}
         canEditProfiles={can(actor, 'settings.edit')}
+        whatsappTemplates={whatsappTemplates}
       />
     </div>
   )

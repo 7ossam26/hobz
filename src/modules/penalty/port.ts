@@ -1,6 +1,7 @@
 import { calendarFor } from '@/lib/calendar'
 import type { Db } from '@/lib/db'
 import type { PenaltyPort, PenaltyRecomputeRequest } from '@/modules/lateness/ports'
+import { notificationMoneyEvents } from '@/modules/notification/bus'
 
 import { noopMoneyEvents, type MoneyEventBus } from './ports'
 import { recomputeTaskPenalty } from './service'
@@ -45,10 +46,20 @@ export function createPenaltyPort(args: PenaltyPortArgs): PenaltyPort {
   }
 }
 
-/** The production port, reading its own settings — an adapter, not a service. */
+/**
+ * The production port, reading its own settings — an adapter, not a service.
+ *
+ * Wires the notification module's `MoneyEventBus` centrally, here: every
+ * caller (a task transition, an extension approval, the nightly job below)
+ * gets a penalty notification for free rather than each remembering to ask
+ * for one.
+ */
 export const prismaPenaltyPort: PenaltyPort = {
   async recompute(db, request) {
     const settings = await loadPenaltySettings()
-    await createPenaltyPort({ settings }).recompute(db, request)
+    await createPenaltyPort({ settings, events: notificationMoneyEvents }).recompute(
+      db,
+      request,
+    )
   },
 }

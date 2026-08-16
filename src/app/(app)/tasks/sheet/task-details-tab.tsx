@@ -12,8 +12,10 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { ar } from '@/i18n/ar'
+import { formatDateTime } from '@/lib/datetime'
 import { PRIORITY_HUE, type Priority } from '@/lib/palette'
 import type { TaxonomyEntry } from '@/lib/settings'
+import { fillWhatsappTemplate } from '@/lib/whatsapp'
 import {
   addTaskWatcherAction,
   removeTaskWatcherAction,
@@ -78,12 +80,15 @@ export function TaskDetailsTab({
   userOptions,
   categories,
   permissions,
+  whatsappTemplates,
   onMutated,
 }: {
   task: TaskDetailDto
   userOptions: UserOptionDto[]
   categories: readonly TaxonomyEntry[]
   permissions: TaskPermissions
+  /** SPEC §8 — Settings `whatsapp.templates`, fetched once for the sheet. */
+  whatsappTemplates: Record<string, string>
   onMutated: () => void
 }) {
   const { toast } = useToast()
@@ -169,7 +174,19 @@ export function TaskDetailsTab({
         <p className="text-sm font-medium">{ar.tasks.assignee}</p>
         <div className="flex items-center gap-2">
           {draft.assignee ? (
-            <UserChip user={draft.assignee} size="sm" showWhatsapp={false} />
+            <UserChip
+              user={draft.assignee}
+              size="sm"
+              whatsappMessage={
+                whatsappTemplates.taskAssigned
+                  ? fillWhatsappTemplate(whatsappTemplates.taskAssigned, {
+                      name: draft.assignee.fullName,
+                      task: draft.title,
+                      due: formatDateTime(draft.dueDate),
+                    })
+                  : undefined
+              }
+            />
           ) : (
             <span className="text-fg-subtle text-sm">{ar.tasks.noAssignee}</span>
           )}
