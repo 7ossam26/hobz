@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db'
 import { can } from '@/lib/rbac'
 import { getSettings } from '@/lib/settings'
 import { recomputeTaskSchedule } from '@/modules/calendar/job'
+import { prismaPenaltyPort } from '@/modules/penalty/port'
 
 import { decideExtensionSchema, requestExtensionSchema } from './schema'
 import { decideExtension, requestExtension } from './service'
@@ -47,7 +48,22 @@ export const decideExtensionAction = requirePermission(
   'task.extend',
   async (actor, raw: unknown): Promise<ExtensionRequestDto> => {
     const input = decideExtensionSchema.parse(raw)
-    const request = await decideExtension(prisma, { actor, input, ip: await ip() })
+    const clientIp = await ip()
+
+    // Phase 6 wrote `extension.penaltyRecomputeRequested` and handed the
+    // instruction to `noopPenaltyPort`, with a note that Phase 8 would replay
+    // every request raised while the port was dark. This is Phase 8, and the
+    // port is live — the deduction is corrected inside the same transaction
+    // that moves the deadline, so there is no window in which the new due date
+    // exists and the old penalty still stands against it.
+    const request = await prisma.$transaction((tx) =>
+      decideExtension(tx, {
+        actor,
+        input,
+        penalty: prismaPenaltyPort,
+        ...(clientIp ? { ip: clientIp } : {}),
+      }),
+    )
 
     // An approved extension can take a task from "three days late and
     // escalated to the admin" to "not late at all". Waiting for 03:00 to

@@ -69,6 +69,18 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: 'banknote',
     permissions: ['payout.view'],
   },
+  /**
+   * The خصومات register (Phase 8). `penalty.view` and nothing wider: a منفّذ
+   * sees their own deductions on مستحقاتي, with the same breakdown, so this
+   * page is the *manager's* view and does not need a second key that would
+   * quietly show one منفّذ another's pay.
+   */
+  {
+    href: '/penalties',
+    labelKey: 'penalties',
+    icon: 'gavel',
+    permissions: ['penalty.view'],
+  },
   {
     href: '/users',
     labelKey: 'users',
@@ -119,6 +131,11 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<{
   { prefix: '/clients', permissions: ['client.view'] },
   { prefix: '/my-earnings', permissions: ['ledger.view.own', 'ledger.view.all'] },
   { prefix: '/payouts', permissions: ['payout.view'] },
+  { prefix: '/penalties', permissions: ['penalty.view'] },
+  // Longest prefix wins, so SPEC R4's report needs `report.view` even though it
+  // lives under the register. The two are different questions: "what was
+  // deducted from this person" and "what did the agency retain this month".
+  { prefix: '/penalties/report', permissions: ['report.view'] },
   { prefix: '/users', permissions: ['user.view'] },
   { prefix: '/roles', permissions: ['role.view'] },
   { prefix: '/settings', permissions: ['settings.view'] },

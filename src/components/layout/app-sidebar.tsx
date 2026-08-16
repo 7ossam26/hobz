@@ -2,6 +2,7 @@
 
 import {
   Banknote,
+  Gavel,
   Building2,
   ChevronLeft,
   ChevronRight,
@@ -58,6 +59,7 @@ const ICONS: Record<string, LucideIcon> = {
   'scroll-text': ScrollText,
   wallet: Wallet,
   banknote: Banknote,
+  gavel: Gavel,
 }
 
 export function AppSidebar({ items }: { items: NavItem[] }) {

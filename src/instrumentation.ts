@@ -27,15 +27,23 @@ export async function register(): Promise<void> {
     const { startScheduler } = await import('@/lib/scheduler')
     const { registerCalendarJobs } = await import('@/modules/calendar/job')
     const { registerPayoutJobs } = await import('@/modules/payout/job')
+    const { registerPenaltyJobs } = await import('@/modules/penalty/job')
 
     // Jobs register themselves here as phases land:
     //   Phase 6 — calendar.recomputeSchedule (03:00 Cairo)  ← registered below
     //   Phase 7 — payout.closeCycle          (23:59 Cairo, closes on
     //             settings.payout.cycleDay)                 ← registered below
-    //   Phase 8 — penalty.recompute          (03:00 Cairo)
+    //   Phase 8 — penalty.recompute          (03:00 Cairo)  ← registered below
     //   Phase 9 — notifications.dailyDigest  (08:00 Cairo)
+    //
+    // `calendar.recomputeSchedule` and `penalty.recompute` share a time and
+    // nothing else: one writes derived columns on `tasks`, the other writes to
+    // the append-only ledger. They take *different* advisory-lock keys on
+    // purpose, so a slow whole-table scan never delays somebody's deduction and
+    // a failing deduction never rolls back the scan.
     registerCalendarJobs()
     registerPayoutJobs()
+    registerPenaltyJobs()
 
     startScheduler()
   }

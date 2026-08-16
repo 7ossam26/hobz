@@ -11,6 +11,9 @@ import { getSetting } from '@/lib/settings'
 import { prismaLeaveLookup } from '@/modules/leave/lookup'
 import { ledgerTaskEvents } from '@/modules/ledger/earnings'
 import { prismaLedgerPort } from '@/modules/ledger/port'
+import { prismaPenaltyPort } from '@/modules/penalty/port'
+import { getTaskPenaltyPanel } from '@/modules/penalty/queries'
+import type { TaskPenaltyPanelDto } from '@/modules/penalty/types'
 
 import {
   getTaskActivity,
@@ -200,11 +203,15 @@ export const startTaskAction = requirePermission(
   permissionForTransition('IN_PROGRESS'),
   async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
     const { id } = taskIdSchema.parse(raw)
-    const result = await startTask(prisma, {
-      actor,
-      input: { taskId: id },
-      ip: await ip(),
-    })
+    const clientIp = await ip()
+    const result = await prisma.$transaction((tx) =>
+      startTask(tx, {
+        actor,
+        input: { taskId: id },
+        penalty: prismaPenaltyPort,
+        ...(clientIp ? { ip: clientIp } : {}),
+      }),
+    )
     revalidateTask(result.task.id, result.task.projectId)
     return result
   },
@@ -214,16 +221,24 @@ export const submitTaskAction = requirePermission(
   permissionForTransition('SUBMITTED'),
   async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
     const { id } = taskIdSchema.parse(raw)
-    const result = await submitTask(prisma, {
-      actor,
-      input: { taskId: id },
-      // Phase 4 had to pass nothing here: `lib/calendar` threw until Phase 6,
-      // so only `elapsedMinutesRaw` was written on submission and the working
-      // figure waited for a job that did not exist. Both are written now, at
-      // the moment of delivery (SPEC §5.2).
-      calendar: calendarFor(prisma),
-      ip: await ip(),
-    })
+    const clientIp = await ip()
+    // SPEC §5.4: delivery is the edge that *freezes* the accrual, so the
+    // deduction is recomputed here and shares the transaction with the status
+    // change — a منفّذ must never be able to read a task as delivered while
+    // their deduction is still growing.
+    const result = await prisma.$transaction((tx) =>
+      submitTask(tx, {
+        actor,
+        input: { taskId: id },
+        // Phase 4 had to pass nothing here: `lib/calendar` threw until Phase 6,
+        // so only `elapsedMinutesRaw` was written on submission and the working
+        // figure waited for a job that did not exist. Both are written now, at
+        // the moment of delivery (SPEC §5.2).
+        calendar: calendarFor(tx),
+        penalty: prismaPenaltyPort,
+        ...(clientIp ? { ip: clientIp } : {}),
+      }),
+    )
     revalidateTask(result.task.id, result.task.projectId)
     return result
   },
@@ -233,11 +248,15 @@ export const reviewTaskAction = requirePermission(
   permissionForTransition('IN_REVIEW'),
   async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
     const { id } = taskIdSchema.parse(raw)
-    const result = await reviewTask(prisma, {
-      actor,
-      input: { taskId: id },
-      ip: await ip(),
-    })
+    const clientIp = await ip()
+    const result = await prisma.$transaction((tx) =>
+      reviewTask(tx, {
+        actor,
+        input: { taskId: id },
+        penalty: prismaPenaltyPort,
+        ...(clientIp ? { ip: clientIp } : {}),
+      }),
+    )
     revalidateTask(result.task.id, result.task.projectId)
     return result
   },
@@ -256,6 +275,7 @@ export const approveTaskAction = requirePermission(
         actor,
         input,
         events: ledgerTaskEvents,
+        penalty: prismaPenaltyPort,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )
@@ -269,7 +289,19 @@ export const requestRevisionAction = requirePermission(
   permissionForTransition('REVISION_REQUESTED'),
   async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
     const input = requestRevisionSchema.parse(raw)
-    const result = await requestRevision(prisma, { actor, input, ip: await ip() })
+    const clientIp = await ip()
+    // SPEC T4: this is the edge that seals the previous delivery's deduction and
+    // opens a new round against the new deadline. Same transaction, so there is
+    // no instant in which the new due date exists and the old penalty is still
+    // being recalculated against it.
+    const result = await prisma.$transaction((tx) =>
+      requestRevision(tx, {
+        actor,
+        input,
+        penalty: prismaPenaltyPort,
+        ...(clientIp ? { ip: clientIp } : {}),
+      }),
+    )
     revalidateTask(result.task.id, result.task.projectId)
     return result
   },
@@ -279,11 +311,15 @@ export const completeTaskAction = requirePermission(
   permissionForTransition('DONE'),
   async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
     const { id } = taskIdSchema.parse(raw)
-    const result = await completeTask(prisma, {
-      actor,
-      input: { taskId: id },
-      ip: await ip(),
-    })
+    const clientIp = await ip()
+    const result = await prisma.$transaction((tx) =>
+      completeTask(tx, {
+        actor,
+        input: { taskId: id },
+        penalty: prismaPenaltyPort,
+        ...(clientIp ? { ip: clientIp } : {}),
+      }),
+    )
     revalidateTask(result.task.id, result.task.projectId)
     return result
   },
@@ -293,7 +329,15 @@ export const blockTaskAction = requirePermission(
   permissionForTransition('BLOCKED'),
   async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
     const input = blockTaskSchema.parse(raw)
-    const result = await blockTask(prisma, { actor, input, ip: await ip() })
+    const clientIp = await ip()
+    const result = await prisma.$transaction((tx) =>
+      blockTask(tx, {
+        actor,
+        input,
+        penalty: prismaPenaltyPort,
+        ...(clientIp ? { ip: clientIp } : {}),
+      }),
+    )
     revalidateTask(result.task.id, result.task.projectId)
     return result
   },
@@ -303,11 +347,15 @@ export const unblockTaskAction = requirePermission(
   'task.edit',
   async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
     const { id } = taskIdSchema.parse(raw)
-    const result = await unblockTask(prisma, {
-      actor,
-      input: { taskId: id },
-      ip: await ip(),
-    })
+    const clientIp = await ip()
+    const result = await prisma.$transaction((tx) =>
+      unblockTask(tx, {
+        actor,
+        input: { taskId: id },
+        penalty: prismaPenaltyPort,
+        ...(clientIp ? { ip: clientIp } : {}),
+      }),
+    )
     revalidateTask(result.task.id, result.task.projectId)
     return result
   },
@@ -325,6 +373,7 @@ export const cancelTaskAction = requirePermission(
         actor,
         input,
         events: ledgerTaskEvents,
+        penalty: prismaPenaltyPort,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )
@@ -355,6 +404,13 @@ export interface TaskSheetDataDto {
   warnings: DependencyWarningDto[]
   dependencies: DependencyRowDto[]
   dependents: DependencyRowDto[]
+  /**
+   * SPEC §5.4's deduction, recomputed live (Phase 8). Null when the caller may
+   * not read it — `getTaskPenaltyPanel` allows `penalty.view`, or the assignee
+   * reading their own task, and nobody else. Null rather than a throw, so a
+   * منفّذ without `ledger.view.own` still gets their task sheet.
+   */
+  penalty: TaskPenaltyPanelDto | null
 }
 
 /**
@@ -371,12 +427,17 @@ export interface TaskSheetDataDto {
  */
 export const getTaskSheetDataAction = requireAuth(
   async (_actor, taskId: string): Promise<TaskSheetDataDto> => {
-    const [task, comments, activity, warnings, graph] = await Promise.all([
+    const [task, comments, activity, warnings, graph, penalty] = await Promise.all([
       getTaskById(taskId),
       getTaskComments(taskId),
       getTaskActivity(taskId),
       getTaskDependencyWarnings(taskId),
       getTaskDependencyGraph(taskId),
+      // Reading a penalty must never *create* one, and it does not:
+      // `taskPenaltyPanel` assesses without writing. A caller who may not see
+      // it gets `null` rather than an error, so one missing key does not take
+      // the whole sheet down.
+      getTaskPenaltyPanel({ taskId }).catch(() => null),
     ])
     return {
       task,
@@ -385,6 +446,7 @@ export const getTaskSheetDataAction = requireAuth(
       warnings,
       dependencies: graph.dependencies,
       dependents: graph.dependents,
+      penalty,
     }
   },
 )

@@ -59,6 +59,8 @@ export default async function TasksPage({
     canApprove: can(actor, 'task.approve'),
     canCancel: can(actor, 'task.cancel'),
     canComment: can(actor, 'task.comment'),
+    penaltyCreate: can(actor, 'penalty.create'),
+    penaltyReverse: can(actor, 'penalty.reverse'),
   }
 
   // `getTaskBoard`/`getTasks`/`getTaskCalendar` all take `Record<string,

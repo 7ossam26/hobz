@@ -2,6 +2,7 @@
 
 import {
   Banknote,
+  Gavel,
   Building2,
   FolderKanban,
   ListTodo,
@@ -134,6 +135,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   'scroll-text': ScrollText,
   wallet: Wallet,
   banknote: Banknote,
+  gavel: Gavel,
 }
 
 function CommandPaletteDialog({

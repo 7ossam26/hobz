@@ -35,6 +35,8 @@ const ALL_PERMISSIONS: TaskPermissions = {
   canApprove: true,
   canCancel: true,
   canComment: true,
+  penaltyCreate: true,
+  penaltyReverse: true,
 }
 
 const NO_PERMISSIONS: TaskPermissions = {
@@ -44,6 +46,8 @@ const NO_PERMISSIONS: TaskPermissions = {
   canApprove: false,
   canCancel: false,
   canComment: false,
+  penaltyCreate: false,
+  penaltyReverse: false,
 }
 
 describe('classifyDrop', () => {

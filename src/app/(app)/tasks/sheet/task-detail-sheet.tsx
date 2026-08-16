@@ -14,6 +14,7 @@ import { TaskActivityTab } from './task-activity-tab'
 import { TaskCommentsTab } from './task-comments-tab'
 import { TaskDependenciesTab } from './task-dependencies-tab'
 import { TaskDetailsTab } from './task-details-tab'
+import { TaskPenaltyTab } from './task-penalty-tab'
 import { TaskStatusControl } from './task-status-control'
 
 /**
@@ -83,6 +84,27 @@ export function TaskDetailSheet({
               taskId={task.id}
               comments={data?.comments ?? []}
               userOptions={userOptions}
+              permissions={permissions}
+              onMutated={onMutated}
+            />
+          ),
+        },
+        {
+          /**
+           * SPEC §5.4's deduction, on the task it came from. A tab rather than
+           * a section of التفاصيل, because it is the one place a منفّذ or their
+           * manager goes to ask "why was I docked?" — and an answer buried
+           * under three other things is an answer nobody finds.
+           */
+          id: 'penalty',
+          label: ar.tasks.detail.tabs.penalty,
+          ...(data?.penalty && data.penalty.entries.length > 0
+            ? { count: data.penalty.entries.length }
+            : {}),
+          content: (
+            <TaskPenaltyTab
+              taskId={task.id}
+              panel={data?.penalty ?? null}
               permissions={permissions}
               onMutated={onMutated}
             />

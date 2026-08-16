@@ -11,6 +11,7 @@ import {
 import { fitsColumn, gt, toMoney, toStorageString } from '@/lib/money'
 import type { Actor, Permission, WhereFragment } from '@/lib/rbac'
 import { normalizeArabic } from '@/lib/search'
+import { noopPenaltyPort, type PenaltyPort } from '@/modules/lateness/ports'
 
 import { computeElapsed } from './elapsed'
 import { parseMentions } from './mentions'
@@ -1456,6 +1457,17 @@ export interface TransitionTaskArgs extends TaskMutationArgs {
    * rather than a fabricated working figure.
    */
   calendar?: Calendar | undefined
+  /**
+   * SPEC §5.4: the penalty engine "runs daily (03:00 Cairo) **and on every task
+   * status change**". Supplied in production since Phase 8; `noopPenaltyPort`
+   * otherwise, so a caller with no ledger — a fixture, a unit test, an import —
+   * still moves the task.
+   *
+   * A port rather than a direct `modules/penalty` import, for the reason
+   * `ports.ts` gives: the task domain knows *that* a deduction may now be
+   * wrong, and knows nothing about how one is computed.
+   */
+  penalty?: PenaltyPort
 }
 
 /**
@@ -1628,6 +1640,28 @@ export async function transitionTask(
     })
   }
 
+  /**
+   * SPEC §5.4: "Runs daily (03:00 Cairo) and on every task status change."
+   *
+   * Every edge changes the answer, which is why this is not narrowed to a
+   * hopeful subset. `SUBMITTED` freezes the accrual, `REVISION_REQUESTED` opens
+   * a new round against a new deadline (SPEC T4), `BLOCKED` and the unblock
+   * both move the excused window (SPEC §5.3), and `CANCELLED` takes lateness to
+   * zero and so reverses whatever had accrued. A list of "the ones that
+   * matter" would be a list somebody has to keep right forever.
+   *
+   * Last, and after the events: the recomputation reads the row this function
+   * has already written, and a cancellation's `REVERSAL` of its `EARNING`
+   * should land before the deduction on the same task is undone, so a statement
+   * reads in the order things happened.
+   */
+  await (args.penalty ?? noopPenaltyPort).recompute(db, {
+    taskId: task.id,
+    cause: 'statusChanged',
+    at: now,
+    requestedById: args.actor.id,
+  })
+
   return {
     task: await detail(db, task.id, now),
     // Finish-to-start is checked where it means something: at the moment work
@@ -1672,6 +1706,7 @@ type SimpleTransitionArgs = TaskMutationArgs & {
   input: { taskId: string }
   events?: TaskEventBus
   calendar?: Calendar | undefined
+  penalty?: PenaltyPort
 }
 
 export async function startTask(
@@ -1706,7 +1741,11 @@ export async function reviewTask(
 
 export async function approveTask(
   db: Db,
-  args: TaskMutationArgs & { input: ApproveTaskInput; events?: TaskEventBus },
+  args: TaskMutationArgs & {
+    input: ApproveTaskInput
+    events?: TaskEventBus
+    penalty?: PenaltyPort
+  },
 ): Promise<TaskTransitionResultDto> {
   return transitionTask(db, {
     ...args,
@@ -1717,7 +1756,11 @@ export async function approveTask(
 
 export async function requestRevision(
   db: Db,
-  args: TaskMutationArgs & { input: RequestRevisionInput; events?: TaskEventBus },
+  args: TaskMutationArgs & {
+    input: RequestRevisionInput
+    events?: TaskEventBus
+    penalty?: PenaltyPort
+  },
 ): Promise<TaskTransitionResultDto> {
   return transitionTask(db, {
     ...args,
@@ -1742,7 +1785,7 @@ export async function completeTask(
 
 export async function blockTask(
   db: Db,
-  args: TaskMutationArgs & { input: BlockTaskInput },
+  args: TaskMutationArgs & { input: BlockTaskInput; penalty?: PenaltyPort },
 ): Promise<TaskTransitionResultDto> {
   return transitionTask(db, {
     ...args,
@@ -1776,7 +1819,11 @@ export async function unblockTask(
 
 export async function cancelTask(
   db: Db,
-  args: TaskMutationArgs & { input: CancelTaskInput; events?: TaskEventBus },
+  args: TaskMutationArgs & {
+    input: CancelTaskInput
+    events?: TaskEventBus
+    penalty?: PenaltyPort
+  },
 ): Promise<TaskTransitionResultDto> {
   return transitionTask(db, {
     ...args,

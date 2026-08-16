@@ -1,5 +1,6 @@
 import cron, { type ScheduledTask } from 'node-cron'
 
+import { advisoryLockKey } from '@/lib/advisory-lock'
 // Deep import: the `@/lib/calendar` barrel builds the app calendar on the
 // Prisma singleton, and the scheduler only needs the timezone name.
 import { CAIRO_TIMEZONE } from '@/lib/calendar/cairo'
@@ -52,23 +53,14 @@ const registry = new Map<string, JobDefinition>()
 const running = new Map<string, ScheduledTask>()
 
 /**
- * Map a job name to a stable 64-bit advisory-lock key (FNV-1a).
+ * Re-exported, not defined here (moved to `lib/advisory-lock` in Phase 8).
  *
- * Stable across processes and deploys — that is the whole requirement. Exported
- * so a test can assert two names don't collide.
+ * The hash was never about cron, and this module imports `node-cron` — which
+ * reaches for `path` and `child_process`. The money path needs advisory locks
+ * of its own now (`modules/payout/cycle`, `modules/penalty/service`) and must
+ * not pull a scheduler in to get one. Every existing caller keeps working.
  */
-export function advisoryLockKey(name: string): bigint {
-  const FNV_OFFSET = 0xcbf29ce484222325n
-  const FNV_PRIME = 0x100000001b3n
-  const MASK = 0xffffffffffffffffn
-
-  let hash = FNV_OFFSET
-  for (const byte of Buffer.from(name, 'utf8')) {
-    hash = ((hash ^ BigInt(byte)) * FNV_PRIME) & MASK
-  }
-  // Postgres advisory keys are signed bigint; fold into the signed range.
-  return hash >= 0x8000000000000000n ? hash - 0x10000000000000000n : hash
-}
+export { advisoryLockKey } from '@/lib/advisory-lock'
 
 /**
  * Run `fn` while holding the named advisory lock, or report that another

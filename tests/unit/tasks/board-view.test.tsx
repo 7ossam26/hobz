@@ -57,6 +57,8 @@ const ALL_PERMISSIONS: TaskPermissions = {
   canApprove: true,
   canCancel: true,
   canComment: true,
+  penaltyCreate: true,
+  penaltyReverse: true,
 }
 
 function buildTask(

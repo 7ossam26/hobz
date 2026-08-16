@@ -605,6 +605,7 @@ export const ar = {
         dependencies: 'الاعتماديات',
         comments: 'التعليقات',
         activity: 'السجل',
+        penalty: 'الخصم',
       },
     },
 
@@ -870,8 +871,7 @@ export const ar = {
       notApproved: 'يجب اعتماد المستحق قبل تسجيل الصرف',
       alreadyPaid: 'هذا المستحق مصروف بالكامل',
       exceedsOutstanding: 'المبلغ أكبر من المتبقي على هذا المستحق',
-      exceedsBalance:
-        'المبلغ أكبر من رصيد المنفّذ الحالي. قد يكون صُرف ضمن دورة أخرى.',
+      exceedsBalance: 'المبلغ أكبر من رصيد المنفّذ الحالي. قد يكون صُرف ضمن دورة أخرى.',
       negativeAmount: 'لا يمكن صرف مبلغ سالب',
       amountRequired: 'يجب تحديد مبلغ أكبر من صفر',
       methodRequired: 'طريقة الصرف مطلوبة',
@@ -897,6 +897,199 @@ export const ar = {
     reason: 'سبب التسوية',
     hint: 'قيد يدوي موقّع، يُستخدم لتصحيح ما لا يصح عكسه.',
     created: 'سُجّلت التسوية',
+  },
+
+  /** Phase 8 — the penalty engine (SPEC §5.4). */
+  penalties: {
+    title: 'الخصومات والمكافآت',
+    subtitle: 'كل خصم محسوب آليًا من موعد التسليم وأيام العمل المتأخرة، لا من تقدير أحد.',
+    penalty: 'خصم',
+    penalties: 'الخصومات',
+    register: 'سجل الخصومات والمكافآت',
+    breakdown: 'تفصيل الحساب',
+    breakdownHint: 'هذه حسبة النظام. الأرقام كلها ظاهرة، ويمكن إعادتها يدويًا.',
+    automatic: 'خصم تلقائي',
+    manual: 'خصم يدوي',
+    worker: 'المنفّذ',
+    task: 'المهمة',
+    amount: 'المبلغ',
+    date: 'التاريخ',
+    reason: 'السبب',
+    recordedBy: 'سجّلها',
+    create: 'تسجيل خصم يدوي',
+    created: 'سُجّل الخصم',
+    /** SPEC §5.4 / phase brief item 5: free text only, no reason taxonomy. */
+    reasonLabel: 'سبب الخصم',
+    reasonPlaceholder: 'اكتب السبب كاملًا — يقرأه المنفّذ كما هو',
+    reasonOnlyOther: 'السبب نص حر. لا توجد قائمة أسباب جاهزة.',
+    empty: 'لا توجد خصومات أو مكافآت',
+    emptyHint: 'الخصومات التلقائية تظهر هنا فور تجاوز موعد التسليم ومهلة السماح.',
+    noPenaltyForTask: 'لا يوجد خصم على هذه المهمة',
+    onTime: 'لا تأخير على هذه المهمة، فلا خصم.',
+    frozen: 'مجمَّد',
+    frozenHint: 'توقّف الاحتساب عند التسليم. لا يزيد بعد ذلك.',
+    live: 'قيد الاحتساب',
+    liveHint: 'يزيد كل يوم عمل حتى التسليم.',
+    /** The per-round labels SPEC T4 asks for. `{n}` is substituted. */
+    originalDelivery: 'التسليم الأصلي',
+    revisionRound: 'المراجعة رقم {n}',
+    revisionSeparate: 'خصم المراجعة يُحتسب على حدة من الموعد الجديد.',
+    revisionNotPenalized: 'خصم تأخير المراجعات موقوف في هذا المشروع.',
+    profile: 'صيغة الخصم',
+    profileDefault: 'الافتراضي العام',
+    /** Column headings inside the breakdown panel. */
+    fields: {
+      dueDate: 'موعد التسليم',
+      graceHours: 'مهلة السماح',
+      effectiveDueDate: 'يبدأ التأخير من',
+      lateWorkingDays: 'أيام العمل المتأخرة',
+      blockedWorkingDays: 'أيام معذورة (متوقفة)',
+      mode: 'طريقة الحساب',
+      basis: 'الأساس',
+      formula: 'المعادلة',
+      amount: 'المبلغ المخصوم',
+    },
+    basis: {
+      FIXED: 'مبلغ ثابت',
+      TASK_VALUE: 'قيمة المهمة',
+      DAILY_RATE: 'الراتب اليومي',
+    },
+    basisFallback: 'قيمة المهمة غير متاحة لهذا المنفّذ، فاحتُسب الخصم من {basis}.',
+    noBasis: 'تعذّر احتساب الخصم: لا قيمة للمهمة ولا راتب يومي مسجَّل لهذا المنفّذ.',
+    /**
+     * The formula as the منفّذ reads it. Every term is exact, so the arithmetic
+     * can be reproduced by hand and land on the same number — which is why the
+     * daily-rate term below shows `salary ÷ days` rather than a rounded rate.
+     *
+     * Composed from a basis term and a shape, **not** keyed by mode. A mode
+     * names the basis it *wants*; when that figure does not exist for this
+     * منفّذ the engine multiplies the other one (`modules/penalty/basis.ts`),
+     * and a template chosen by mode would then describe an arithmetic that did
+     * not happen. Composing also covers the pairs the enum does not name, such
+     * as a one-off percentage of a daily rate.
+     */
+    formulas: {
+      fixedPerDay: '{value} × {days} يوم عمل',
+      fixedOnce: '{value} (مرة واحدة)',
+      percentPerDay: '{basis} × {value}% × {days} يوم عمل',
+      percentOnce: '{basis} × {value}%',
+    },
+    /** The term that stands in for `{basis}` above. */
+    basisTerms: {
+      amount: '{amount}',
+      dailyRate: '({salary} ÷ {perMonth})',
+    },
+    /** Notes persisted onto the ledger entries themselves. */
+    notes: {
+      auto:
+        'خصم تأخير مهمة «{task}» — موعد التسليم {due}، مهلة {grace} ساعة، ' +
+        '{days} يوم عمل تأخير. الحساب: {formula} = {amount}',
+      autoRevision:
+        'خصم تأخير {round} لمهمة «{task}» — الموعد الجديد {due}، مهلة {grace} ساعة، ' +
+        '{days} يوم عمل تأخير. الحساب: {formula} = {amount}',
+      recalculated: 'إعادة احتساب خصم مهمة «{task}»: {cause}',
+      manual: 'خصم يدوي: {reason}',
+    },
+    causes: {
+      extensionApproved: 'اعتماد تمديد نقل موعد التسليم',
+      statusChanged: 'تغيّر حالة المهمة',
+      scheduled: 'إعادة الحساب اليومية',
+      manual: 'إعادة حساب يدوية',
+    },
+    reverse: {
+      action: 'عكس الخصم',
+      title: 'عكس خصم',
+      reason: 'سبب العكس',
+      reasonHint: 'إلزامي. يظهر للمنفّذ في كشف حسابه كما كُتب.',
+      confirm: 'سيُضاف قيد عكسي بنفس المبلغ. القيد الأصلي يبقى في السجل ولا يُحذف.',
+      done: 'عُكس الخصم',
+      doneBonus: 'عُكست المكافأة',
+    },
+    errors: {
+      reasonRequired: 'سبب الخصم مطلوب',
+      reverseReasonRequired: 'سبب العكس مطلوب',
+      amountRequired: 'مبلغ الخصم مطلوب ويجب أن يكون أكبر من صفر',
+      userRequired: 'يجب تحديد المنفّذ',
+      notPenalty: 'هذا القيد ليس خصمًا',
+      taskNotFound: 'المهمة غير موجودة',
+      recomputeLocked: 'جارٍ إعادة احتساب خصم هذه المهمة الآن. حاول بعد قليل.',
+    },
+  },
+
+  /** Phase 8 — bonuses are manual only (SPEC §5.4, phase brief item 6). */
+  bonuses: {
+    title: 'المكافآت',
+    bonus: 'مكافأة',
+    create: 'تسجيل مكافأة',
+    created: 'سُجّلت المكافأة',
+    amount: 'مبلغ المكافأة',
+    reason: 'سبب المكافأة',
+    reasonHint: 'نص حر. يقرأه المنفّذ في كشف حسابه كما كُتب.',
+    hint: 'المكافآت يدوية دائمًا. لا يوجد حساب آلي يمنحها.',
+    empty: 'لا توجد مكافآت',
+    errors: {
+      amountRequired: 'مبلغ المكافأة مطلوب ويجب أن يكون أكبر من صفر',
+      reasonRequired: 'سبب المكافأة مطلوب',
+    },
+  },
+
+  /** Phase 8 — SPEC R4's one report. Phase 10 owns the rest. */
+  reports: {
+    title: 'التقارير',
+    deductions: 'الخصومات كإيراد',
+    /**
+     * SPEC §1: "Deductions are reported as agency income in reports only. **No
+     * profit/margin math anywhere.**" The wording says what the number *is*,
+     * and deliberately gives the reader nothing to divide it by.
+     */
+    deductionsAsIncome: 'صافي الخصومات المحتجزة — يُحتسب إيرادًا للوكالة.',
+    period: 'الفترة',
+    from: 'من',
+    to: 'إلى',
+    groupBy: 'التجميع حسب',
+    groups: {
+      month: 'الشهر',
+      cycle: 'دورة الصرف',
+      project: 'المشروع',
+      worker: 'المنفّذ',
+    },
+    grossPenalties: 'إجمالي الخصومات',
+    reversedPenalties: 'المعكوس منها',
+    netPenalties: 'الصافي',
+    entryCount: 'عدد القيود',
+    empty: 'لا توجد خصومات في هذه الفترة',
+  },
+
+  /** Phase 8 — the per-user penalty formula (SPEC R2). */
+  penaltyProfiles: {
+    title: 'صيغ الخصم',
+    subtitle: 'صيغة محفوظة تُسند لمن يختلف خصمهم عن الافتراضي العام.',
+    create: 'صيغة خصم جديدة',
+    edit: 'تعديل صيغة الخصم',
+    name: 'اسم الصيغة',
+    namePlaceholder: 'مثال: خصم المصممين',
+    mode: 'طريقة الحساب',
+    value: 'القيمة',
+    valueCurrency: 'المبلغ بالجنيه',
+    valuePercent: 'النسبة المئوية',
+    graceHours: 'مهلة السماح (ساعة)',
+    graceHoursHint: 'اتركه فارغًا لاستخدام مهلة الوكالة. تجاوز المشروع يظل الأعلى.',
+    assignedUsers: 'المنفّذون المسندون',
+    usersCount: '{count} منفّذ',
+    delete: 'حذف الصيغة',
+    deleteConfirm: 'سيعود كل منفّذ مسند لهذه الصيغة إلى الافتراضي العام.',
+    created: 'أُنشئت صيغة الخصم',
+    updated: 'حُدّثت صيغة الخصم',
+    deleted: 'حُذفت صيغة الخصم',
+    empty: 'لا توجد صيغ خصم مخصّصة',
+    emptyHint: 'الجميع يخضع للافتراضي العام في الإعدادات.',
+    noCap: 'لا يوجد حد أقصى للخصم. هذا قرار مقصود.',
+    errors: {
+      nameRequired: 'اسم الصيغة مطلوب',
+      valueNegative: 'قيمة الخصم لا تكون سالبة',
+      notFound: 'صيغة الخصم غير موجودة',
+      duplicateName: 'يوجد صيغة خصم بنفس الاسم',
+    },
   },
 
   audit: {
@@ -997,6 +1190,17 @@ export const ar = {
     'ledger.reversalBlocked': 'تعذّر عكس قيد من دورة مصروفة',
     'advance.created': 'تسجيل سلفة',
     'bonus.created': 'إضافة مكافأة',
+    'penalty.applied': 'تطبيق خصم تأخير',
+    'penalty.recalculated': 'إعادة احتساب خصم تأخير',
+    'penalty.cleared': 'إلغاء خصم تأخير بالكامل',
+    'penalty.skipped': 'تخطّي احتساب خصم',
+    'penalty.created': 'تسجيل خصم يدوي',
+    'penalty.reversed': 'عكس خصم',
+    'bonus.reversed': 'عكس مكافأة',
+    'penaltyProfile.created': 'إنشاء صيغة خصم',
+    'penaltyProfile.updated': 'تعديل صيغة خصم',
+    'penaltyProfile.deleted': 'حذف صيغة خصم',
+    'penaltyProfile.assigned': 'إسناد صيغة خصم لمنفّذ',
     'payout.cycleClosed': 'إغلاق دورة صرف',
     'payout.cycleSettled': 'اكتمال صرف دورة',
     'payout.drafted': 'توليد مستحق مسودة',
@@ -1174,6 +1378,7 @@ export const ar = {
       PER_TASK: 'بالمهمة',
       HYBRID: 'مختلط',
     },
+
     weekday: {
       SUN: 'الأحد',
       MON: 'الاثنين',

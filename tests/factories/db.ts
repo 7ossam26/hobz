@@ -98,6 +98,8 @@ export interface CreateUserOptions {
   monthlySalary?: string | null
   defaultTaskRate?: string | null
   weeklyCapacityHours?: number
+  /** SPEC R2 — the per-user penalty formula override (Phase 8). */
+  penaltyProfileId?: string | null
   roleIds?: readonly string[]
   deletedAt?: Date | null
 }
@@ -138,6 +140,7 @@ export async function createUser(
       defaultTaskRate:
         options.defaultTaskRate === undefined ? '500.00' : options.defaultTaskRate,
       weeklyCapacityHours: options.weeklyCapacityHours ?? 40,
+      penaltyProfileId: options.penaltyProfileId ?? null,
       deletedAt: options.deletedAt ?? null,
       roles: { create: (options.roleIds ?? []).map((roleId) => ({ roleId })) },
     },
@@ -371,6 +374,38 @@ export async function createTask(
   })
 
   return { ...row, status: row.status as TaskStatusOption }
+}
+
+/**
+ * Any `STATUS_CHANGED` activity row, written directly.
+ *
+ * The feed is load-bearing three times over — `BLOCKED → previous` (SPEC §5.1),
+ * the blocked intervals lateness subtracts (SPEC §5.3), and the revision
+ * boundaries penalties are frozen at (SPEC T4) — so a test about any of those
+ * needs to arrange a history without walking the whole state machine to get
+ * there. Tests about the transitions themselves call the service.
+ */
+export async function createStatusActivity(
+  db: PrismaClient,
+  options: {
+    taskId: string
+    from: TaskStatusOption | null
+    to: TaskStatusOption
+    actorId?: string | null
+    at: Date
+  },
+): Promise<{ id: string }> {
+  return db.taskActivity.create({
+    data: {
+      taskId: options.taskId,
+      actorId: options.actorId ?? null,
+      type: 'STATUS_CHANGED',
+      from: options.from,
+      to: options.to,
+      createdAt: options.at,
+    },
+    select: { id: true },
+  })
 }
 
 /**
@@ -670,6 +705,49 @@ export async function createPayout(
     select: { id: true, net: true },
   })
   return { id: row.id, net: row.net.toFixed(2) }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Penalties — Phase 8 (PenaltyProfile)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type PenaltyModeOption =
+  | 'FIXED_PER_DAY'
+  | 'PCT_TASK_VALUE_PER_DAY'
+  | 'PCT_DAILY_RATE_PER_DAY'
+  | 'FIXED_ONCE'
+  | 'PCT_TASK_VALUE_ONCE'
+
+export interface CreatePenaltyProfileOptions {
+  name?: string
+  mode?: PenaltyModeOption
+  /** Currency for `FIXED_*`, a percentage for `PCT_*`. 2dp string. */
+  value?: string
+  graceHours?: number | null
+  deletedAt?: Date | null
+}
+
+/**
+ * A named penalty formula (SPEC R2). `graceHours` uses `=== undefined` rather
+ * than `??` for the reason `defaultTaskRate` above does: a test that explicitly
+ * asks for a profile with *no* grace override is testing the fall-through, and
+ * `?? 8` would silently give it one and make the test prove nothing.
+ */
+export async function createPenaltyProfile(
+  db: PrismaClient,
+  options: CreatePenaltyProfileOptions = {},
+): Promise<{ id: string; name: string }> {
+  const n = next()
+  return db.penaltyProfile.create({
+    data: {
+      name: options.name ?? `صيغة خصم ${n}`,
+      mode: options.mode ?? 'PCT_TASK_VALUE_PER_DAY',
+      value: options.value ?? '5.00',
+      graceHours: options.graceHours === undefined ? null : options.graceHours,
+      deletedAt: options.deletedAt ?? null,
+    },
+    select: { id: true, name: true },
+  })
 }
 
 export interface CreateProjectTemplateOptions {

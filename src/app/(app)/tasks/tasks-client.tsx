@@ -31,6 +31,9 @@ export interface TaskPermissions {
   canApprove: boolean
   canCancel: boolean
   canComment: boolean
+  /** Phase 8. Cosmetic, like every other flag here — the actions re-check. */
+  penaltyCreate: boolean
+  penaltyReverse: boolean
 }
 
 interface Props {

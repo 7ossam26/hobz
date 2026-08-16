@@ -1,3 +1,4 @@
+import { advisoryXactLock } from '@/lib/advisory-lock'
 import type { Db } from '@/lib/db'
 
 import { cycleEndAfter } from './period'
@@ -11,6 +12,12 @@ import { cycleEndAfter } from './period'
  * imports `modules/ledger`, so there is no cycle between the two modules and no
  * port abstraction invented to pretend there isn't.
  */
+
+/**
+ * One name for the whole table, because the fact being protected is agency-wide:
+ * there is at most one OPEN cycle, ever (`payout_cycles_single_open`).
+ */
+const OPEN_CYCLE_LOCK = 'payout.ensureOpenCycle'
 
 export const CYCLE_SELECT = {
   id: true,
@@ -84,6 +91,34 @@ export async function ensureOpenCycle(
   const open = await currentOpenCycle(db)
   if (open) return { ...open, created: false }
 
+  /**
+   * Serialise the open-a-cycle path (added in Phase 8).
+   *
+   * The `catch` below was the whole defence until now: let both writers try,
+   * and let the loser re-read the winner's row. That works on the base client,
+   * where each statement is its own transaction — and **cannot** work inside an
+   * interactive one, because a unique violation aborts the whole transaction
+   * and Postgres then refuses every subsequent command with `25P02`. The
+   * recovery read is exactly such a command, so the loser died on the
+   * re-read rather than recovering.
+   *
+   * Nothing exercised that until Phase 8: before it, ledger writes were
+   * user-driven and arrived one at a time. The penalty engine writes money for
+   * a منفّذ while a manager may be doing the same for another, each inside
+   * their own transaction, and `tests/integration/penalty/concurrency.test.ts`
+   * found it on the first try.
+   *
+   * A blocking lock, not `try`: the loser must not give up, it must wait and
+   * then use the winner's cycle. The wait is one INSERT long. The key is the
+   * *fact* being established — there is at most one open cycle in the whole
+   * agency — so one name for the whole table is right.
+   */
+  await advisoryXactLock(db, OPEN_CYCLE_LOCK)
+
+  // Re-read under the lock. The winner created it while this caller waited.
+  const opened = await currentOpenCycle(db)
+  if (opened) return { ...opened, created: false }
+
   const previous = await latestCycle(db)
   // The *fact*, not the plan: a cycle closed early on the 20th hands over at
   // the 20th, and one closed late on the 1st hands over at the 1st. Using the
@@ -99,8 +134,16 @@ export async function ensureOpenCycle(
     })
     return { ...row, created: true }
   } catch (error) {
-    // `payout_cycles_single_open` — another writer opened it first. That is the
-    // correct outcome, not an error: re-read and use theirs.
+    /**
+     * Kept as a backstop, and unreachable for callers inside a transaction —
+     * the lock above is what stops them colliding now. It still earns its place
+     * on the base client, where the lock is released the instant it is taken
+     * and two callers genuinely can race the index. There, a unique violation
+     * does not poison anything and re-reading is the correct recovery.
+     *
+     * `payout_cycles_single_open` — another writer opened it first. That is the
+     * right outcome, not an error: use theirs.
+     */
     const raced = await currentOpenCycle(db)
     if (raced) return { ...raced, created: false }
     throw error

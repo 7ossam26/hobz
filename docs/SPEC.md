@@ -209,9 +209,11 @@ Payout       id, userId, cycleId, carriedForward, gross, penalties, bonuses,
              advances, adjustments, net,
              status(DRAFT|APPROVED|PAID), paidAmount, method, reference, note,
              approvedById, approvedAt, paidById, paidAt
-PenaltyProfile id, name, mode, value, graceHours, isDefault
+PenaltyProfile id, name, mode, value, graceHours   ← `isDefault` dropped, §5.4
              mode ∈ FIXED_PER_DAY | PCT_TASK_VALUE_PER_DAY
                     | PCT_DAILY_RATE_PER_DAY | FIXED_ONCE | PCT_TASK_VALUE_ONCE
+             The agency default is the Settings triple, not a flagged row —
+             two answers to "what is the default" is one too many (§5.4).
 PaymentMethod  ← NOT a table. See below.
 ```
 
@@ -423,6 +425,88 @@ dailyRate(user) = monthlySalary ÷ settings.workingDaysPerMonth
 - No cap. A payout may reach zero but **never goes negative** — surplus deduction carries to the next cycle as a debit balance.
 - Worker gets a non-dismissable notification. Worker cannot contest in-system.
 - Reversal requires `penalty.reverse` permission + a mandatory reason.
+
+**How the engine is read (settled in Phase 8, `modules/penalty/`)**
+
+- **"Active" means *still subject to recalculation*, not "not yet reversed".**
+  That is what makes this section's "exactly one active auto `PENALTY` per
+  task" and T4's "the original delivery's penalty stands" agree instead of
+  contradicting each other. The instant a revision is requested, the previous
+  delivery's figure can never change again — the deadline it was measured
+  against is gone — so it stops being active. A revised task therefore carries
+  two unreversed automatic penalties and exactly one live one.
+- **Which delivery an entry belongs to is derived from `TaskActivity`**, not
+  stamped on the row. §2 says there is no round counting and §4 gives
+  `LedgerEntry` no metadata column, so the boundary is the `STATUS_CHANGED →
+  REVISION_REQUESTED` instant and an entry at or after the latest one is live.
+  This is the third reader of a feed §5.1 and §5.3 already made load-bearing,
+  so it cannot disagree with the other two.
+- **Idempotency is a comparison, not a flag.** The target is a pure function of
+  data the engine did not write, so it is compared against what the ledger
+  already holds and *nothing at all* is written when they match — no reversal,
+  no replacement, no audit row. Ten runs produce one entry and zero reversals,
+  which is stronger than "one net penalty" and is why a quiet night leaves no
+  trace. The freeze at `SUBMITTED` then needs no code of its own: §5.3 stops
+  the clock, so the target stops moving.
+- **`PenaltyProfile.isDefault` is not a column.** This section writes the lookup
+  as `user.penaltyProfile ?? settings.defaultPenaltyProfile`, and §7 already
+  puts penalty defaults in Settings. A row flagged `isDefault` would be a second
+  answer to "what is the agency default", so the Settings triple
+  (`penalty.defaultMode` / `defaultValue` / `defaultGraceHours`) **is** that
+  default profile, and the table holds only the named overrides. §4's listing is
+  amended accordingly.
+- **A profile is taken whole or not at all.** Its mode gives its `value` a unit,
+  so falling back field-by-field would invent a formula nobody configured — a
+  profile meaning "150 EGP once" plus a default meaning "5% per day" resolves to
+  "150% of the task value, per day".
+- **Grace resolves project → user profile → global.** §5.3's "project override →
+  global default" stays literally true wherever a project sets one; the
+  profile's grace fills the gap where it has not. The project wins because it is
+  the narrower promise — a commitment made to a client about *this work* — and
+  because that keeps §5.3 unchanged. `??` at every link: a zero grace is a
+  decision.
+- **The mode names a preferred basis; an absent basis falls back, out loud.**
+  One agency-wide default mode meets three pay types, so
+  `PCT_TASK_VALUE_PER_DAY` on a salaried منفّذ would take a percentage of a
+  `taskValue` their work does not carry and produce a silent zero — the failure
+  Phase 0 stubbed `lib/calendar` as *throwing* to avoid. A `taskValue` basis
+  exists only for someone who `earnsPerTask`, a `dailyRate` basis only for
+  someone who `isSalaried`, and **zero is not a basis**. Where the preferred one
+  is missing and the other exists, the other is used and the breakdown says so;
+  where neither exists there is no deduction and the reason is `NO_BASIS` —
+  audited, never rendered as a correct zero.
+- **The breakdown reproduces by hand, and that is a hard requirement.** Every
+  term shown is exact, so no rounded intermediate is displayed: the formula is
+  `basis × value% × days`, never a per-day figure that would not multiply back
+  up. A daily rate is shown as its derivation (`5,000.00 ÷ 22`) rather than as
+  the rounded quotient, because §5.4's arithmetic uses the unrounded one. The
+  same text is written into `LedgerEntry.note`, carried on the notification
+  event and rendered in the task sheet, so the three cannot disagree.
+- **Sub-piastre deductions are zero, not errors.** The verdict is taken on the
+  rounded figure: `40.00 × 0.01%` is 0.004, which is nothing in a
+  `Decimal(12,2)` column, and reporting it as due would hand `appendEntry` a
+  zero it refuses — failing that task every night forever.
+- **A skip is not a clear.** When the inputs become unreadable (no assignee, no
+  basis, the منفّذ departed), the engine stops changing the figure and audits
+  why. It does not reverse a deduction that was correct when it was computed:
+  money moves on arithmetic somebody can reproduce, not because a column went
+  null. A human with `penalty.reverse` may still undo it, with a reason, which
+  records a decision rather than a data change.
+- **Lateness reaching zero *is* a clear**, and that is the same rule from the
+  other side: an approved extension or a cancellation makes the arithmetic say
+  nothing is owed, so the entry is reversed to exactly zero.
+- **Concurrency is closed at both ends.** A per-task transaction advisory lock
+  covers the read *and* the write, so two callers cannot both insert a first
+  penalty; the unique index on `reversesEntryId` covers the case where both try
+  to reverse the same entry. A caller who cannot take the lock is told so and
+  stops — the correct outcome, since whoever holds it computes the same target.
+- **Manual deductions carry `isAutoGenerated: false`**, which is what keeps the
+  engine's hands off them: a nightly recomputation can never reverse a manager's
+  decision. Their reason is free text with no taxonomy, because a dropdown would
+  dress judgement up as computation and leave the منفّذ reading "أخرى".
+- **Bonuses are manual, always.** The asymmetry is the thesis, not an omission:
+  a deduction must be automatic so that it is arithmetic rather than the
+  manager's mood, and a bonus is supposed to be somebody's judgement.
 
 ### 5.5 Payout cycle
 

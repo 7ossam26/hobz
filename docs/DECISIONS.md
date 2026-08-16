@@ -735,8 +735,7 @@ one-day project; `gracePeriodHours: 0` proven distinct from `null` at both the
 schema and the persisted-row level; `nextProjectCode` at the 9999→10000
 padding-width transition; a health-override reason at exactly the 500-char
 limit; pagination at the exact page-size boundary for both `listClients` and
-`listProjects`; a milestone due exactly on its project's `startDate` (offset
-0) round-tripping through save/create-from-template. No bugs found — Phase 3's
+`listProjects`; a milestone due exactly on its project's `startDate` (offset 0) round-tripping through save/create-from-template. No bugs found — Phase 3's
 first-pass implementation already held every one of these.
 
 **Axis 4 (permissions).** One new file, 102 tests, table-driven over all 16
@@ -781,10 +780,10 @@ and correctly declined to fix a function outside their assigned scope,
 reporting it instead — three independent confirmations of one bug is about as
 sure as a bug gets without a production incident. Fixed by adding
 `owner: { deletedAt: null }` / `client: { deletedAt: null }` to the two
-facet-deriving queries, which filters the *parent project* out of that
+facet-deriving queries, which filters the _parent project_ out of that
 specific distinct-value computation without touching anything else about how
 the project reads elsewhere (a soft-deleted client's name still correctly
-shows on the *project* that references it — see the axis 11 test file — this
+shows on the _project_ that references it — see the axis 11 test file — this
 fix only closes the filter-menu leak). 7 further tests (2 new files) also
 proved: exclusion survives being the only match for a search/owner filter;
 `getProject` on a deleted id throws `NotFoundError` even under a scope with
@@ -906,7 +905,7 @@ category's colour follows its id rather than its wording. SPEC §7 updated.
 That reshape needed a **data migration**, which was nearly missed. The seed
 deliberately never overwrites an existing `Setting` row ("filling gaps only, so
 re-running it after go-live cannot silently reset a grace period"), and
-`lib/settings` Zod-validates on *read* — so an already-seeded database would
+`lib/settings` Zod-validates on _read_ — so an already-seeded database would
 have kept the old string array forever and started throwing the moment anybody
 opened the task form. `20260816000001_task_categories_taxonomy` rewrites it,
 keeping the meaningful id for labels that match a seeded default so a migrated
@@ -934,7 +933,7 @@ number, and that instruction must arrive). An event that _must_ be handled is
 not an event, so collapsing them would have blurred a real distinction.
 
 **Moving a task is gated by permission, not by ownership.** Nothing requires
-the caller to *be* the assignee. SPEC §6 gates these edges by key and says
+the caller to _be_ the assignee. SPEC §6 gates these edges by key and says
 nothing about ownership, and a manager submitting for a worker who is out sick
 is an ordinary day at an agency this size. What stops a منفّذ touching someone
 else's task is `scopeTasks` — they cannot read it, so they cannot name its id.
@@ -1008,7 +1007,7 @@ produced. The tests are the same tests either way; the provenance is not.
 and hands every Cairo-calendar question to `lib/calendar`, so the boundary holds
 by construction; the tests pin it so a later phase cannot quietly move the line.
 Egypt's real transitions are used (forward 2026-04-24, back 2026-10-29) and
-every DST effect is asserted as a *difference* between two identical wall-clock
+every DST effect is asserted as a _difference_ between two identical wall-clock
 spans rather than against a hardcoded `+02:00`, so the suite survives Egypt
 changing the rule again. The sharpest case: with a 00:00–08:00 workday window,
 the spring-forward day contains the hour Cairo skips — a calendar counting
@@ -1045,7 +1044,7 @@ past-the-end pages, and the RAG thresholds at exactly-at versus one-over.
 `tests/unit/task/state-machine-edges.test.ts`, written as properties rather
 than examples: `assertTransition` agrees with `canTransition` in all 100 cells;
 `nextStatuses` returns exactly what `canTransition` allows; nothing leaves a
-final status under *any* context; every non-final status reaches `CANCELLED` in
+final status under _any_ context; every non-final status reaches `CANCELLED` in
 one step and has at least one exit. The `previousStatus` that `unblockTask`
 reads back from `TaskActivity` is treated as untrusted input — a corrupt or
 non-blockable value must make the machine refuse rather than let a task escape
@@ -1150,11 +1149,11 @@ than guessing a status the machine never authorised.
   built into `DataTable`, nothing new needed), and a new row-selection column
   driving three bulk actions (assign, change priority, change due date).
   Bulk actions are new, thin orchestration in `actions.ts` — `Promise.
-  allSettled` over the existing, unmodified `assignTask`/`updateTask` — never
+allSettled` over the existing, unmodified `assignTask`/`updateTask` — never
   a new code path through the state machine or the ledger ports.
 - **Calendar view** — month (fixed 6-week/42-cell grid) and week, Sunday-
   first, built from scratch in `calendar/date-grid.ts` (pure UTC-day
-  arithmetic; deliberately *not* `lib/calendar` — this is grid decoration,
+  arithmetic; deliberately _not_ `lib/calendar` — this is grid decoration,
   not a lateness calculation, and SPEC §5.2/§5.3's business-day rules stay
   Phase 6's alone).
 - **The detail sheet** — fetches on open, the one documented exception to
@@ -1163,7 +1162,7 @@ than guessing a status the machine never authorised.
   read, mirroring the command palette's `loadCommandDirectoryAction`
   precedent) combines detail + comments + activity + dependency warnings +
   the full dependency graph into one round trip. Inline fields save
-  optimistically field-by-field, always resending the *whole* `UpdateTaskInput`
+  optimistically field-by-field, always resending the _whole_ `UpdateTaskInput`
   core shape so an edit to priority can never silently wipe out a
   `delayReason` the task already carried. The status control, watchers,
   reassignment (with SPEC M4's "pay the previous assignee?" question),
@@ -1182,7 +1181,7 @@ than guessing a status the machine never authorised.
   entity's sheet") already anticipated exactly this shape.
 - **Polling** — `useAutoRefresh` (`components/shared/`) calls
   `router.refresh()` on `notifications.pollingIntervalSeconds`, paused on
-  `document.hidden`. Deliberately *not* a parallel client fetch: this is the
+  `document.hidden`. Deliberately _not_ a parallel client fetch: this is the
   same mechanism `DataTable` already uses for its own filter changes, so a
   poll tick is indistinguishable from any other server-driven update and
   touches nothing the client owns locally (an open sheet, a bulk selection,
@@ -1229,7 +1228,7 @@ showing an incomplete board; no view has needed it in practice at this
 scale, but it exists rather than being assumed away.
 
 **There is no generic `transitionTaskAction`.** The board and the status
-control only ever call the *named* wrappers (`startTaskAction`,
+control only ever call the _named_ wrappers (`startTaskAction`,
 `approveTaskAction`, …) that already existed in Phase 4's `actions.ts`. A
 generic `{taskId, to}` action reachable from the client would let it
 construct any edge, including the five that need a rating, a reason, or an
@@ -1267,7 +1266,7 @@ redundant enforcement that could drift from the real one.
 **`getDependencyGraph` is additive, next to the unchanged
 `getDependencyWarnings`.** SPEC §4/§5.1's "warning only, never a block" is
 entirely `getDependencyWarnings`'s job, and Phase 4 already proved it.
-Managing the list (add, remove, see the *satisfied* ones too, see who
+Managing the list (add, remove, see the _satisfied_ ones too, see who
 depends on this task) needs the full graph in both directions, which is a
 different question with a different answer — a second function beside the
 first, not a replacement.
@@ -1357,13 +1356,13 @@ exhaustively. No bug found.
 
 ### Deferred (with owners)
 
-| Deferred                                                                     | Phase |
-| ----------------------------------------------------------------------------- | ----- |
-| Working-elapsed time still job-updated only, board/sheet just display it     | 6     |
-| Extension requests (`ExtensionRequest` model, task due-date change UI)        | 6     |
-| Penalty/bonus breakdown panel inside the task sheet                           | 8     |
-| Notifications on assign/submit/approve/@mention (bell, drawer)                | 9     |
-| Task tab on `/projects/[id]` — still the Phase 3 `EmptyState` placeholder      | later |
+| Deferred                                                                                           | Phase |
+| -------------------------------------------------------------------------------------------------- | ----- |
+| Working-elapsed time still job-updated only, board/sheet just display it                           | 6     |
+| Extension requests (`ExtensionRequest` model, task due-date change UI)                             | 6     |
+| Penalty/bonus breakdown panel inside the task sheet                                                | 8     |
+| Notifications on assign/submit/approve/@mention (bell, drawer)                                     | 9     |
+| Task tab on `/projects/[id]` — still the Phase 3 `EmptyState` placeholder                          | later |
 | Command-palette entity search extended to tasks (quick-create is a deep link, not a search result) | later |
 
 ### Known limitations
@@ -1421,14 +1420,14 @@ exhaustively. No bug found.
   disagreed the penalty engine would pick one without anyone knowing which.
   SPEC §4 updated to say so.
 
-- **The unit of arithmetic is the Cairo *date key*, not the `Date`.** Everything
+- **The unit of arithmetic is the Cairo _date key_, not the `Date`.** Everything
   in `cairo.ts` runs on integer civil fields via Howard Hinnant's
   `days_from_civil`, so a 23- or 25-hour day cannot perturb a day count and the
   century leap rules (1900 no, 2000 yes) are exact. The only place an instant
   and a date meet is `cairoInstant()`, which asks the platform's timezone
   database with a two-pass offset rather than assuming +02:00.
 
-- **A working day counts when *its own start* falls in `[from, to)`.** One rule,
+- **A working day counts when _its own start_ falls in `[from, to)`.** One rule,
   and every consequence the SPEC asks for falls out of it: same-instant is zero,
   each midnight crossed into a working day adds one, and §5.2's T2 edge case
   ("working voluntarily on a day off never hurts and never helps") is not a
@@ -1447,7 +1446,7 @@ exhaustively. No bug found.
   minutes before somebody's deduction is recomputed, so a stale answer there is
   a wrong penalty. Every read is a query; the nightly job uses
   `snapshotCalendarSource()` instead — one holiday query and one leave query for
-  a whole batch — which is fresh *and* cheap without a cache two unrelated
+  a whole batch — which is fresh _and_ cheap without a cache two unrelated
   callers can share.
 
 - **What stops the lateness clock is delivery, not review**, and the delivered
@@ -1455,14 +1454,14 @@ exhaustively. No bug found.
   overdue in the list and showing zero in the penalty breakdown would be a
   support ticket every week. `REVISION_REQUESTED` therefore restarts the clock
   against the new due date with no special case, because it is not in that set.
-  *(Amended below: BLOCKED now pauses accrual, so the two sets differ for that
-  one status — deliberately, and the divergence is explained there.)*
+  _(Amended below: BLOCKED now pauses accrual, so the two sets differ for that
+  one status — deliberately, and the divergence is explained there.)_
 
 - **Escalation is stored on the task, not derived on read.** An escalation is an
-  *event* — somebody gets notified, once. A value recomputed on every read has
+  _event_ — somebody gets notified, once. A value recomputed on every read has
   no way to know it has already fired, so it would either notify nightly forever
   or need a second column recording that it had. `Task.escalationLevel` is that
-  column, the job is its only writer, and it emits only on a level *change*.
+  column, the job is its only writer, and it emits only on a level _change_.
 
 - **"Force project health RED" is a signal, not an override.**
   `Project.healthOverride` means a human decided, and carries a mandatory reason
@@ -1480,11 +1479,11 @@ exhaustively. No bug found.
   `modules/leave`.
 
 - **`Holiday` is hard-deleted.** Invariant 8 says soft-delete is respected in
-  every query; a soft-deleted *holiday* that one query forgot to filter would
+  every query; a soft-deleted _holiday_ that one query forgot to filter would
   keep being a day off, which is that invariant's failure mode inverted. Same
   reasoning, and same precedent, as `Milestone`.
 
-- **Duplicate holidays are detected by *coverage*, not equality.** The unique
+- **Duplicate holidays are detected by _coverage_, not equality.** The unique
   index on `holidays.date` cannot catch the case that actually happens: a
   recurring 7 January exists, and somebody adds a one-off for 2027-01-07. Two
   legal rows, one day off, one of them a mistake.
@@ -1497,7 +1496,7 @@ exhaustively. No bug found.
 - **`calendar.leaveTypes` became a taxonomy**, following `tasks.categories` from
   Phase 4, with an in-place data migration for the same reason that one needed
   it: the seed never overwrites an existing `Setting` row, and `lib/settings`
-  validates on *read*, so an already-seeded database would have started throwing
+  validates on _read_, so an already-seeded database would have started throwing
   the moment anyone opened the leave form.
 
 - **`cairoParts` moved from `lib/datetime` to `lib/calendar`**, and datetime
@@ -1512,12 +1511,12 @@ exhaustively. No bug found.
   a formatter reading that reports whole seconds, so the offset came back
   fractional (119.297 minutes) and every `===` comparison against it failed. The
   bisect that finds the year's transitions therefore found nothing real, and
-  three DST tests failed against a *correct* implementation. Worth recording
+  three DST tests failed against a _correct_ implementation. Worth recording
   because the failure looked exactly like an implementation bug.
 
 - **Egypt's 25-hour day is the Thursday, not the Wednesday.** Summer time ends at
   24:00 local on the last Thursday of October, so the clock reads 23:00 again on
-  the *same* Cairo date. The first version of the test looked at the day before.
+  the _same_ Cairo date. The first version of the test looked at the day before.
 
 - **A recurring 29 February expanded into common years.** `expandHolidayRows`
   built the candidate key by string concatenation and compared it into range,
@@ -1561,7 +1560,7 @@ an ordinary `09:00–23:30` window gave 930 at the edge and 870 in the interior.
 
 **Axis 1 (boundaries) found a flag that flickered.** `LatenessResult.frozen` was
 `measuredAt !== now`, an object-identity comparison. `measurementEnd` returns the
-`now` *object* when `submittedAt` is not strictly earlier, so a task delivered at
+`now` _object_ when `submittedAt` is not strictly earlier, so a task delivered at
 exactly the measurement instant reported "still accruing" for one instant, with
 no change in the number behind it. Both the delivery test and the freeze flag now
 read one predicate, `deliveredAt()`.
@@ -1577,7 +1576,7 @@ was never affected, which is exactly why no correctness test caught it.
 **Axes 3 (calendar) and 12 (empty/null) found nothing**, and both went out of
 their way to prove they were not passing vacuously — axis 3 by mutation-testing
 the holiday∩leave de-duplication (removing it fails exactly one test and nothing
-else), axis 12 by asserting the *inverse* of every empty case: an agency with no
+else), axis 12 by asserting the _inverse_ of every empty case: an agency with no
 holidays configured must still count five working days, and `holidayCalls === 1`
 proves the emptiness was measured rather than skipped.
 
@@ -1590,29 +1589,29 @@ What the 127 cases add beyond the implementation's own suite, in brief:
   window (1439 minutes — a workday can never contain the day's last minute).
 - **Axis 2** — every minute of the skipped `00:00–00:59` resolving onto the right
   date; both passes of the repeated `23:xx` carrying the same key; grace being
-  the same *real* duration for two workers on either side of a transition; the
+  the same _real_ duration for two workers on either side of a transition; the
   two transitions cancelling so a year is exactly 365 × 24 h; and that
-  `lib/datetime` re-exports the *identical* `cairoParts` function object, by
+  `lib/datetime` re-exports the _identical_ `cairoParts` function object, by
   identity rather than by behaviour.
 - **Axis 3** — SPEC §5.2's T2 as a property rather than three samples: all 96
   hours of عيد الأضحى 2026 running into the weekend sweep to a single answer, in
   both directions, for days and for minutes.
 - **Axis 5** — an exhaustive 3×3 fixed point over `nextEscalationLevel`, which is
   what makes "ten job runs, one notification" true; and a calendar answering a
-  *growing* number on every call still clamped to `raw` every time.
+  _growing_ number on every call still clamped to `raw` every time.
 - **Axis 12** — two kinds of nothing kept distinct: a task with no assignee
   issues no leave query at all, while a brand-new assignee issues exactly one
   that comes back empty.
 
 ### Deferred (with owners)
 
-| Deferred                                                                      | Phase |
-| ----------------------------------------------------------------------------- | ----- |
-| Penalty recomputation on extension approval (`PenaltyPort` is a no-op today; every request is audit-logged first so Phase 8 can replay them) | 8 |
-| Delivery of `TaskEscalated` (the event fires on the real code path; nobody subscribes) | 9 |
-| UI for holidays, leave and extensions — services, actions and queries exist; the screens do not | 12 |
-| `dailyRate(user) = monthlySalary ÷ workingDaysPerMonth` — `Calendar.workCalendar()` exposes the divisor, nothing consumes it yet | 7 |
-| e2e flow #4 ("approve an extension before the due date → no penalty ever accrues") — needs Phase 8's penalty engine to be meaningful | 12 |
+| Deferred                                                                                                                                     | Phase |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| Penalty recomputation on extension approval (`PenaltyPort` is a no-op today; every request is audit-logged first so Phase 8 can replay them) | 8     |
+| Delivery of `TaskEscalated` (the event fires on the real code path; nobody subscribes)                                                       | 9     |
+| UI for holidays, leave and extensions — services, actions and queries exist; the screens do not                                              | 12    |
+| `dailyRate(user) = monthlySalary ÷ workingDaysPerMonth` — `Calendar.workCalendar()` exposes the divisor, nothing consumes it yet             | 7     |
+| e2e flow #4 ("approve an extension before the due date → no penalty ever accrues") — needs Phase 8's penalty engine to be meaningful         | 12    |
 
 ### The open question, answered: BLOCKED time does not accrue lateness
 
@@ -1630,7 +1629,7 @@ both are ordinary days at an agency:
 
 - a task blocked for a week and then **resumed** is no longer BLOCKED, so the
   one-line rule charges the منفّذ for the week they could not work; and
-- a task blocked **today**, three weeks overdue, *is* BLOCKED, so the one-line
+- a task blocked **today**, three weeks overdue, _is_ BLOCKED, so the one-line
   rule forgives all three weeks.
 
 So the unit is the interval, recovered from `TaskActivity` in
@@ -1642,14 +1641,14 @@ be wrong. The same argument rules out a `blockedMinutes` column here.
 **It is a subtraction, and that is what preserves every other rule for free.**
 `lateWorkingDays` counts the window as before, then takes out the working days
 inside the blocked stretches clipped to the same window. Both halves call the
-*same* `workingDaysBetween` with the *same* assignee, so a blocked Friday, a
+_same_ `workingDaysBetween` with the _same_ assignee, so a blocked Friday, a
 blocked عيد and a blocked day of approved leave are each worth zero on both
 sides — none can be excused twice, and none can drive the result negative. Grace
 still applies first (it decides where the window starts); review time still
 freezes the endpoint; an extension still moves the deadline. Nothing else needed
 a special case, which is the sign the shape is right. The integration suite
 pins the property directly: the same scenario with and without a holiday inside
-the blocked stretch yields the *same* `lateWorkingDays`, and only
+the blocked stretch yields the _same_ `lateWorkingDays`, and only
 `blockedWorkingDays` moves.
 
 **Three consequences worth naming.**
@@ -1659,7 +1658,7 @@ the blocked stretch yields the *same* `lateWorkingDays`, and only
    the pre-decision answer — a higher deduction, with nothing to show anyone
    why. `[]` is a claim, so it has to be made. Making it required flushed out
    all eight construction sites at compile time.
-2. **A task blocked *out of* a delivered status stays delivered.** The open
+2. **A task blocked _out of_ a delivered status stays delivered.** The open
    interval carries its `from`, so `effectiveStatus()` reads it and a manager
    blocking a task that sits in review does not restart the worker's clock.
    This was latent before the change and is now correct: it is the same "time
@@ -1693,7 +1692,7 @@ the stuck part. The task sheet shows both figures with the difference named.
   optimisation if the table ever grows.
 - **Elapsed working time is written on submission and by the job**, so a task
   submitted between two runs shows its working figure immediately, while one
-  whose *calendar* changed retroactively (a holiday added last week) waits until
+  whose _calendar_ changed retroactively (a holiday added last week) waits until
   03:00.
 - **`/tasks` is down to ~6 kB of First Load JS headroom** (174 kB against the
   SPEC §9 180 kB budget), from ~8 kB at the end of Phase 5. The leave-warning
@@ -1744,12 +1743,12 @@ the stuck part. The task sheet shows both figures with the difference named.
 
 ### Decisions worth recording
 
-- **`net` is the balance at close *minus what earlier payouts still claim*,
+- **`net` is the balance at close _minus what earlier payouts still claim_,
   floored at zero — not a per-period sum.**
   SPEC §5.5 says `net = SUM(all unpaid ledger entries in period)`, and the two
   readings agree exactly whenever the previous cycle was paid in full. Where
   they differ the balance is the correct one, and choosing it is what makes
-  three of the brief's requirements need *no code*: the payout that never goes
+  three of the brief's requirements need _no code_: the payout that never goes
   negative, the advance that "settles automatically at month-end because balance
   is a sum — do not write special-case deduction code", and the partial payment
   whose remainder stays outstanding. Under a per-period net each of those would
@@ -1773,7 +1772,7 @@ the stuck part. The task sheet shows both figures with the difference named.
   (which lists it as a model) and §7 (which settled in Phase 6 that
   `payout.paymentMethods` is a plain Settings list because "nothing stores a
   reference to it"). §7 wins, and stays true: `Payout.method` stores a
-  *snapshot* of the label chosen at payment time. Renaming a method in Settings
+  _snapshot_ of the label chosen at payment time. Renaming a method in Settings
   must not rewrite what a payment record says happened.
 - **The sign lives in the amount, and zero is refused.** Fixed per type,
   validated on the one write path. A `direction` column would be a second
@@ -1785,14 +1784,14 @@ the stuck part. The task sheet shows both figures with the difference named.
   §4 axis 7), but allowed while the cycle is merely closed. The second half
   matters as much as the first: SPEC §5.4's penalty recomputation is
   "insert `REVERSAL` + insert new `PENALTY`", and it has to keep working across
-  a cycle boundary. The reversal lands in the *open* cycle, so a statement the
+  a cycle boundary. The reversal lands in the _open_ cycle, so a statement the
   منفّذ has already read never changes. The instrument for correcting a paid
   cycle is an `ADJUSTMENT`, which shows up as its own movement.
 - **Closing is refused three ways, and the scheduler can only ever hit one.**
   `already-closed`, `not-started` (`periodStart` has not passed) and `not-due`
   (`periodEnd` has not passed and the caller did not ask for an early close).
   This came out of a failing test rather than from foresight — see Surprises.
-- **Salary is one entry per cycle *and* at most one per Cairo month**, where
+- **Salary is one entry per cycle _and_ at most one per Cairo month**, where
   the month is anchored on `min(closedAt, periodEnd)`. SPEC §5.5 says per cycle,
   and the default cycle is a month; the month rule is what "monthly salary"
   means and it is the one that holds when an operator deliberately closes twice
@@ -1833,12 +1832,12 @@ the stuck part. The task sheet shows both figures with the difference named.
 
 - **The half-open balance window silently cost every salaried worker their
   salary.** `balanceFor` uses `createdAt < at`, which is right for a reader and
-  wrong for the close: the close *writes* the `SALARY` entry at exactly
+  wrong for the close: the close _writes_ the `SALARY` entry at exactly
   `closedAt`, so the payout it then computed excluded the largest number on it.
   Caught by the HYBRID test asserting `gross` 8900 and `net` 8900 — the gross
   was right and the net was 900, which is exactly the shape of a boundary bug.
   The cycle's own window is closed at the top; the reader's stays half-open.
-- **The advisory lock does not stop a *second* close, only a simultaneous one.**
+- **The advisory lock does not stop a _second_ close, only a simultaneous one.**
   Three parallel `closeCycleUnderLock` calls produced two salaries: with a
   connection pool smaller than the fan-out, the second caller queued rather than
   being rejected, then closed the brand-new cycle the first had just opened —
@@ -1854,7 +1853,7 @@ the stuck part. The task sheet shows both figures with the difference named.
 - **A scope that was right for one page was wrong for the other.**
   `getLedgerPage` widens to the whole agency for a `ledger.view.all` holder,
   which is correct for a finance screen — and it was what مستحقاتي called. A
-  manager who also held that key would have opened *their own* earnings page and
+  manager who also held that key would have opened _their own_ earnings page and
   found everybody's money on it. Found by re-reading the query layer rather than
   by a failing test, which is the uncomfortable part: every existing test passed,
   because they were all written from the منفّذ's side. `getMyLedgerPage` now
@@ -1871,7 +1870,7 @@ at 2,154 across 123, with every gate in `vitest.config.ts` met — including the
 - **Axis 5 — idempotency** (`payout/idempotency.test.ts`, 10). Close run 1×/3×/10×
   compared by whole-table snapshot rather than by counts; the earnings subscriber
   replayed ten times; the scheduled handler on a night that is not the cycle day;
-  and the case that is *not* idempotent by design — a second payment — asserted
+  and the case that is _not_ idempotent by design — a second payment — asserted
   through its guard instead.
 - **Axis 6 — concurrency** (`payout/concurrency.test.ts`, 14). Two approvals of
   one task, a close racing a ledger write, two approvals of one payout, two
@@ -1879,11 +1878,11 @@ at 2,154 across 123, with every gate in `vitest.config.ts` met — including the
 - **Axis 7 — reversal** (`ledger/reversal.test.ts`, 22). Every reversible type
   round-tripped against a non-round opening balance; reversal into the open cycle
   while the closed statement stays byte-identical; the paid-cycle refusal proved
-  to be per-worker rather than per-cycle; twice-reversal refused in code *and* by
+  to be per-worker rather than per-cycle; twice-reversal refused in code _and_ by
   the unique index.
 - **Axis 8 — money** (`ledger/money-edges.test.ts`, 20). `0.005` rejected rather
   than rounded; `MONEY_MAX` through the whole chain; 700 entries of `0.07`
-  asserted equal in Decimal and *unequal* in float; `333.33 + 333.33 + 333.34`;
+  asserted equal in Decimal and _unequal_ in float; `333.33 + 333.33 + 333.34`;
   a penalty exactly equal to earnings producing `0.00` and not `-0.00`.
 - **Axis 12 — empty/null** (`ledger/empty-values.test.ts`, 19). A brand-new
   user, a salaried worker with no salary and with a zero salary, an empty cycle,
@@ -1986,3 +1985,165 @@ and no money moves, because attribution is not arithmetic here (SPEC §4).
   indexes.** They cannot be expressed in the schema language, so they live in
   the migration and are listed in a comment block at the bottom of
   `schema.prisma`. Anyone regenerating a migration must keep them.
+
+---
+
+## Phase 8 — Penalties & Bonuses
+
+The phase the product exists for. Every earlier phase was building the inputs to
+one sentence: _this is the system's calculation, not my decision._
+
+### What was built
+
+- **`PenaltyProfile`** (`prisma/schema.prisma`, migration
+  `20260819000000_penalty_profiles`) — SPEC R2's named formula, shared rather
+  than per-user, with `User.penaltyProfileId` finally a real foreign key.
+- **`modules/penalty/`** — `mode`, `basis`, `calculate`, `profile`, `rounds`
+  (pure); `assess`, `service`, `register`, `profiles`, `job`, `port`, `ports`
+  (database-facing); `schema`, `actions`, `queries` at the edge.
+- **The 03:00 Cairo job** (`penalty.recompute`), plus recomputation on every
+  status change and on extension approval. Phase 6's `PenaltyPort` was pointed
+  at `noopPenaltyPort` with a promise that the real one would drop into the same
+  call site unchanged; it did, and `tests/integration/penalty/extension.test.ts`
+  is what that promise was worth.
+- **The manager's register** (`/penalties`), the per-task breakdown panel in the
+  task sheet, one-click reverse with a mandatory reason, profile management in a
+  sheet, and SPEC R4's deductions report (`/penalties/report`).
+- **256 new tests** — 143 unit, 113 integration — including six edge-case sweeps
+  (docs/TESTING.md §4 axes 1, 3, 5, 6, 7, 8) written by subagents.
+
+### The decisions
+
+**"Active" is _recalculable_, not _unreversed_.** SPEC §5.4 promises exactly one
+active auto penalty per task; SPEC T4 promises that after a revision the
+original delivery's penalty stands. Read carelessly those contradict. They agree
+once _active_ means what it says: the moment a revision is requested, the
+previous figure can never change again, so it stops being active. A revised task
+carries two unreversed penalties and one live one. Everything else in the
+revision feature falls out of that — `findActiveAutoPenalties` filters by round,
+and no other code path needed a special case.
+
+**The round comes from `TaskActivity`, not a column.** SPEC §2 says there is no
+round counting and SPEC §4 gives `LedgerEntry` no metadata field, so the boundary
+is the `STATUS_CHANGED → REVISION_REQUESTED` instant. This is the third reader of
+a feed §5.1 and §5.3 already made load-bearing, which is the point: a third
+column would be a third thing that can disagree. The boundary is inclusive, and
+that is required rather than a tie-break — `transitionTask` writes the activity
+row and calls the recomputation with the same `now`, so a strict `>` would have
+the revision's own recomputation reverse the penalty T4 says must stand.
+
+**Idempotency is a comparison, not a flag.** The target is a pure function of
+data the engine did not write, so the service compares it against the ledger and
+writes _nothing at all_ when they match. Ten runs produce one entry, zero
+reversals and zero audit rows. The brief asked for "one net penalty", which a
+reverse-and-reinsert-every-night engine would also satisfy — with twenty rows on
+a منفّذ's statement about one late delivery. The stricter reading is the one a
+person has to read.
+
+**A mode names a preferred basis; an absent basis falls back and says so.** One
+agency-wide default mode meets three pay types. With the shipped default,
+`PCT_TASK_VALUE_PER_DAY`, every salaried منفّذ's deduction would be a percentage
+of a `taskValue` their work does not carry — and would come out zero. Phase 0
+stubbed `lib/calendar` as _throwing_ rather than returning 0 for exactly this
+class of failure. So availability follows rules `modules/ledger/pay-profile`
+already set (`earnsPerTask`, `isSalaried`, and zero is not a basis), the fallback
+is recorded on the breakdown, and where neither figure exists the answer is
+`NO_BASIS` — audited, never a correct-looking zero.
+
+**The breakdown must reproduce by hand.** This is the phase's hardest constraint
+and it decided three things: no intermediate is ever displayed (a rounded
+per-day figure does not multiply back up), a daily rate is shown as
+`5,000.00 ÷ 22` rather than `227.27`, and the formula is composed from the basis
+that was _actually_ multiplied rather than from the mode that asked for one. The
+last of those was a real bug, caught by `pay-type.test.ts`: a fallback rendered
+the task-value template around a daily rate, so a منفّذ would have gone looking
+for a task worth 300.
+
+**`isDefault` was not added.** SPEC §4 lists it; SPEC §5.4 and §7 both say the
+default lives in Settings. Two answers to "what is the agency default" is one too
+many, so the Settings triple _is_ `settings.defaultPenaltyProfile` and the table
+holds only overrides. SPEC §4 amended.
+
+**Grace resolves project → profile → global.** SPEC §5.3 says "project override →
+global default" and R2 gives the profile a grace too. The project wins because it
+is the narrower promise — a commitment about _this work_, made to a client — and
+because that keeps §5.3 literally true wherever a project sets one.
+
+**A skip is not a clear.** When the inputs become unreadable the engine stops
+changing the figure and audits why; it does not refund a deduction that was
+correct when computed. Money moves on arithmetic somebody can reproduce, not
+because a column went null. Lateness genuinely reaching zero _is_ a clear, which
+is the same rule seen from the other side.
+
+**Manual deductions have no reason taxonomy.** The brief settles it, and the
+reasoning is the thesis: a dropdown would dress a manager's judgement up as
+computation and leave the منفّذ reading "أخرى". Bonuses are manual for the
+mirror-image reason — a deduction must be automatic to be defensible, a bonus is
+supposed to be a decision.
+
+### What surprised us
+
+**`ensureOpenCycle`'s race recovery could not work inside a transaction.** Phase
+7 caught the unique violation on `payout_cycles_single_open` and re-read the
+winner's row. Inside an interactive transaction a unique violation aborts the
+whole transaction, and Postgres then refuses the recovery read with `25P02`.
+Nothing had exercised it: before this phase, ledger writes were user-driven and
+arrived one at a time. `tests/integration/penalty/concurrency.test.ts` found it
+on the first run. Fixed by _preventing_ the collision — a blocking advisory lock
+around the open-a-cycle path — with the catch kept as a backstop for base-client
+callers, where it still works.
+
+**`advisoryLockKey` had to move out of `lib/scheduler`.** The money path needs
+locks now, and `lib/scheduler` imports `node-cron`, which reaches for `path` and
+`child_process`. Extracted to `lib/advisory-lock` with `lib/scheduler`
+re-exporting; no caller changed.
+
+**The axis sweeps found two real defects, and both were arithmetic.** Axis 1:
+`calculatePenalty` decided `DUE`/`ZERO` on the _unrounded_ product, so
+`40.00 × 0.01%` = 0.004 reported a deduction of `0.00` — which `appendEntry`
+refuses, meaning the nightly job would have counted that task as failed every
+night forever. Axis 6: a manager losing a reversal race to the engine got a raw
+Prisma `P2002` carrying an index name, untranslatable into Arabic; now mapped to
+the same `ledger.errors.alreadyReversed` the pre-read guard throws. Axis 8
+pointed out that a daily rate could be passed without its derivation and write a
+note that does not add up — the derivation now travels _inside_ `PayBases`, so
+the two cannot be separated.
+
+**A task's grace can change by unassigning it.** The profile hangs off the
+assignee, so an unassigned task loses the profile link and inherits the agency
+default. Correct per §5.3 + R2, and surprising enough that the axis-3 fixture
+pins its grace on the project instead — with a comment saying why.
+
+### Deferred
+
+- **Notification delivery is Phase 9's**, as SPEC §8 and the phase plan both say.
+  What Phase 8 owes it is paid: `MoneyEventBus` emits `PenaltyApplied`,
+  `BonusGranted` and `MoneyReversed` on the exact call sites Phase 9 subscribes
+  to, each carrying the **whole** breakdown rather than a pair of ids — a
+  notification is read long after it is sent and cannot recompute anything — and
+  `dismissable: false` travels with penalties, because whether a منفّذ may
+  dismiss a deduction is this brief's decision and not a rendering choice. In the
+  meantime the منفّذ is not uninformed: the full calculation is written into
+  `LedgerEntry.note`, which their مستحقاتي statement already renders.
+- **Penalty profiles live behind a sheet on the register**, not on a Settings
+  page — Phase 12 owns the Settings shell, and building half of it now would be
+  reworked there. The sheet is gated on `settings.view` / `settings.edit`, so
+  moving it later is a relocation rather than a re-permissioning.
+
+### Known limitations
+
+- **A recomputation blocked by a paid cycle stops rather than adjusting.** If the
+  old figure cannot be reversed because its payout is PAID, inserting the new one
+  would charge twice, so the whole recomputation aborts with a
+  `ledger.reversalBlocked` audit row. Correcting a paid cycle is an `ADJUSTMENT`,
+  which is a decision somebody makes. Nothing notifies them yet — Phase 9.
+- **Reversal corrects a figure; it is not a standing pardon.** Reverse an
+  automatic penalty and the next nightly run re-applies it, because the
+  arithmetic still says it is owed. To stop it, change an _input_ — approve an
+  extension, cancel the task, or set the منفّذ's profile value to zero. This is
+  the right behaviour and it will surprise the first manager who meets it;
+  `tests/integration/penalty/axis7-reversal.test.ts` pins it deliberately.
+- **The register's `projectId` filter is available in the schema but has no
+  control on the page.** The query supports it; the UI ships worker, kind,
+  automatic and reversed. A project filter belongs next to Phase 10's reporting
+  work rather than as a fifth dropdown here.

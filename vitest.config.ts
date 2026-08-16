@@ -166,6 +166,27 @@ export default defineConfig({
         'src/modules/payout/period.ts',
         'src/modules/payout/cycle.ts',
         'src/modules/payout/job.ts',
+        // Phase 8. docs/TESTING.md §3 names `modules/penalty` in the 90% group
+        // alongside money, rbac, calendar, payout and ledger — this is the phase
+        // where that gate starts applying to something real. Every file below
+        // `service.ts` is listed so its coverage is measured honestly rather
+        // than quietly excluded for living next door to it, and the four that
+        // decide an amount carry the elevated gate: a silently wrong formula,
+        // basis, mode or grace chain looks exactly like a correct one, which is
+        // the failure this product exists to abolish.
+        'src/lib/advisory-lock.ts',
+        'src/modules/penalty/calculate.ts',
+        'src/modules/penalty/basis.ts',
+        'src/modules/penalty/mode.ts',
+        'src/modules/penalty/profile.ts',
+        'src/modules/penalty/rounds.ts',
+        'src/modules/penalty/assess.ts',
+        'src/modules/penalty/breakdown.ts',
+        'src/modules/penalty/register.ts',
+        'src/modules/penalty/profiles.ts',
+        'src/modules/penalty/port.ts',
+        'src/modules/penalty/ports.ts',
+        'src/modules/penalty/job.ts',
       ],
       thresholds: {
         // Global gate (docs/TESTING.md §3).
@@ -342,6 +363,42 @@ export default defineConfig({
           statements: 90,
         },
         'src/modules/payout/cycle.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        // Phase 8 — the penalty engine. Every deduction in the product is the
+        // product of these four files and `lib/calendar`, so they carry the
+        // financial gate rather than the global 70%.
+        'src/modules/penalty/service.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/modules/penalty/calculate.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/modules/penalty/basis.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/modules/penalty/profile.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        // Which delivery a penalty belongs to decides whether a recomputation
+        // may touch it at all (SPEC T4). Getting it wrong silently refunds an
+        // original delivery's deduction, so it carries the financial gate too.
+        'src/modules/penalty/rounds.ts': {
           lines: 90,
           functions: 90,
           branches: 90,

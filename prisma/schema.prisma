@@ -51,8 +51,10 @@ model User {
   defaultTaskRate     Decimal? @db.Decimal(12, 2)
   weeklyCapacityHours Int      @default(40)
 
-  /// Per-user penalty formula override (SPEC R2). The PenaltyProfile table
-  /// itself lands in Phase 8; this column is the seam, deliberately unconstrained.
+  /// Per-user penalty formula override (SPEC R2). Null means "the agency
+  /// default", which lives in Settings (`penalty.default*`) and not in a row —
+  /// see the note on `PenaltyProfile`. Phase 8 turned the Phase-0 seam into a
+  /// real foreign key.
   penaltyProfileId String?
 
   createdAt DateTime  @default(now())
@@ -86,8 +88,11 @@ model User {
   payoutsPaid          Payout[]      @relation("PayoutPaidBy")
   cyclesClosed         PayoutCycle[] @relation("PayoutCycleClosedBy")
 
+  penaltyProfile PenaltyProfile? @relation(fields: [penaltyProfileId], references: [id], onDelete: SetNull)
+
   @@index([deletedAt])
   @@index([isWorker, isActive])
+  @@index([penaltyProfileId])
   @@map("users")
 }
 
@@ -842,6 +847,77 @@ model ExtensionRequest {
 /// SPEC §4, verbatim:
 /// `EARNING | SALARY | PENALTY | BONUS | ADVANCE | ADJUSTMENT | PAYOUT | REVERSAL`.
 ///
+/// SPEC §5.4's five formulas, and nothing else may be added without adding a
+/// branch to `modules/penalty/calculate.ts` — which is the point of an enum
+/// here rather than a stored expression (SPEC R2: "without a formula parser").
+///
+/// The `_PER_DAY` modes multiply by `lateWorkingDays`; the `_ONCE` modes do
+/// not. That distinction is the whole difference between "every day you are
+/// late costs you" and "being late costs you", and an operator picking between
+/// them is making a policy decision, not a configuration one.
+enum PenaltyMode {
+  FIXED_PER_DAY
+  PCT_TASK_VALUE_PER_DAY
+  PCT_DAILY_RATE_PER_DAY
+  FIXED_ONCE
+  PCT_TASK_VALUE_ONCE
+}
+
+/// SPEC §4: `PenaltyProfile id, name, mode, value, graceHours, isDefault`, and
+/// SPEC R2: "defaulted globally and overridable per user".
+///
+/// **`isDefault` is deliberately not a column.** SPEC §5.4 writes the lookup as
+/// `profile = user.penaltyProfile ?? settings.defaultPenaltyProfile`, and SPEC
+/// §7 already puts "Penalty defaults" in Settings — where `penalty.defaultMode`,
+/// `penalty.defaultValue` and `penalty.defaultGraceHours` have lived since
+/// Phase 0. A row flagged `isDefault` would be a second answer to "what is the
+/// agency default", and the first thing that reads the wrong one deducts the
+/// wrong amount from somebody. So the Settings triple *is*
+/// `settings.defaultPenaltyProfile`, and this table holds only the named
+/// overrides. Recorded in SPEC §4.
+///
+/// A profile is **shared, not per-user**: an agency assigns "خصم المصممين" to
+/// eleven designers, and changing it once is the point. `User.penaltyProfileId`
+/// is the many-to-one that makes that true.
+model PenaltyProfile {
+  id   String @id @default(cuid())
+  /// Arabic, and the only name this entity has — nothing stores a reference to
+  /// it by name, so unlike `tasks.categories` it needs no machine id.
+  name String
+
+  mode PenaltyMode
+
+  /// Interpreted **per mode**: currency for `FIXED_*`, a percentage for
+  /// `PCT_*`. Two columns would let a profile carry a percentage it does not
+  /// use and disagree with itself; the mode is what gives this number meaning.
+  ///
+  /// `Decimal`, never `Float`, for the FIXED case — it is money — and the PCT
+  /// case gets the same treatment because it is *multiplied by* money.
+  /// Unsigned in practice: a negative penalty is a bonus, and
+  /// `modules/penalty/schema.ts` refuses it rather than letting the ledger's
+  /// sign check report it as a mysterious direction error.
+  value Decimal @db.Decimal(12, 2)
+
+  /// Overrides Settings `penalty.defaultGraceHours` for this person's work.
+  /// Null means "the agency's grace" — the reason the column is nullable rather
+  /// than defaulted, exactly as `Project.gracePeriodHours` beside it.
+  ///
+  /// The full chain is **project override → user profile → global default**
+  /// (`modules/penalty/profile.ts`), which keeps SPEC §5.3's "project override
+  /// → global default" literally true whenever a project has committed to a
+  /// grace of its own. See docs/SPEC.md §5.4.
+  graceHours Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  users User[]
+
+  @@index([deletedAt])
+  @@map("penalty_profiles")
+}
+
 /// The sign of `LedgerEntry.amount` is fixed per type and enforced in
 /// `modules/ledger/service.ts` (`assertSignForType`): credits to the منفّذ are
 /// positive, debits negative. That rule is what lets every balance, payout and
