@@ -19,6 +19,7 @@ import {
   Settings,
   Shield,
   Sun,
+  Upload,
   User,
   Users,
   Wallet,
@@ -140,6 +141,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   gavel: Gavel,
   'bar-chart-3': BarChart3,
   'calendar-days': CalendarDays,
+  upload: Upload,
 }
 
 function CommandPaletteDialog({

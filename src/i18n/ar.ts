@@ -1148,6 +1148,232 @@ export const ar = {
     },
   },
 
+  /**
+   * Phase 11 — bulk `.xlsx` import (SPEC §10). `columns` mirrors
+   * `modules/import/columns.ts` exactly: each entity's field list, in the
+   * template's column order, each carrying the header shown in the sheet and
+   * the one-line hint shown on the instructions sheet next to it.
+   */
+  import: {
+    title: 'استيراد البيانات',
+    subtitle:
+      'نزّل القالب، املأه، ثم عاين النتيجة قبل التأكيد. لا يُحفظ شيء قبل التأكيد.',
+    entityLabel: 'نوع البيانات',
+    entities: {
+      users: 'المستخدمون',
+      clients: 'العملاء',
+      projects: 'المشاريع',
+      tasks: 'المهام',
+    },
+    actions: {
+      downloadTemplate: 'تنزيل قالب Excel',
+      chooseFile: 'اختيار ملف',
+      changeFile: 'اختيار ملف آخر',
+      runDryRun: 'معاينة الاستيراد',
+      confirmImport: 'تأكيد الاستيراد وحفظ البيانات',
+      startOver: 'البدء من جديد',
+    },
+    fileLabel: 'ملف Excel (.xlsx)',
+    noFileChosen: 'لم يتم اختيار ملف',
+    rowStatus: {
+      create: 'سيُنشأ',
+      update: 'سيُحدَّث',
+      invalid: 'غير صالح',
+    },
+    preview: {
+      title: 'معاينة الاستيراد',
+      row: 'الصف',
+      status: 'الحالة',
+      summary: 'البيانات',
+      errors: 'الأخطاء',
+      totalRows: 'إجمالي الصفوف',
+      toCreate: 'سيتم إنشاؤها',
+      toUpdate: 'سيتم تحديثها',
+      invalidCount: 'صفوف غير صالحة',
+      noValidRows: 'لا توجد صفوف صالحة — لا شيء للتأكيد',
+    },
+    result: {
+      title: 'اكتمل الاستيراد',
+      created: 'تم إنشاؤها',
+      updated: 'تم تحديثها',
+      skipped: 'تم تجاهلها (غير صالحة)',
+    },
+    errors: {
+      fileRequired: 'يرجى اختيار ملف Excel أولًا',
+      invalidFile: 'تعذّرت قراءة الملف. تأكد أنه بصيغة xlsx صحيحة وغير تالف',
+      wrongTemplate:
+        'هذا الملف لا يطابق قالب الاستيراد الحالي لهذا النوع من البيانات — نزّل قالبًا جديدًا',
+      emptyFile: 'الملف لا يحتوي على أي صف بيانات',
+      /** `{maxMb}` substituted at render time. */
+      fileTooLarge: 'حجم الملف أكبر من الحد المسموح ({maxMb} ميجابايت)',
+      /** `{max}` substituted at render time. */
+      tooManyRows: 'عدد صفوف الملف أكبر من الحد المسموح ({max} صفًا)',
+      duplicateInFile: 'قيمة مكررة داخل الملف',
+      unresolvedProject: 'لم يتم العثور على مشروع بهذا الكود',
+      unresolvedUser: 'لم يتم العثور على مستخدم بهذا الاسم',
+      unresolvedClient: 'لم يتم العثور على عميل بهذا الاسم',
+      ambiguousClient:
+        'يوجد أكثر من عميل بهذا الاسم — استخدم اسمًا فريدًا أو عدّله من شاشة العملاء',
+      invalidOption: 'قيمة غير موجودة ضمن الخيارات المتاحة لهذا العمود',
+      inactiveAssignee: 'حساب هذا المنفّذ معطّل',
+      staleImport:
+        'تغيّرت البيانات منذ المعاينة الأخيرة، يرجى إعادة المعاينة قبل التأكيد',
+    },
+    meta: {
+      sheetName: 'معلومات القالب',
+      field: 'الحقل',
+      value: 'القيمة',
+      entityRow: 'نوع البيانات',
+      versionRow: 'إصدار القالب',
+    },
+    instructions: {
+      sheetName: 'تعليمات',
+      title: 'تعليمات تعبئة القالب',
+      intro:
+        'لا تُغيّر أسماء الأعمدة في ورقة البيانات ولا ترتيبها. الصف الثاني في ورقة البيانات مثال — عدّله أو احذفه. كل عمود بأدناه إلزامي إلا إن ذُكر خلاف ذلك.',
+      column: 'العمود',
+      required: 'إلزامي؟',
+      explanation: 'الشرح',
+      requiredYes: 'نعم',
+      requiredNo: 'لا',
+    },
+    columns: {
+      users: {
+        username: {
+          header: 'اسم المستخدم',
+          hint: 'حروف لاتينية صغيرة وأرقام فقط. هو المفتاح: يوجد مستخدم بنفس الاسم؟ يتم تحديث بياناته بدل إنشاء حساب جديد.',
+          sample: 'ahmed.hassan',
+        },
+        fullName: {
+          header: 'الاسم الكامل',
+          hint: 'الاسم الظاهر في النظام.',
+          sample: 'أحمد حسن',
+        },
+        password: {
+          header: 'كلمة المرور',
+          hint: 'إلزامية عند إنشاء حساب جديد فقط — تُتجاهل تمامًا عند تحديث حساب موجود.',
+          sample: 'Passw0rd123',
+        },
+        phone: {
+          header: 'رقم الهاتف',
+          hint: 'رقم موبايل مصري، مثل 01012345678. اختياري.',
+          sample: '01012345678',
+        },
+        isWorker: {
+          header: 'منفّذ؟',
+          hint: 'نعم أو لا — هل يُسنَد له مهام ويُصرف له أجر؟',
+          sample: 'نعم',
+        },
+        payType: {
+          header: 'نوع الأجر',
+          hint: 'مطلوب فقط إذا كان "منفّذ؟" = نعم.',
+          sample: 'بالمهمة',
+        },
+        monthlySalary: {
+          header: 'الراتب الشهري',
+          hint: 'مطلوب لنوع الأجر "راتب شهري" أو "مختلط".',
+          sample: '',
+        },
+        defaultTaskRate: {
+          header: 'سعر المهمة الافتراضي',
+          hint: 'مطلوب لنوع الأجر "بالمهمة" أو "مختلط".',
+          sample: '500.00',
+        },
+        weeklyCapacityHours: {
+          header: 'ساعات العمل الأسبوعية',
+          hint: 'اختياري، الافتراضي ٤٠.',
+          sample: '40',
+        },
+      },
+      clients: {
+        name: {
+          header: 'اسم العميل',
+          hint: 'الاسم الظاهر على مشاريعه.',
+          sample: 'شركة النخبة',
+        },
+        phone: { header: 'رقم الهاتف', hint: 'اختياري.', sample: '01099999999' },
+        notes: { header: 'ملاحظات', hint: 'اختياري.', sample: 'عميل تجريبي' },
+      },
+      projects: {
+        code: {
+          header: 'كود المشروع',
+          hint: 'اتركه فارغًا لإنشاء كود تلقائي. إن طابق كود مشروع موجود، يُحدَّث ذلك المشروع بدل إنشاء واحد جديد.',
+          sample: '',
+        },
+        name: {
+          header: 'اسم المشروع',
+          hint: '',
+          sample: 'موقع الشركة الإلكتروني',
+        },
+        clientName: {
+          header: 'اسم العميل',
+          hint: 'اختياري. يجب أن يطابق اسم عميل موجود بالضبط.',
+          sample: 'شركة النخبة',
+        },
+        ownerUsername: {
+          header: 'اسم مستخدم مالك المشروع',
+          hint: 'اسم مستخدم موجود بالنظام.',
+          sample: 'ahmed.hassan',
+        },
+        engagementType: { header: 'نوع التعاقد', hint: '', sample: 'سعر ثابت' },
+        status: {
+          header: 'حالة المشروع',
+          hint: 'اختياري، الافتراضي "مسودة".',
+          sample: '',
+        },
+        startDate: {
+          header: 'تاريخ البدء',
+          hint: 'بصيغة YYYY-MM-DD، مثل 2026-09-01.',
+          sample: '2026-09-01',
+        },
+        dueDate: {
+          header: 'تاريخ التسليم',
+          hint: 'بصيغة YYYY-MM-DD، ولا يسبق تاريخ البدء.',
+          sample: '2026-10-01',
+        },
+      },
+      tasks: {
+        projectCode: {
+          header: 'كود المشروع',
+          hint: 'يجب أن يطابق كود مشروع موجود.',
+          sample: 'PRJ-0001',
+        },
+        title: { header: 'عنوان المهمة', hint: '', sample: 'تصميم الشعار' },
+        description: { header: 'الوصف', hint: 'اختياري.', sample: '' },
+        categoryLabel: {
+          header: 'التصنيف',
+          hint: 'من قائمة التصنيفات المعرّفة بالإعدادات.',
+          sample: '',
+        },
+        priority: {
+          header: 'الأولوية',
+          hint: 'اختياري، الافتراضي "متوسطة".',
+          sample: 'متوسطة',
+        },
+        assigneeUsername: {
+          header: 'اسم مستخدم المنفّذ',
+          hint: 'اختياري. إن حُدِّد، تُسنَد المهمة له مباشرة.',
+          sample: 'ahmed.hassan',
+        },
+        dueDate: {
+          header: 'تاريخ الاستحقاق',
+          hint: 'بصيغة YYYY-MM-DD.',
+          sample: '2026-09-15',
+        },
+        estimatedHours: {
+          header: 'الساعات المقدرة',
+          hint: 'اختياري، الافتراضي صفر.',
+          sample: '8',
+        },
+        taskValue: {
+          header: 'قيمة المهمة',
+          hint: 'اختياري — إن تُرك فارغًا ووُجد منفّذ، تُملأ تلقائيًا من سعر مهمته الافتراضي.',
+          sample: '',
+        },
+      },
+    },
+  },
+
   /** Phase 10 — the manager and worker dashboards (phase brief §"Dashboards"). */
   dashboard: {
     welcomeBack: 'أهلًا بعودتك،',

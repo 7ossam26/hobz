@@ -14,6 +14,7 @@ import {
   ScrollText,
   Settings,
   Shield,
+  Upload,
   Users,
   Wallet,
   type LucideIcon,
@@ -64,6 +65,7 @@ const ICONS: Record<string, LucideIcon> = {
   gavel: Gavel,
   'bar-chart-3': BarChart3,
   'calendar-days': CalendarDays,
+  upload: Upload,
 }
 
 export function AppSidebar({ items }: { items: NavItem[] }) {

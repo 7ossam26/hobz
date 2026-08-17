@@ -126,6 +126,13 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: 'scroll-text',
     permissions: ['audit.view'],
   },
+  /** Phase 11's bulk `.xlsx` import (SPEC §10). */
+  {
+    href: '/import',
+    labelKey: 'import',
+    icon: 'upload',
+    permissions: ['import.run'],
+  },
 ] as const
 
 export function visibleNavItems(actor: Actor | null): NavItem[] {
@@ -162,6 +169,7 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<{
   { prefix: '/roles', permissions: ['role.view'] },
   { prefix: '/settings', permissions: ['settings.view'] },
   { prefix: '/audit', permissions: ['audit.view'] },
+  { prefix: '/import', permissions: ['import.run'] },
 ] as const
 
 export function permissionsForRoute(pathname: string): readonly Permission[] | null {

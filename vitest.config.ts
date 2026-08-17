@@ -209,6 +209,19 @@ export default defineConfig({
         'src/modules/penalty/port.ts',
         'src/modules/penalty/ports.ts',
         'src/modules/penalty/job.ts',
+        // Phase 11. `service.ts` is already covered by the
+        // `src/modules/**/service.ts` glob above; the files below it are
+        // listed individually so their coverage is measured honestly rather
+        // than quietly excluded for living next door to it — the same
+        // reasoning `task/mentions.ts` and `ledger/sign.ts` already carry.
+        // No elevated gate: nothing here decides an amount or a permission,
+        // which is what earns the 90% tier elsewhere in this list.
+        'src/lib/xlsx.ts',
+        'src/modules/import/columns.ts',
+        'src/modules/import/cells.ts',
+        'src/modules/import/parse.ts',
+        'src/modules/import/resolve.ts',
+        'src/modules/import/template.ts',
       ],
       thresholds: {
         // Global gate (docs/TESTING.md §3).

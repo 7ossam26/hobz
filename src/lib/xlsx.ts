@@ -1,3 +1,4 @@
+import JSZip from 'jszip'
 import * as XLSX from 'xlsx'
 
 import { ar } from '@/i18n/ar'
@@ -36,6 +37,12 @@ export interface XlsxColumn {
   width: number
   /** Excel number-format code. Omit for a text column. */
   numberFormat?: string
+  /**
+   * Excel "List" data validation — every data-row cell in this column is
+   * constrained to one of these values, rendered as an in-cell dropdown.
+   * Requires `buildWorkbookAsync` (below); `buildWorkbook` ignores it.
+   */
+  validationList?: readonly string[]
 }
 
 export interface XlsxSheet {
@@ -86,6 +93,88 @@ export function buildWorkbook(sheets: readonly XlsxSheet[]): Buffer {
   }
 
   return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer
+}
+
+/**
+ * How many data rows a dropdown column stays enforced for. A template is
+ * blank when downloaded, so this bounds "how far can someone paste/type
+ * before the dropdown stops constraining them" rather than any real row
+ * count — Import's own `MAX_IMPORT_ROWS` (`modules/import/parse.ts`) is the
+ * actual cap enforced on upload.
+ */
+const VALIDATION_ROWS = 1000
+
+function escapeXmlText(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+/**
+ * SheetJS's community edition parses `dataValidation` on read but — unlike
+ * every other feature this module uses — never writes it; that is a paid-tier
+ * feature upstream. The dropdowns the Import templates need (Phase 11 phase
+ * brief item 1) are real OOXML `<dataValidation>` elements instead, spliced
+ * into each worksheet's XML directly inside the already-written `.xlsx` zip.
+ * `dataValidations` is a documented, empty extension point in the writer's own
+ * output (see the `/* dataValidations *\/` comment `write_ws_xml` leaves right
+ * before `<hyperlinks>`/`<ignoredErrors>`), so this only adds a sibling
+ * element in the slot the format reserves for it — nothing else in the
+ * workbook changes.
+ */
+async function injectDataValidations(
+  buffer: Buffer,
+  sheets: readonly XlsxSheet[],
+): Promise<Buffer> {
+  const zip = await JSZip.loadAsync(buffer)
+
+  for (const [index, sheet] of sheets.entries()) {
+    const columns = sheet.columns
+      .map((column, colIndex) => ({ column, colIndex }))
+      .filter(({ column }) => (column.validationList?.length ?? 0) > 0)
+    if (columns.length === 0) continue
+
+    const path = `xl/worksheets/sheet${index + 1}.xml`
+    const file = zip.file(path)
+    if (!file) continue // Defensive: sheet count always matches what SheetJS just wrote.
+
+    const xml = await file.async('string')
+    const elements = columns
+      .map(({ column, colIndex }) => {
+        const letter = XLSX.utils.encode_col(colIndex)
+        const sqref = `${letter}2:${letter}${VALIDATION_ROWS + 1}`
+        const formula = escapeXmlText((column.validationList ?? []).join(','))
+        return (
+          `<dataValidation type="list" allowBlank="1" showErrorMessage="1" ` +
+          `errorStyle="stop" sqref="${sqref}"><formula1>"${formula}"</formula1></dataValidation>`
+        )
+      })
+      .join('')
+    const block = `<dataValidations count="${columns.length}">${elements}</dataValidations>`
+
+    // Insertion point matches the CT_Worksheet element order the writer
+    // already follows: right before `<ignoredErrors>` when present (the
+    // writer emits one on every sheet unless explicitly disabled), else
+    // right before the closing tag.
+    const updated = xml.includes('<ignoredErrors')
+      ? xml.replace('<ignoredErrors', `${block}<ignoredErrors`)
+      : xml.replace('</worksheet>', `${block}</worksheet>`)
+    zip.file(path, updated)
+  }
+
+  return zip.generateAsync({ type: 'nodebuffer' })
+}
+
+/**
+ * `buildWorkbook`, plus in-cell dropdowns for any column carrying a
+ * `validationList`. A separate, async entry point so every existing caller of
+ * `buildWorkbook` (the Phase 10 reports, all synchronous) is untouched — only
+ * `modules/import/template.ts` needs this one.
+ */
+export async function buildWorkbookAsync(sheets: readonly XlsxSheet[]): Promise<Buffer> {
+  const buffer = buildWorkbook(sheets)
+  const needsValidation = sheets.some((sheet) =>
+    sheet.columns.some((column) => (column.validationList?.length ?? 0) > 0),
+  )
+  return needsValidation ? injectDataValidations(buffer, sheets) : buffer
 }
 
 /**

@@ -2532,3 +2532,288 @@ tests each) against a run before the fix that had shown one flaky failure.
   at SPEC §2's ~100-project scale — the same trade `taskHealthSignals` already
   makes per project — and worth revisiting only if that scale assumption ever
   changes.
+
+## Phase 11 — Import Module
+
+**Date:** 2026-08-17 · **Model:** Sonnet 5
+
+### Built
+
+- **`modules/import/`** — `columns.ts` (the one place a template's column
+  list is described: key, Arabic header, hint, required flag, and — for
+  `payType`/`engagementType`/`status`/`priority`/`categoryLabel` — a live
+  Settings-backed dropdown with a display-text ↔ code-value map),
+  `cells.ts` (one raw SheetJS cell → the shape an entity schema expects:
+  text, `"نعم"`/`"لا"` → boolean, a real `Date` or an ISO string for
+  `z.coerce.date()`, dropdown text → code value, and a number-or-explicit-
+  failure reader for the two genuinely-numeric fields), `parse.ts` (buffer →
+  per-row raw cells, plus every file-shaped check: size, row cap, the
+  template's own meta sheet, blank-row skipping — SPEC §10 item 2),
+  `resolve.ts` (project-by-code, user-by-username, client-by-name — SPEC §10
+  item 5, with an explicit `'ambiguous'` result for a client name that
+  matches more than one row, since `Client.name` carries no `@unique`),
+  `template.ts` (the three-sheet workbook — SPEC §10 item 1), `service.ts`
+  (`previewImport`/`confirmImport`, both built on one `planImport` — SPEC
+  §10 items 3–4), `schema.ts`, `types.ts`, `queries.ts` (`import.run`-gated
+  template read), `actions.ts` (`previewImportAction`/`confirmImportAction`,
+  both `{ok, messageKey, params}` rather than throwing — SPEC §10 item 6).
+- **`lib/xlsx.ts` gained `buildWorkbookAsync`** — SheetJS's community
+  edition parses `dataValidation` on read but has never written it (a
+  documented Pro-tier gap; confirmed by reading the writer's own source,
+  which leaves `/* dataValidations */` as a comment in the exact slot the
+  OOXML schema reserves for it). `buildWorkbookAsync` calls the existing
+  synchronous `buildWorkbook`, then — only for a sheet carrying a
+  `validationList` column — unzips the result with `jszip`, splices a real
+  `<dataValidations>` element into that one worksheet's XML, and rezips.
+  Every existing `buildWorkbook` caller (all five Phase 10 reports) is
+  untouched; only `modules/import/template.ts` calls the new function.
+  **`jszip` is a new dependency**, added specifically for this.
+- **`/import`** (full page, alongside `/reports`/`/settings` — a
+  template-download-then-upload-then-preview-table flow is the same
+  "list/dashboard/report/settings" shape SPEC §9 reserves a page for, not an
+  entity being edited) and **`/api/import/template/[entity]`** (reuses
+  Phase 10's `xlsxResponse`/`reportErrorResponse` from
+  `app/api/reports/respond.ts` — nothing about either is report-specific).
+  Nav entry and `ROUTE_PERMISSIONS` prefix, both gated on `import.run`
+  (already in the SPEC §6 catalog since Phase 0, unused until now).
+- **59 new tests** (21 unit, 38 integration) across `tests/unit/import/`,
+  `tests/unit/xlsx/data-validation.test.ts` and `tests/integration/import/`
+  (one file per entity plus `actions.test.ts`, `rollback.test.ts`,
+  `template.test.ts`), covering every case the phase brief names by name:
+  Arabic round-trip (write → read → write again, asserted at both the
+  parser and the persisted-row level), mixed valid/invalid files, duplicate
+  usernames and project codes within one file, unresolved and ambiguous
+  references, an empty file, a wrong-template-version file, and the
+  zero-rows-on-failure guarantee (proved by making the second of two
+  otherwise-valid `createClient` calls throw mid-transaction and asserting
+  the table is still empty afterward). The edge-case sweep below adds 37
+  more, for **96 import-module tests** total. Whole-project suite after the
+  sweep: **172 files, 2715 tests, all green.** Combined coverage measured
+  before the sweep (unaffected by it — the sweep added tests, not
+  untested lines): **98.13% statements / 92.2% branches** — every Phase 11
+  file added to `vitest.config.ts`'s `include` list clears the 70% global
+  gate on its own (`cells.ts` 100%, `columns.ts` 100%, `resolve.ts` 100%,
+  `parse.ts` 97.1%, `service.ts` 90.6%, `xlsx.ts` 98.7%), with no elevated
+  gate — nothing here
+  decides an amount or a permission, which is what earns that tier
+  elsewhere in this file.
+
+### Decisions worth recording
+
+- **A row's create/update path calls the *real* `createUser`/`updateUser`/
+  `createClient`/`createProject`/`updateProject`/`createTask` — the exact
+  functions `modules/*/actions.ts` call for a hand-filled form — never a
+  parallel `db.user.create(...)`.** This is the load-bearing decision the
+  rest of the module follows from: an imported row is
+  password-policy-checked, audited, state-machine-correct (a task with an
+  assignee lands `ASSIGNED` with `assignedAt` stamped, exactly as
+  `createTask` already does it) and Settings-validated identically to one
+  entered by hand, and a future change to any of those rules needs no
+  parallel edit here to keep matching it.
+- **`previewImport` and `confirmImport` are the same `planImport` pipeline,
+  called with a different `Db`** — `prisma` (read-only) for the dry run, the
+  caller's interactive transaction for confirm. A confirm therefore
+  re-parses and re-validates against the database's *current* state rather
+  than trusting a preview that might be minutes old — the TOCTOU-safe
+  reading of "nothing persists before confirmation" (SPEC §10) — and every
+  create/update call happens inside that one transaction, so an unexpected
+  write-time failure on row 2 rolls back row 1's already-"succeeded" write
+  too. `rollback.test.ts` proves exactly that by mocking a mid-batch
+  failure.
+- **Update-match keys are `username` (users) and `code` (projects) — both
+  already the product's real natural key for that entity — and clients and
+  tasks are import-*create-only*.** `Client.name` carries no uniqueness
+  constraint anywhere in the schema, and a task has no natural key at all
+  (a title is not unique, deliberately). Inventing a matching heuristic for
+  either (exact-name, or title-within-project) risks silently merging two
+  different records that happen to share a display string — worse than
+  simply always creating, which is also the honest answer to "what human-
+  readable key would a person filling a spreadsheet expect to update
+  against" for these two. Flagged here for override the same way SPEC §2's
+  own "decisions I made on your behalf" section flags T4/M4/R2/B6 — bulk
+  *editing* of existing clients or tasks already has a dedicated UI.
+- **A user-import row's password column is required to create a new
+  account and silently ignored to update an existing one — it never
+  touches `passwordHash` on update.** `updateUserSchema` has no password
+  field at all (matching the real edit form, which routes a reset through
+  its own `user.resetPassword`-gated action), so this falls out of reusing
+  the schema rather than needing its own rule; recorded because a
+  spreadsheet column that looks like it controls a password but only does
+  so half the time is worth naming explicitly.
+- **Every relationship (`clientId`, `ownerId`, `assigneeId`, `projectId`,
+  `categoryId`) is resolved to a real id *before* the entity's own schema
+  ever runs**, so a Zod refinement never has to re-discover "this string
+  isn't a real project" — that is `resolve.ts`'s job, and its failure is
+  reported against the *human-readable* column (`كود المشروع`, `اسم
+  العميل`), never a raw id the person filling the sheet never typed.
+- **Enum dropdowns show live Settings text, and the reverse map is built
+  from that same live read — never a hardcoded list.** A category, a
+  priority label or a project-status label an operator renamed in Settings
+  *after* a template was downloaded makes the old cell text fail to
+  resolve, which is a correct, loud failure (the same "missing → default,
+  invalid → throw" stance `lib/settings` already takes) rather than a
+  silent misread — the fix is downloading a fresh template, not a bug
+  report.
+- **The template's third sheet is not documentation.** `parse.ts` reads
+  it back — entity key and template version, both plain ASCII values in a
+  visible sheet, not a hidden marker — and refuses a file whose meta
+  doesn't match *before* looking at a single data row (`wrongTemplate`).
+  Structural header-set matching is a second, independent check for the
+  same failure (a `.xlsx` that happens to have the right sheet names but a
+  hand-edited header row), so both "an unrelated workbook" and "a stale or
+  tampered template" land on the same, correctly-named error.
+- **Row-level errors are pre-resolved Arabic text, not message keys** — the
+  `ImportRowResult`/`ImportPreviewDto` they live in is plain JSON data
+  returned from a successful call, never a thrown error, so there is no
+  boundary for a key to cross. File-*level* problems (wrong template, empty
+  file, too many rows) are the opposite: `parse.ts` throws a `DomainError`
+  with a key, and `actions.ts` catches it and returns `{ok:false,
+  messageKey, params}` instead of letting it propagate — because a thrown
+  `AppError`'s message is stripped crossing the Server Action boundary in
+  production, the lesson `modules/auth/actions.ts` recorded in Phase 1.
+  This phase's wizard (`import-wizard.tsx`) carries its own `resolveMessage`
+  rather than reusing either auth form's: both existing ones only resolve a
+  flat two-segment key, and `import.errors.*` is a level deeper.
+- **`MAX_IMPORT_FILE_BYTES` (5 MB) and `MAX_IMPORT_ROWS` (500) are plain
+  code constants, not Settings.** CLAUDE.md invariant 4 is about *business*
+  numbers — grace periods, penalty rates, cycle days, the kind of figure an
+  operator legitimately re-tunes without a redeploy. A parser safety bound
+  is the same kind of thing `lib/auth/username.ts`'s
+  `USERNAME_MAX_LENGTH` already is: a technical guard nobody tunes per
+  agency. `security.*`'s login-throttle numbers are the nearby precedent
+  for the other direction, and the difference is real: those are decisions
+  about how the *business* wants to handle an incident, not a memory/CPU
+  ceiling on parsing a file.
+- **No role assignment, no milestone assignment, no project override
+  fields (`gracePeriodHours`, `penalizeRevisionLateness`, health override)
+  in any template.** Each entity's import is scoped to the fields that
+  actually block bulk onboarding — pay setup for a worker, the core
+  project/task shape — not every field the corresponding edit form exposes.
+  Flagged here for the same reason as the update-match-key decision above;
+  none of it is a SPEC conflict, just a bounded first cut.
+- **Project-import's client-name resolution (`resolve.ts`'s
+  `findClientByName`) is an exact match — it does not fold alef/hamza,
+  ta-marbuta or diacritics the way `lib/search.ts` does for every other
+  Arabic lookup in this product** (client search, project search, the
+  command palette). Flagged for override rather than silently made
+  consistent one way or the other: a manager typing `احمد` (no hamza, how
+  most people type it) into an import sheet gets a hard
+  `unresolvedClient` where every other search box in the app would have
+  found `أحمد`. The asymmetry exists because `findClientByName` is a
+  database query (`where: { name }`) and `lib/search.ts`'s fold table only
+  runs in application code over an already-fetched candidate set
+  (Phase 2/3's own "fetch the scoped set once, fold in memory" precedent,
+  SPEC §2 scale) — folding here would mean fetching every client on every
+  project row instead of one indexed lookup. Worth doing if bulk project
+  import from a client-name column turns out to be a common real workflow;
+  left exact for now because the failure is loud (`unresolvedClient`, not
+  a silent wrong match) rather than dangerous.
+
+### Surprises
+
+- **`node_modules` did not match `package.json`/the lockfile at the start of
+  this phase** — `xlsx` (added in Phase 10) was resolved in
+  `pnpm-lock.yaml` but had never actually been installed, so `import * as
+  XLSX from 'xlsx'` would have failed at runtime despite type-checking
+  cleanly against stale types. A plain `pnpm install` fixed it before any
+  Phase 11 code was written against it; worth naming because it is exactly
+  the kind of gap that looks like a Phase 11 bug and is not one.
+- **SheetJS's own writer source settled the data-validation question
+  immediately, without any trial and error against a real Excel file.**
+  `write_ws_xml` in the installed `xlsx@0.18.5` leaves `/* dataValidations
+  */` as a bare comment in the middle of an otherwise-complete tag
+  sequence — reading that one line was enough to know writing dropdowns
+  needed a second mechanism, rather than discovering it after a template
+  silently shipped without them.
+
+### The edge-case sweep (docs/TESTING.md §4, axes 1, 10, 12)
+
+Run as three parallel subagents, one per axis, each writing into new files
+rather than editing the initial pass's — the same collision-avoidance shape
+Phase 3's log recorded. **37 further tests** (12 unit, 25 integration),
+taking the module's suite from 59 to **96**, all executed for real by the
+orchestrator afterward (each agent was asked not to run
+`--project integration` itself, since the test database is one shared
+Postgres instance that truncates before every test and a concurrent run
+from a sibling agent would have corrupted everyone's results — each hand-
+traced its DB-backed cases instead and left the live run to the end).
+
+**Axis 1 (boundaries) — one real bug, found and fixed.**
+`parseImportFile` assigned each surviving row's `rowNumber` from its
+*position among rows already filtered for blankness*, not its real
+position in the sheet: with row 2 real, row 3 blank and row 4 real, row 4
+was reported as row 3. A person fixing "row 3" in their own spreadsheet
+would have edited the wrong line. Fixed by computing `rowNumber` from the
+original array position before the blank-row filter runs
+(`src/modules/import/parse.ts`). 15 further tests (7 unit — exact-boundary
+cases for `MAX_IMPORT_FILE_BYTES`/`MAX_IMPORT_ROWS`/`IMPORT_TEMPLATE_VERSION`,
+plus a regression test for the bug above; 8 integration —
+`weeklyCapacityHours`/`estimatedHours`/money-format/`Project.code` at their
+schema limits, and duplicate/ambiguous-match detection proven at 3
+occurrences, not just 2).
+
+**Axis 10 (Arabic) — no bug; one design asymmetry confirmed and flagged
+(see the decision above).** 13 tests (5 unit, 8 integration): diacritics,
+bidi marks (RLM/LRM) and tatweel survive parse and persist unchanged;
+mixed Arabic/Latin/digit content round-trips; whitespace around a dropdown
+value still resolves (trimming already benefits enum matching, not just
+plain text); an Arabic-script username is rejected through the same
+`ar.validation.usernameFormat` message the rest of the app uses; and
+`Client.name`/`Task.title`'s length limits are proven to count *characters*,
+not UTF-8 bytes, at their exact boundaries.
+
+**Axis 12 (empty/null) — no bug.** 9 integration tests confirming every
+schema default actually persists when its column is left blank (task →
+`BACKLOG`/no assignee/`taskValue` unforced to zero when typed explicitly;
+project → `clientId: null`, `status: 'DRAFT'`; new user → every real
+`@default` from `prisma/schema.prisma`; an *existing* user updated via
+import with blank optional columns genuinely resets them rather than
+preserving the old values, per this phase's own full-row-overwrite
+decision; blank `notes`/`phone` persist as `null`, never `''`).
+
+**Playwright flow #6** (`tests/e2e/flow-6-import.spec.ts`) — the sixth and
+last flow docs/TESTING.md §6 names, so the product now has all six. Signs
+in as the seeded `E2E_ADMIN` (SUPER_ADMIN, no separate role setup needed,
+unlike flow #1), downloads the real users template, builds a 3-row `.xlsx`
+in-process with the same `buildImportFixture` helper the Vitest suite uses
+(two valid rows, one with a blank `fullName`), uploads it via
+`setInputFiles` with a raw buffer — no temp file ever touches disk, per
+CLAUDE.md invariant 9 — runs the dry-run preview and asserts the exact
+2/0/1 create/update/invalid split and the invalid row's error text, confirms,
+asserts the result panel, and finally visits `/users` to prove the two
+valid accounts exist and the invalid one does not — the step with teeth
+docs/TESTING.md's own description of this flow calls for. **1 passed**,
+against a real production build. No product bug found; the one bug found
+was in the spec's own first-draft locator (the template-download control
+renders as a real `<a>` via Radix `Slot`, so its accessible role is
+`link`, not `button`) and was fixed there.
+
+### Deferred
+
+- **Role assignment, milestone assignment, and the three project override
+  fields**, per the decision above. Each is a straightforward column
+  addition to the relevant `columns.ts` entry and a resolver, whenever a
+  real onboarding file needs one.
+- **Update-by-key for clients and tasks.** Would need a real natural key
+  first (an operator-visible short code, the same shape `Project.code`
+  already is) rather than a heuristic — worth proposing as a SPEC change if
+  bulk re-import of existing clients/tasks becomes a real workflow rather
+  than initial onboarding.
+
+### Known limitations
+
+- **A confirm's interactive transaction is given a 120s timeout** (`prisma
+  $transaction`'s default is 5s), sized for `MAX_IMPORT_ROWS` (500) worth of
+  full `createTask`/`createUser`-style calls, each with its own audit
+  write. The edge-case sweep's axis-1 pass proves `parseImportFile` itself
+  accepts exactly 500 rows, but no test runs a real `confirmImport` at that
+  ceiling — every integration fixture stays in the low single digits, by
+  design (docs/TESTING.md's own factories precedent) — so the 120s figure
+  is a sized estimate, not a measured one.
+- **The dropdown-injection XML targets the exact tag ordering the installed
+  `xlsx@0.18.5` writer produces** (`<ignoredErrors>` as the insertion
+  anchor). A future SheetJS upgrade that reorders or renames that element
+  would silently stop adding dropdowns rather than fail loudly — the
+  `data-validation.test.ts` unit tests are what would catch it, and are
+  written to fail clearly (an `xml.toContain('<dataValidations')`
+  assertion) rather than pass on a no-op.
