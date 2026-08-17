@@ -2371,3 +2371,164 @@ tests each) against a run before the fix that had shown one flaky failure.
 - **Digest recipients are recomputed, not cached, across the loop that
   delivers to them.** At agency scale this is one query either way; revisit if
   the manager set ever needs to be large enough for that to matter.
+
+## Phase 10 — Dashboards, Performance & Reports
+
+**Date:** 2026-08-17 · **Model:** Sonnet 5
+
+### Built
+
+- **`PerformanceScore`** cache table (`20260821000000_performance_scores`) —
+  one row per worker, overwritten in place like `login_throttles`, deliberately
+  not append-only: SPEC §5.6 keeps penalties and bonuses out of the score
+  entirely, so there is nothing here a REVERSAL-style correction would ever
+  need to undo, only a fresher number to overwrite it with.
+- **`modules/performance/`** — `service.ts` (pure SPEC §5.6 maths: on-time 50%
+  / quality 30% / volume 10% / estimate accuracy 10%, weighted by the *actual*
+  sum of the four Settings weights rather than an assumed 100, so a Settings
+  edit that leaves them at 90 or 110 still produces a score inside `[0, 100]`),
+  `facts.ts` (Prisma reads — reuses `Task.overdueWorkingDays`, already frozen
+  at delivery by `modules/calendar/job.ts`'s nightly sweep, instead of
+  recomputing lateness a second time), `compute.ts` (the orchestration shared
+  by the cache-miss read and the nightly sweep, so the two can never score the
+  same worker two different ways), `queries.ts` (`getMyPerformanceScore` —
+  compute-and-cache on a genuine miss, otherwise serve the cache regardless of
+  age; `getPerformanceScoreForUser`, `report.view`-gated, cache-only), `job.ts`
+  (04:00 Cairo — deliberately after the two 03:00 jobs that freeze
+  `overdueWorkingDays`, not alongside them).
+- **`modules/workload/`** — `utilisation = Σ estimatedHours of
+  OPEN_TASK_STATUSES tasks ÷ weeklyCapacityHours`, reusing the state machine's
+  existing "still counts as owned work" set (`modules/task/state-machine.ts`)
+  rather than inventing a second one. `getUserOptions()`
+  (`modules/user/queries.ts`) now carries `utilisationPercent`/`overCapacity`
+  on every option, which is what lets the over-capacity warning reach all
+  three assignment surfaces (`AssignDialog`, `ReassignDialog`,
+  `TaskQuickCreateDialog`) through one shared `<AssigneeCapacityHint>`
+  component with no extra request per selection.
+- **`modules/dashboard/`** — `getManagerDashboard`/`getWorkerDashboard`,
+  composed entirely from existing scoped queries (`getTasks`, `getProjects`,
+  `getWorkloadSnapshot`, `getPayoutCycles`, `getDeductionsReport`,
+  `getMyPerformanceScore`) per the phase brief's own "composition over
+  existing data". `isManagerAudience` is `task.view.all OR project.view.all` —
+  the literal reading SPEC §6 Phase 1 already settled ("in practice such a
+  manager holds `task.view.all`"), so every widget's scoping falls out of
+  `scopeTasks`/`scopeProjects` for free instead of a second, parallel
+  manager-detection rule. A secondary widget the actor cannot see (workload,
+  pending payouts, month deductions) is `null` on the DTO, never a thrown
+  error on the one route every signed-in user lands on after login.
+- **`modules/report/`** — four new reports (payout statement per cycle,
+  project summary, worker performance, monthly agency summary), plus an
+  `.xlsx` export added to SPEC R4's pre-existing deductions report, all gated
+  on `report.view` alone. **`lib/xlsx.ts`** is the one place a workbook is
+  assembled — Arabic headers, RTL sheet direction (`Workbook.Views[0].RTL`),
+  Western-digit number formats on real numeric cells, per-column widths —
+  which Phase 11's template generator will reuse rather than duplicate.
+- **`lib/perf.ts`** — `timed(label, fn)`, wrapping every dashboard/report
+  query per the phase brief's "log query times... report anything over
+  100ms".
+- **Global calendar** (`/calendar`) — composed from `getTaskCalendar` +
+  `getProjects`, filterable by project/worker, no permission gate of its own
+  (the same reasoning `/dashboard` and holiday reads already use: the composed
+  queries are already RBAC-scoped, so the page degrades rather than denies).
+- **`/reports` hub** linking all five reports; nav + route-permission entries
+  for `/reports` and `/calendar`; `performance.recompute` registered in
+  `instrumentation.ts` alongside the other four scheduled jobs.
+
+### Decisions worth recording
+
+- **On-time rate reuses `Task.overdueWorkingDays`, never a second lateness
+  computation.** CLAUDE.md invariant 5 says business-day maths only through
+  `lib/calendar`; the nightly calendar job already produces the canonical,
+  frozen-at-delivery figure for every `APPROVED`/`DONE` task, so reading that
+  column is the invariant applied, not an exception to it.
+- **"Vs peers" includes the worker's own count in the ceiling it is measured
+  against** — a `MAX` over every active worker, self included — so the
+  busiest person always reads 100 and the `peerMaxVolume <= 0` branch with
+  tasks completed is unreachable in practice, kept only as a defensive
+  fallback rather than a designed path.
+- **Reports bypass normal per-entity RBAC scoping except the project
+  summary.** `report.view` is a whole-agency privilege for the payout
+  statement, worker performance and agency summary reports —
+  `getPayoutStatementReport` goes through `modules/payout/service`'s ungated
+  `listCycles`/`listPayouts`, deliberately not the `payout.view`-gated query
+  wrapper, so `report.view` alone is sufficient. The project summary is the
+  one exception: it reuses `getProjects` and therefore the actor's own project
+  scope, because a project carries an owner/member concept the ledger and the
+  performance cache do not, and SPEC §6's "restrictive is the safe direction
+  to be wrong in" applies here too.
+- **The worker performance report reads the `PerformanceScore` cache only; it
+  never computes.** Computing per-worker scores live for a ~100-person report
+  is exactly the query this phase's own 100ms budget is warning against — a
+  worker never yet scored shows `null`/"لم يُحتسب بعد" rather than blocking
+  the whole report on a fresh calculation.
+- **Capacity's colour is two states, not three.** `capacityHue` returns only
+  `emerald`/`red` at the 100% line — the literal definition of "over
+  capacity" — rather than an unrequested "approaching capacity" amber band,
+  which CLAUDE.md invariant 4 would then require a new Settings threshold for.
+- **The workload heatmap is the one dynamically-imported client island**
+  (`workload-heatmap-lazy.tsx`). Next's App Router refuses
+  `next/dynamic({ ssr: false })` inside a Server Component; the one-line
+  Client Component wrapper is what lets `manager-dashboard.tsx` stay a Server
+  Component while the heatmap's own JS still ships in its own chunk, only
+  when the secondary row actually renders.
+
+### Surprises
+
+- **SheetJS's `XLSX.read` does not parse `!cols` or a cell's `.z` number
+  format by default.** Undocumented in the shipped types; confirmed with a
+  throwaway Node script. `cellStyles: true` on read is required for either to
+  survive the write→read round trip — found by this phase's own xlsx
+  round-trip unit tests failing on `undefined` where a format code was
+  expected.
+- **`Buffer<ArrayBufferLike>` no longer satisfies `BodyInit` under this
+  Next/TS/Node combination.** Neither a raw `Buffer` nor a re-viewed
+  `Uint8Array` over its same backing bytes type-checks against
+  `NextResponse`'s constructor — only `new Uint8Array(buffer)` as a **copy**
+  (a fresh, non-shared `ArrayBuffer`) does. Every `/api/reports/*` route goes
+  through that copy.
+- **`getPayoutStatementReport` was one call away from silently requiring
+  `payout.view` too.** Its first draft called the RBAC-gated `getPayoutCycles`
+  query for the cycle list instead of the ungated `listCycles` service
+  function. Caught while writing the RBAC integration test, before it
+  shipped, because the test's minimal-permission fixture (`report.view`
+  alone) would have failed the moment it existed.
+- **Adding a permission-less `/calendar` nav item changes what "a user with
+  no permissions sees" means everywhere that was already asserted.** Three
+  pre-existing navigation tests hardcoded `['/dashboard']` as the floor;
+  updated to `['/dashboard', '/calendar']` rather than loosened, since the
+  extra item is deliberate, documented behaviour, not a regression.
+
+### Deferred
+
+- **Milestones are not a third global-calendar event type.** A milestone has
+  no assignee, so "filterable by... worker" does not apply to it the way it
+  does to a task or a project deadline, and it is already visible inside its
+  own project's milestone list. Revisit if a milestone-heavy workflow needs it
+  surfaced agency-wide.
+- **The monthly agency summary and payout statement reports take one filter
+  each (month, cycle) — no free-form date-range picker.** Matches the phase
+  brief's own examples ("this month's total deductions", a per-cycle
+  statement) rather than generalising to a range nobody asked for.
+- **No `.xlsx` export on the manager/worker dashboards themselves** — only
+  the report pages export. The phase brief's "all exportable to .xlsx" is
+  read as applying to the Reports section; dashboard widgets are previews
+  with "view all" links into the underlying list pages, not report artefacts
+  of their own.
+
+### Known limitations
+
+- **The report and dashboard RBAC integration tests were written but not run
+  against a live Postgres** — no Docker/local Postgres was available in the
+  environment this phase was built in. `pnpm test:unit`, `pnpm typecheck`,
+  `pnpm lint` and `pnpm build` all pass; the integration suite is typechecked,
+  linted, and hand-traced line-by-line against the actual implementation
+  (including the `payout.view` bug above, caught by that tracing before it
+  ran anywhere), but `pnpm test:integration` should be run before this phase
+  is considered verified end-to-end.
+- **The project summary report's task-count aggregates are two `groupBy`
+  queries over every non-deleted task**, filtered to the reporter's visible
+  project ids in application code after `getProjects` resolves the scoped
+  set, rather than pushed into the `groupBy`'s own `where`. Correct and cheap
+  at SPEC §2's ~100-project scale — the same trade `taskHealthSignals` already
+  makes per project — and worth revisiting only if that scale assumption ever
+  changes.

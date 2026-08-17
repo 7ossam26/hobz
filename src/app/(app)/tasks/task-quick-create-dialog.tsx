@@ -16,6 +16,8 @@ import { createTaskAction } from '@/modules/task/actions'
 import type { TaskDetailDto } from '@/modules/task/types'
 import type { UserOptionDto } from '@/modules/user/queries'
 
+import { AssigneeCapacityHint } from './assignee-capacity-hint'
+
 const PRIORITIES = Object.keys(PRIORITY_HUE) as Priority[]
 
 /** `today + 7 days`, as a `YYYY-MM-DD` — a sensible starting point, always editable. */
@@ -217,6 +219,8 @@ export function TaskQuickCreateDialog({
             )}
           </FormField>
         </div>
+
+        <AssigneeCapacityHint userOptions={userOptions} assigneeId={assigneeId} />
       </div>
     </Dialog>
   )

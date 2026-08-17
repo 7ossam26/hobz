@@ -2,6 +2,8 @@
 
 import {
   Banknote,
+  BarChart3,
+  CalendarDays,
   Gavel,
   Building2,
   FolderKanban,
@@ -136,6 +138,8 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   wallet: Wallet,
   banknote: Banknote,
   gavel: Gavel,
+  'bar-chart-3': BarChart3,
+  'calendar-days': CalendarDays,
 }
 
 function CommandPaletteDialog({

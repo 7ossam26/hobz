@@ -1,8 +1,10 @@
+import { Download } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { MoneyText } from '@/components/data/money-text'
 import { EmptyState } from '@/components/shared/empty-state'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
@@ -68,12 +70,23 @@ export default async function DeductionsReportPage({
           <h1 className="text-xl font-semibold">{ar.reports.deductions}</h1>
           <p className="text-muted-foreground text-sm">{ar.reports.deductionsAsIncome}</p>
         </div>
-        <Link
-          href="/penalties"
-          className="text-muted-foreground hover:text-foreground text-sm underline underline-offset-4"
-        >
-          {ar.penalties.register}
-        </Link>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="outline" size="sm">
+            <a
+              href={`/api/reports/deductions?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&groupBy=${groupBy}`}
+              download
+            >
+              <Download className="size-4" aria-hidden />
+              {ar.reports.export}
+            </a>
+          </Button>
+          <Link
+            href="/penalties"
+            className="text-muted-foreground hover:text-foreground text-sm underline underline-offset-4"
+          >
+            {ar.penalties.register}
+          </Link>
+        </div>
       </header>
 
       <nav className="flex flex-wrap gap-2" aria-label={ar.reports.groupBy}>

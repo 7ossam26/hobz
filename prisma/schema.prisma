@@ -75,9 +75,9 @@ model User {
   taskComments  TaskComment[]  @relation("TaskCommentAuthor")
   taskActivity  TaskActivity[] @relation("TaskActivityActor")
 
-  leave              Leave[]            @relation("LeaveSubject")
-  leaveRequested     Leave[]            @relation("LeaveRequestedBy")
-  leaveDecided       Leave[]            @relation("LeaveDecidedBy")
+  leave               Leave[]            @relation("LeaveSubject")
+  leaveRequested      Leave[]            @relation("LeaveRequestedBy")
+  leaveDecided        Leave[]            @relation("LeaveDecidedBy")
   extensionsRequested ExtensionRequest[] @relation("ExtensionRequestedBy")
   extensionsDecided   ExtensionRequest[] @relation("ExtensionDecidedBy")
 
@@ -89,7 +89,9 @@ model User {
   cyclesClosed         PayoutCycle[] @relation("PayoutCycleClosedBy")
 
   notifications           Notification[]           @relation("NotificationRecipient")
-  notificationPreferences NotificationPreference[]  @relation("NotificationPreferenceOwner")
+  notificationPreferences NotificationPreference[] @relation("NotificationPreferenceOwner")
+
+  performanceScore PerformanceScore?
 
   penaltyProfile PenaltyProfile? @relation(fields: [penaltyProfileId], references: [id], onDelete: SetNull)
 
@@ -555,17 +557,17 @@ model Task {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  project      Project          @relation(fields: [projectId], references: [id])
-  milestone    Milestone?       @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
-  assignee     User?            @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  watchers     TaskWatcher[]
-  comments     TaskComment[]
-  activity     TaskActivity[]
-  extensions   ExtensionRequest[]
+  project       Project            @relation(fields: [projectId], references: [id])
+  milestone     Milestone?         @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  assignee      User?              @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  watchers      TaskWatcher[]
+  comments      TaskComment[]
+  activity      TaskActivity[]
+  extensions    ExtensionRequest[]
   ledgerEntries LedgerEntry[]
   /// Tasks this one waits on, and the ones waiting on it.
-  dependencies TaskDependency[] @relation("TaskDependent")
-  dependents   TaskDependency[] @relation("TaskDependedOn")
+  dependencies  TaskDependency[]   @relation("TaskDependent")
+  dependents    TaskDependency[]   @relation("TaskDependedOn")
 
   @@index([deletedAt])
   @@index([projectId, status])
@@ -1243,6 +1245,49 @@ model NotificationPreference {
 
   @@unique([userId, type])
   @@map("notification_preferences")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Performance & reporting — Phase 10 (SPEC §5.6).
+// ─────────────────────────────────────────────────────────────────────────
+
+/// The cached performance score (SPEC §5.6). "Computed on demand with a
+/// cached daily recomputation" (phase brief) means two writers share this row:
+/// `modules/performance/job.ts`'s nightly sweep, and a cache-miss read that
+/// computes fresh rather than showing a brand-new worker nothing.
+///
+/// Deliberately **not** append-only, unlike `LedgerEntry`/`AuditLog` — this is
+/// a cache in the same sense `LoginThrottle` is, not a financial or audit
+/// record. CLAUDE.md invariant 1 is about the ledger; a performance score has
+/// no "correction" concept because penalties and bonuses never touch it
+/// (SPEC §5.6, "money only, per G9"), so there is nothing here a REVERSAL-style
+/// row would ever need to undo — only a fresher number to overwrite it with.
+model PerformanceScore {
+  userId String @id
+
+  /**
+   * The weighted composite, 0–100.
+   */
+  score            Decimal @db.Decimal(5, 2)
+  /**
+   * Each component already normalised to 0–100, before its weight is applied.
+   */
+  onTimeRate       Decimal @db.Decimal(5, 2)
+  qualityScore     Decimal @db.Decimal(5, 2)
+  volumeScore      Decimal @db.Decimal(5, 2)
+  estimateAccuracy Decimal @db.Decimal(5, 2)
+
+  /**
+   * How many completed tasks the score was computed over — 0 is a real, valid score.
+   */
+  taskCount Int @default(0)
+
+  computedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([computedAt])
+  @@map("performance_scores")
 }
 
 // ─────────────────────────────────────────────────────────────────────────

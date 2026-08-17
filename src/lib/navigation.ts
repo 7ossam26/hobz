@@ -40,6 +40,20 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: 'folder-kanban',
     permissions: ['project.view.all', 'project.view.assigned'],
   },
+  /**
+   * Phase 10's global deadlines view. No permission listed — like `/dashboard`
+   * and holiday reads (SPEC §6), the page itself needs no gate because the
+   * queries it composes (`getTaskCalendar`, `getProjects`) are already
+   * RBAC-scoped; a user with no task/project visibility simply sees an empty
+   * calendar, the same degrade-not-deny shape `scopeTasks`/`scopeProjects`
+   * already commit to everywhere else.
+   */
+  {
+    href: '/calendar',
+    labelKey: 'calendar',
+    icon: 'calendar-days',
+    permissions: [],
+  },
   {
     href: '/tasks',
     labelKey: 'tasks',
@@ -80,6 +94,13 @@ export const NAV_ITEMS: readonly NavItem[] = [
     labelKey: 'penalties',
     icon: 'gavel',
     permissions: ['penalty.view'],
+  },
+  /** Phase 10's report hub — the four new reports plus SPEC R4's deductions one. */
+  {
+    href: '/reports',
+    labelKey: 'reports',
+    icon: 'bar-chart-3',
+    permissions: ['report.view'],
   },
   {
     href: '/users',
@@ -136,6 +157,7 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<{
   // lives under the register. The two are different questions: "what was
   // deducted from this person" and "what did the agency retain this month".
   { prefix: '/penalties/report', permissions: ['report.view'] },
+  { prefix: '/reports', permissions: ['report.view'] },
   { prefix: '/users', permissions: ['user.view'] },
   { prefix: '/roles', permissions: ['role.view'] },
   { prefix: '/settings', permissions: ['settings.view'] },

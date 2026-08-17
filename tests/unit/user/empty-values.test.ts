@@ -135,12 +135,14 @@ describe('lib/phone — القيم الفارغة', () => {
 })
 
 describe('lib/navigation — المستخدم الجديد بلا أدوار', () => {
-  it('يعرض عنصر لوحة التحكم فقط', () => {
+  it('يعرض عنصري لوحة التحكم والتقويم فقط — كلاهما بلا صلاحية', () => {
     // A brand-new account created before any role is assigned. It must land
-    // somewhere, not on an empty sidebar with no way forward.
+    // somewhere, not on an empty sidebar with no way forward. `/calendar`
+    // carries no permission either (Phase 10) — same reasoning as `/dashboard`.
     const items = visibleNavItems(nobody())
-    expect(items).toHaveLength(1)
+    expect(items).toHaveLength(2)
     expect(items[0]?.href).toBe('/dashboard')
+    expect(items[1]?.href).toBe('/calendar')
   })
 
   it('يمنع المسارات المحروسة عنه', () => {

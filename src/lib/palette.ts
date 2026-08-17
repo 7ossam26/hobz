@@ -194,3 +194,14 @@ export const projectMemberRoleHue = (role: string): Hue =>
 
 export const ledgerTypeHue = (type: string): Hue =>
   LEDGER_TYPE_HUE[type as LedgerType] ?? 'neutral'
+
+/**
+ * Workload utilisation (Phase 10, `Σ estimatedHours ÷ weeklyCapacityHours`).
+ * A function rather than a lookup table like the maps above it: utilisation is
+ * continuous, and the one boundary that means something is the definition
+ * itself — over 100% *is* over capacity. Adding a second, softer "getting
+ * full" band would be a threshold nobody asked for and CLAUDE.md invariant 4
+ * would then require living in Settings for no requested behaviour.
+ */
+export const capacityHue = (utilisationPercent: number): Hue =>
+  utilisationPercent > 100 ? 'red' : 'emerald'

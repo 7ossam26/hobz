@@ -13,6 +13,7 @@ import { assignTaskAction } from '@/modules/task/actions'
 import type { TaskDetailDto } from '@/modules/task/types'
 import type { UserOptionDto } from '@/modules/user/queries'
 
+import { AssigneeCapacityHint } from '../assignee-capacity-hint'
 import { leaveWarningMessage } from '../leave-warnings'
 
 /**
@@ -120,6 +121,8 @@ export function ReassignDialog({
             </Select>
           )}
         </FormField>
+
+        <AssigneeCapacityHint userOptions={userOptions} assigneeId={assigneeId} />
 
         {hasPreviousAssignee ? (
           <FormField

@@ -1033,9 +1033,15 @@ export const ar = {
     },
   },
 
-  /** Phase 8 — SPEC R4's one report. Phase 10 owns the rest. */
+  /** Phase 8 shipped SPEC R4's one report. Phase 10 owns the rest. */
   reports: {
     title: 'التقارير',
+    subtitle: 'تقارير جاهزة للتصدير بصيغة Excel — لكل تقرير صلاحيته الخاصة.',
+    export: 'تصدير Excel',
+    exporting: 'جارٍ التصدير…',
+    exportFailed: 'تعذّر تصدير التقرير',
+    /** `lib/xlsx`'s fallback when a sheet name is empty after stripping Excel's reserved characters. */
+    defaultSheetName: 'ورقة',
     deductions: 'الخصومات كإيراد',
     /**
      * SPEC §1: "Deductions are reported as agency income in reports only. **No
@@ -1058,6 +1064,156 @@ export const ar = {
     netPenalties: 'الصافي',
     entryCount: 'عدد القيود',
     empty: 'لا توجد خصومات في هذه الفترة',
+
+    /** Phase 10 — the `/reports` hub linking every report, this one included. */
+    hub: {
+      payoutStatement: 'كشف المستحقات',
+      payoutStatementHint: 'كشف كل منفّذ في دورة صرف محددة.',
+      projectSummary: 'ملخص المشاريع',
+      projectSummaryHint: 'المهام ونسبة الإنجاز والمتأخر والحالة الصحية لكل مشروع.',
+      workerPerformance: 'أداء المنفّذين',
+      workerPerformanceHint: 'مؤشر الأداء ومكوّناته لكل منفّذ نشط.',
+      agencySummary: 'ملخص الوكالة الشهري',
+      agencySummaryHint:
+        'المهام المكتملة، إجمالي المدفوع، الخصومات كإيراد، ونسبة الالتزام بالمواعيد.',
+      deductions: 'الخصومات كإيراد',
+      deductionsHint: 'إجمالي الخصومات المحتجزة، مُحتسبة إيرادًا للوكالة.',
+    },
+
+    payoutStatement: {
+      title: 'كشف المستحقات',
+      selectCycle: 'دورة الصرف',
+      sheetName: 'كشف المستحقات',
+      columns: {
+        worker: 'المنفّذ',
+        username: 'اسم المستخدم',
+        carriedForward: 'مرحّل من السابق',
+        gross: 'الإجمالي',
+        penalties: 'الخصومات',
+        bonuses: 'المكافآت',
+        advances: 'السلف',
+        adjustments: 'تسويات',
+        net: 'الصافي',
+        paid: 'المدفوع',
+        outstanding: 'المتبقي',
+        status: 'الحالة',
+        method: 'طريقة الصرف',
+        paidAt: 'تاريخ الصرف',
+      },
+      empty: 'لا توجد مستحقات في هذه الدورة',
+    },
+
+    projectSummary: {
+      title: 'ملخص المشاريع',
+      sheetName: 'ملخص المشاريع',
+      columns: {
+        code: 'الكود',
+        name: 'اسم المشروع',
+        status: 'الحالة',
+        health: 'الحالة الصحية',
+        totalTasks: 'إجمالي المهام',
+        completedTasks: 'المهام المكتملة',
+        overdueTasks: 'المهام المتأخرة',
+        completionPercent: 'نسبة الإنجاز',
+      },
+      empty: 'لا توجد مشاريع',
+    },
+
+    workerPerformance: {
+      title: 'أداء المنفّذين',
+      sheetName: 'أداء المنفّذين',
+      columns: {
+        worker: 'المنفّذ',
+        username: 'اسم المستخدم',
+        score: 'المؤشر العام',
+        onTimeRate: 'الالتزام بالمواعيد',
+        qualityScore: 'تقييم الجودة',
+        volumeScore: 'حجم الإنجاز',
+        estimateAccuracy: 'دقة التقدير',
+        taskCount: 'عدد المهام المكتملة',
+        computedAt: 'تاريخ آخر احتساب',
+      },
+      neverComputed: 'لم يُحتسب بعد',
+      empty: 'لا يوجد منفّذون نشطون',
+    },
+
+    agencySummary: {
+      title: 'ملخص الوكالة الشهري',
+      sheetName: 'ملخص الوكالة',
+      month: 'الشهر',
+      completedTasks: 'المهام المكتملة',
+      totalPaid: 'إجمالي المدفوع',
+      totalDeductions: 'إجمالي الخصومات (إيراد)',
+      onTimeRate: 'نسبة الالتزام بالمواعيد',
+    },
+  },
+
+  /** Phase 10 — the manager and worker dashboards (phase brief §"Dashboards"). */
+  dashboard: {
+    welcomeBack: 'أهلًا بعودتك،',
+    manager: {
+      overdueTasks: 'المهام المتأخرة',
+      overdueTasksEmpty: 'لا توجد مهام متأخرة',
+      projectsAtRisk: 'مشاريع في خطر',
+      projectsAtRiskEmpty: 'لا توجد مشاريع في حالة حرجة',
+      awaitingApproval: 'بانتظار الاعتماد',
+      awaitingApprovalEmpty: 'لا توجد مهام بانتظار الاعتماد',
+      workload: 'العبء الوظيفي',
+      workloadEmpty: 'لا يوجد منفّذون نشطون',
+      pendingPayouts: 'مستحقات هذه الدورة',
+      pendingPayoutsEmpty: 'لا توجد دورة صرف مفتوحة',
+      pendingAmount: 'المتبقي',
+      monthDeductions: 'خصومات هذا الشهر',
+      viewAll: 'عرض الكل',
+    },
+    worker: {
+      activeTasks: 'مهامي النشطة',
+      activeTasksEmpty: 'لا توجد مهام نشطة حاليًا',
+      dueNext: 'القادم استحقاقًا',
+      dueNextEmpty: 'لا توجد مواعيد قادمة',
+      awaitingMySubmission: 'بانتظار تسليمي',
+      awaitingReview: 'بانتظار المراجعة',
+      performance: 'مؤشر أدائي',
+      performanceHint: 'لا تؤثر الخصومات أو المكافآت على هذا المؤشر (SPEC §5.6).',
+    },
+  },
+
+  /** Phase 10 — SPEC §5.6, shared by the worker dashboard widget and the report. */
+  performance: {
+    score: 'المؤشر العام',
+    onTimeRate: 'الالتزام بالمواعيد',
+    qualityScore: 'تقييم الجودة',
+    volumeScore: 'حجم الإنجاز مقارنة بالزملاء',
+    estimateAccuracy: 'دقة التقدير',
+    taskCount: 'عدد المهام المكتملة',
+    computedAt: 'آخر احتساب',
+    noData: 'لا توجد مهام مكتملة بعد',
+  },
+
+  /** Phase 10 — utilisation = Σ estimatedHours of active tasks ÷ weeklyCapacityHours. */
+  workload: {
+    title: 'العبء الوظيفي',
+    utilisation: 'نسبة الإشغال',
+    activeHours: 'الساعات النشطة',
+    capacity: 'الطاقة الأسبوعية',
+    overCapacity: 'تجاوز الطاقة',
+    overCapacityWarning: 'هذا المنفّذ يتجاوز طاقته الأسبوعية المتاحة حاليًا.',
+  },
+
+  /** Phase 10 — the global deadlines calendar (phase brief item 6). */
+  globalCalendar: {
+    title: 'تقويم المواعيد',
+    subtitle: 'كل مواعيد المهام والمشاريع، قابلة للتصفية حسب المشروع أو المنفّذ.',
+    filterProject: 'المشروع',
+    filterWorker: 'المنفّذ',
+    allProjects: 'كل المشاريع',
+    allWorkers: 'كل المنفّذين',
+    empty: 'لا توجد مواعيد في هذا الشهر',
+    types: {
+      TASK: 'مهمة',
+      PROJECT: 'مشروع',
+      MILESTONE: 'مرحلة',
+    },
   },
 
   /** Phase 8 — the per-user penalty formula (SPEC R2). */

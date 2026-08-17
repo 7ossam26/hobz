@@ -62,15 +62,17 @@ describe('lib/navigation — التنقّل حسب الصلاحية', () => {
     expect(visibleNavItems(null)).toEqual([])
   })
 
-  it('يبقي لوحة التحكم لأي مستخدم مسجَّل بلا صلاحيات', () => {
+  it('يبقي لوحة التحكم والتقويم لأي مستخدم مسجَّل بلا صلاحيات', () => {
+    // Phase 10: `/calendar` carries no permission, exactly like `/dashboard` —
+    // the underlying queries are already RBAC-scoped (lib/navigation.ts).
     const items = visibleNavItems(nobody())
-    expect(items.map((i) => i.href)).toEqual(['/dashboard'])
+    expect(items.map((i) => i.href)).toEqual(['/dashboard', '/calendar'])
   })
 
-  it('يُظهر عنصرًا واحدًا فقط لصاحب صلاحية واحدة', () => {
+  it('يُظهر عنصرًا واحدًا إضافيًا فقط لصاحب صلاحية واحدة', () => {
     // Flow #1 in docs/TESTING.md §6 turns on exactly this.
     const items = visibleNavItems(actingAs(['user.view']))
-    expect(items.map((i) => i.href)).toEqual(['/dashboard', '/users'])
+    expect(items.map((i) => i.href)).toEqual(['/dashboard', '/calendar', '/users'])
   })
 
   it('يُظهر كل شيء لمدير النظام دون تخزين أي مفتاح', () => {

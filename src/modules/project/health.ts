@@ -73,9 +73,16 @@ export const noTaskHealthSignals: TaskHealthLookup = async () => ({
  * Statuses in which a task's due date is still the worker's problem. Time in
  * review never counts against them (SPEC §5.3), so a delivered task is not
  * overdue no matter how long the reviewer sits on it — the same set
- * `modules/task/service.ts` filters `overdueOnly` on.
+ * `modules/task/service.ts` filters `overdueOnly` on. Exported so Phase 10's
+ * project summary report counts "overdue" the same way this file does, rather
+ * than a second, drifting definition of "still undelivered".
  */
-const UNDELIVERED = ['BACKLOG', 'ASSIGNED', 'IN_PROGRESS', 'REVISION_REQUESTED'] as const
+export const UNDELIVERED_TASK_STATUSES = [
+  'BACKLOG',
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'REVISION_REQUESTED',
+] as const
 
 /**
  * The real signals, as of Phase 4.
@@ -97,7 +104,7 @@ export function taskHealthSignals(now: Date = new Date()): TaskHealthLookup {
         where: {
           projectId,
           deletedAt: null,
-          status: { in: [...UNDELIVERED] },
+          status: { in: [...UNDELIVERED_TASK_STATUSES] },
           dueDate: { lt: now },
         },
       }),

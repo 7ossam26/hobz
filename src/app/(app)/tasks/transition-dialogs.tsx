@@ -21,6 +21,7 @@ import {
 import type { TaskAssignmentResultDto } from '@/modules/task/types'
 import type { UserOptionDto } from '@/modules/user/queries'
 
+import { AssigneeCapacityHint } from './assignee-capacity-hint'
 import { leaveWarningMessage } from './leave-warnings'
 
 /**
@@ -120,23 +121,27 @@ export function AssignDialog({
         </>
       }
     >
-      <FormField name="assignee" label={ar.tasks.assignee} required>
-        {(field) => (
-          <Select
-            {...field}
-            data-autofocus
-            value={assigneeId}
-            onChange={(event) => setAssigneeId(event.target.value)}
-          >
-            <option value="">{ar.tasks.assignment.selectAssignee}</option>
-            {userOptions.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.fullName}
-              </option>
-            ))}
-          </Select>
-        )}
-      </FormField>
+      <div className="flex flex-col gap-4">
+        <FormField name="assignee" label={ar.tasks.assignee} required>
+          {(field) => (
+            <Select
+              {...field}
+              data-autofocus
+              value={assigneeId}
+              onChange={(event) => setAssigneeId(event.target.value)}
+            >
+              <option value="">{ar.tasks.assignment.selectAssignee}</option>
+              {userOptions.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.fullName}
+                </option>
+              ))}
+            </Select>
+          )}
+        </FormField>
+
+        <AssigneeCapacityHint userOptions={userOptions} assigneeId={assigneeId} />
+      </div>
     </Dialog>
   )
 }
