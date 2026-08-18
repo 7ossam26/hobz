@@ -47,7 +47,10 @@ import { deliverNotification } from './service'
  */
 
 async function fullNameOf(db: Db, userId: string): Promise<string> {
-  const user = await db.user.findUnique({ where: { id: userId }, select: { fullName: true } })
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { fullName: true },
+  })
   return user?.fullName ?? ''
 }
 
@@ -80,7 +83,11 @@ export const notificationTaskEvents: TaskEventBus = {
         [event.assigneeId, ...watchers],
         event.requestedById,
       )) {
-        await deliverNotification(db, { userId, type: 'TASK_REVISION_REQUESTED', message })
+        await deliverNotification(db, {
+          userId,
+          type: 'TASK_REVISION_REQUESTED',
+          message,
+        })
       }
       return
     }

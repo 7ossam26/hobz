@@ -1,5 +1,7 @@
 import { Decimal } from 'decimal.js'
 
+import { MONEY_MAX_STRING, MONEY_MIN_STRING } from './money-format'
+
 /**
  * lib/money — the ONLY place money arithmetic is allowed to happen.
  *
@@ -27,15 +29,16 @@ Decimal.set({
 export type Money = Decimal
 export type MoneyInput = Money | string | number
 
-/** Money columns are `Decimal(12,2)`: 10 integer digits + 2 fractional. */
+/**
+ * Money columns are `Decimal(12,2)`: 10 integer digits + 2 fractional.
+ *
+ * The bounds come from `lib/money-format`, which holds them as strings so a
+ * Zod schema can import the ceiling without importing decimal.js — see the note
+ * there. One definition, two shapes.
+ */
 export const MONEY_SCALE = 2
-export const MONEY_MAX = new Decimal('9999999999.99')
-export const MONEY_MIN = new Decimal('-9999999999.99')
-
-/** LRM, RLM, embedding/override marks, ALM, and the isolate controls. */
-const BIDI_CONTROL_CHARS = /[\u200e\u200f\u202a-\u202e\u061c\u2066-\u2069]/g
-/** NBSP and narrow NBSP, which ICU emits before the currency symbol. */
-const NBSP_CHARS = /[\u00a0\u202f]/g
+export const MONEY_MAX = new Decimal(MONEY_MAX_STRING)
+export const MONEY_MIN = new Decimal(MONEY_MIN_STRING)
 
 /**
  * Coerce to `Money`. Rejects NaN/Infinity loudly rather than letting a poisoned
@@ -147,43 +150,15 @@ export function toStorageString(value: MoneyInput): string {
   return round2(value).toFixed(MONEY_SCALE)
 }
 
-export interface FormatOptions {
-  /** Append the EGP symbol (ج.م.). Default: false. */
-  withCurrency?: boolean
-  /** Render a leading `+` for positive values — used for ledger credits. */
-  signDisplay?: boolean
-}
-
 /**
- * Display formatting: `Intl.NumberFormat('ar-EG')` with Western digits
- * (`-u-nu-latn`) and a fixed 2dp, per CLAUDE.md.
+ * Display formatting lives in `lib/money-format`, which knows nothing about
+ * `Decimal`. That is not tidiness — it is the SPEC §9 bundle budget: `MoneyText`
+ * renders inside client components, so anything it imports ships to the
+ * browser, and decimal.js is 12.5 KB gzip of arithmetic no browser performs.
  *
- * Unicode bidi control marks that ICU injects are stripped. Two reasons:
- * their exact placement varies between ICU versions, which would make this
- * function's output untestable; and direction is handled properly at the
- * rendering layer instead — `MoneyText` wraps the value in `dir="ltr"` with
- * `tabular-nums`, which is more robust than embedded marks.
+ * Re-exported here, unchanged, so `import { format } from '@/lib/money'` keeps
+ * working everywhere and there is still exactly one formatter in the product.
  */
-export function format(value: MoneyInput, options: FormatOptions = {}): string {
-  const rounded = round2(value)
-  const formatter = new Intl.NumberFormat('ar-EG-u-nu-latn', {
-    minimumFractionDigits: MONEY_SCALE,
-    maximumFractionDigits: MONEY_SCALE,
-    ...(options.withCurrency
-      ? {
-          style: 'currency' as const,
-          currency: 'EGP',
-          currencyDisplay: 'symbol' as const,
-        }
-      : {}),
-    ...(options.signDisplay ? { signDisplay: 'exceptZero' as const } : {}),
-  })
-
-  return formatter
-    .format(rounded.toNumber())
-    .replace(BIDI_CONTROL_CHARS, '')
-    .replace(NBSP_CHARS, ' ')
-    .trim()
-}
+export { formatMoney as format, type FormatOptions } from './money-format'
 
 export { Decimal }

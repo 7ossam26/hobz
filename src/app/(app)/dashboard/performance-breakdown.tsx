@@ -19,13 +19,20 @@ function ScoreRow({ label, value }: { label: string; value: string }) {
         </span>
       </div>
       <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
-        <div className="bg-accent-solid h-full rounded-full" style={{ width: `${percent}%` }} />
+        <div
+          className="bg-accent-solid h-full rounded-full"
+          style={{ width: `${percent}%` }}
+        />
       </div>
     </div>
   )
 }
 
-export function PerformanceBreakdown({ performance }: { performance: PerformanceScoreDto }) {
+export function PerformanceBreakdown({
+  performance,
+}: {
+  performance: PerformanceScoreDto
+}) {
   const p = ar.performance
 
   return (

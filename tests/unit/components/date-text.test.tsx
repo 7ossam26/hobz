@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
 
-
 import { DateText, DateTimeText, DurationText } from '@/components/data/date-text'
 import { ar } from '@/i18n/ar'
 import { render, screen } from '@tests/helpers/render'

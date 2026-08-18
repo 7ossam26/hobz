@@ -105,6 +105,8 @@ export async function getGlobalCalendarEvents(
 
   return {
     events,
-    truncated: taskCalendar.truncated || (projectPage?.total ?? 0) > (projectPage?.items.length ?? 0),
+    truncated:
+      taskCalendar.truncated ||
+      (projectPage?.total ?? 0) > (projectPage?.items.length ?? 0),
   }
 }

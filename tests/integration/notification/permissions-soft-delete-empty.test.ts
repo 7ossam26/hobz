@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { NotFoundError } from '@/lib/errors'
-import { notificationLatenessEvents, notificationTaskEvents } from '@/modules/notification/bus'
+import {
+  notificationLatenessEvents,
+  notificationTaskEvents,
+} from '@/modules/notification/bus'
 import { buildManagerDigest, deliverManagerDigest } from '@/modules/notification/digest'
 import { managerIds, projectOwnerId } from '@/modules/notification/recipients'
 import {
@@ -15,7 +18,13 @@ import {
 } from '@/modules/notification/service'
 import type { HealthThresholds } from '@/modules/project/health'
 
-import { createProject, createTask, createUser, createUserWithPermissions, seedPermissionCatalog } from '../../factories/db'
+import {
+  createProject,
+  createTask,
+  createUser,
+  createUserWithPermissions,
+  seedPermissionCatalog,
+} from '../../factories/db'
 import { actorFor } from '../../helpers/actor-from-db'
 import { clearSessionActor, setSessionActor } from '../../helpers/session-mock'
 import { cairo } from '../../helpers/time'
@@ -30,7 +39,8 @@ import { testDb } from '../../setup/reset'
 // tests/integration/ledger/permissions.test.ts.
 vi.mock('@/lib/auth/session', () => import('../../helpers/session-mock'))
 
-const { getMyNotifications, getMyUnreadCount } = await import('@/modules/notification/queries')
+const { getMyNotifications, getMyUnreadCount } =
+  await import('@/modules/notification/queries')
 
 const db = testDb()
 const NOW = cairo('2026-08-16T10:00')
@@ -171,7 +181,9 @@ describe('modules/notification/recipients — مالك مشروع محذوف/م�
     })
 
     expect(
-      await db.notification.count({ where: { userId: owner.id, type: 'TASK_SUBMITTED' } }),
+      await db.notification.count({
+        where: { userId: owner.id, type: 'TASK_SUBMITTED' },
+      }),
     ).toBe(0)
   })
 
@@ -196,7 +208,9 @@ describe('modules/notification/recipients — مالك مشروع محذوف/م�
     })
 
     expect(
-      await db.notification.count({ where: { userId: owner.id, type: 'TASK_SUBMITTED' } }),
+      await db.notification.count({
+        where: { userId: owner.id, type: 'TASK_SUBMITTED' },
+      }),
     ).toBe(0)
   })
 
@@ -248,12 +262,17 @@ describe('modules/notification/recipients — managerIds يستثني المعط
       deletedAt: NOW,
     })
 
-    const outcome = await deliverManagerDigest(db, { now: NOW, healthThresholds: THRESHOLDS })
+    const outcome = await deliverManagerDigest(db, {
+      now: NOW,
+      healthThresholds: THRESHOLDS,
+    })
 
     expect(outcome.recipients).toBe(1)
     expect(outcome.delivered).toBe(1)
     expect(
-      await db.notification.count({ where: { userId: active.id, type: 'MANAGER_DIGEST' } }),
+      await db.notification.count({
+        where: { userId: active.id, type: 'MANAGER_DIGEST' },
+      }),
     ).toBe(1)
     for (const excluded of [deactivated, deleted]) {
       expect(
@@ -320,7 +339,11 @@ describe('modules/notification — لا حاجة لأي صلاحية للتعا�
     // must accept: authentication, not authorization.
     expect(actor.permissions.size).toBe(0)
 
-    await deliverNotification(db, { userId: user.id, type: 'TASK_ASSIGNED', message: MESSAGE })
+    await deliverNotification(db, {
+      userId: user.id,
+      type: 'TASK_ASSIGNED',
+      message: MESSAGE,
+    })
     setSessionActor(actor)
 
     const page = await getMyNotifications()
@@ -336,12 +359,22 @@ describe('modules/notification — لا حاجة لأي صلاحية للتعا�
  */
 describe('modules/notification/digest — قاعدة بيانات فارغة تمامًا (بلا مستخدمين أو مشاريع أو مهام)', () => {
   it('buildManagerDigest يرجع أصفارًا بلا أي انهيار', async () => {
-    const summary = await buildManagerDigest(db, { now: NOW, healthThresholds: THRESHOLDS })
-    expect(summary).toEqual({ overdueCount: 0, awaitingApprovalCount: 0, atRiskProjectCount: 0 })
+    const summary = await buildManagerDigest(db, {
+      now: NOW,
+      healthThresholds: THRESHOLDS,
+    })
+    expect(summary).toEqual({
+      overdueCount: 0,
+      awaitingApprovalCount: 0,
+      atRiskProjectCount: 0,
+    })
   })
 
   it('deliverManagerDigest بلا أي مدير لا يحاول التكرار ولا ينهار (recipients: 0)', async () => {
-    const outcome = await deliverManagerDigest(db, { now: NOW, healthThresholds: THRESHOLDS })
+    const outcome = await deliverManagerDigest(db, {
+      now: NOW,
+      healthThresholds: THRESHOLDS,
+    })
     expect(outcome.recipients).toBe(0)
     expect(outcome.delivered).toBe(0)
     expect(await db.notification.count()).toBe(0)

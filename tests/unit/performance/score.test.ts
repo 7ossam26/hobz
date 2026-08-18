@@ -46,7 +46,11 @@ describe('computePerformanceScore — لا توجد مهام', () => {
 
 describe('computePerformanceScore — الالتزام بالمواعيد', () => {
   it('كل المهام متأخرة: الالتزام صفر', () => {
-    const facts = [fact({ onTime: false }), fact({ onTime: false }), fact({ onTime: false })]
+    const facts = [
+      fact({ onTime: false }),
+      fact({ onTime: false }),
+      fact({ onTime: false }),
+    ]
     const result = computePerformanceScore(facts, 3, DEFAULT_WEIGHTS)
     expect(result.onTimeRate).toBe(0)
     // Quality/volume/estimate stay at their own values — a late delivery does
@@ -80,17 +84,29 @@ describe('computePerformanceScore — تقييم الجودة', () => {
   })
 
   it('التقييم الأدنى (١) يعطي صفرًا بعد إعادة القياس', () => {
-    const result = computePerformanceScore([fact({ qualityRating: 1 })], 1, DEFAULT_WEIGHTS)
+    const result = computePerformanceScore(
+      [fact({ qualityRating: 1 })],
+      1,
+      DEFAULT_WEIGHTS,
+    )
     expect(result.qualityScore).toBe(0)
   })
 
   it('التقييم الأعلى (٥) يعطي ١٠٠', () => {
-    const result = computePerformanceScore([fact({ qualityRating: 5 })], 1, DEFAULT_WEIGHTS)
+    const result = computePerformanceScore(
+      [fact({ qualityRating: 5 })],
+      1,
+      DEFAULT_WEIGHTS,
+    )
     expect(result.qualityScore).toBe(100)
   })
 
   it('تقييم متوسط (٣) يعطي منتصف المقياس', () => {
-    const result = computePerformanceScore([fact({ qualityRating: 3 })], 1, DEFAULT_WEIGHTS)
+    const result = computePerformanceScore(
+      [fact({ qualityRating: 3 })],
+      1,
+      DEFAULT_WEIGHTS,
+    )
     expect(result.qualityScore).toBe(50)
   })
 
@@ -173,13 +189,23 @@ describe('computePerformanceScore — دقة التقدير', () => {
 
 describe('computePerformanceScore — الوزن الإجمالي', () => {
   it('أوزان لا تجمع إلى ١٠٠: يُقسَّم على مجموعها الفعلي فيبقى الناتج بين ٠ و١٠٠', () => {
-    const skewed: PerformanceWeights = { onTime: 90, quality: 90, volume: 0, estimateAccuracy: 0 }
+    const skewed: PerformanceWeights = {
+      onTime: 90,
+      quality: 90,
+      volume: 0,
+      estimateAccuracy: 0,
+    }
     const result = computePerformanceScore([fact()], 1, skewed)
     expect(result.score).toBe(100)
   })
 
   it('كل الأوزان صفر: لا خطأ قسمة على صفر، والنتيجة صفر', () => {
-    const zero: PerformanceWeights = { onTime: 0, quality: 0, volume: 0, estimateAccuracy: 0 }
+    const zero: PerformanceWeights = {
+      onTime: 0,
+      quality: 0,
+      volume: 0,
+      estimateAccuracy: 0,
+    }
     const result = computePerformanceScore([fact()], 1, zero)
     expect(result.score).toBe(0)
   })

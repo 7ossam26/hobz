@@ -56,7 +56,11 @@ export default async function WorkerPerformanceReportPage() {
                 <TableRow key={row.userId}>
                   <TableCell>
                     <UserChip
-                      user={{ id: row.userId, fullName: row.fullName, username: row.username }}
+                      user={{
+                        id: row.userId,
+                        fullName: row.fullName,
+                        username: row.username,
+                      }}
                       size="sm"
                       showWhatsapp={false}
                     />
@@ -80,7 +84,11 @@ export default async function WorkerPerformanceReportPage() {
                     {row.taskCount ?? 0}
                   </TableCell>
                   <TableCell className="text-fg-subtle text-xs">
-                    {row.computedAt ? <RelativeTime value={row.computedAt} /> : ar.common.none}
+                    {row.computedAt ? (
+                      <RelativeTime value={row.computedAt} />
+                    ) : (
+                      ar.common.none
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

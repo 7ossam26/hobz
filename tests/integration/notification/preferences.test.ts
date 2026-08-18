@@ -269,7 +269,11 @@ describe('modules/notification/service — القراءة وتعليم القر�
   it('عزل بين المستخدمين: لا يرى مستخدم إشعارات غيره', async () => {
     const a = await createUser(db)
     const b = await createUser(db)
-    await deliverNotification(db, { userId: a.id, type: 'TASK_ASSIGNED', message: MESSAGE })
+    await deliverNotification(db, {
+      userId: a.id,
+      type: 'TASK_ASSIGNED',
+      message: MESSAGE,
+    })
 
     const bPage = await listNotifications(db, {
       userId: b.id,

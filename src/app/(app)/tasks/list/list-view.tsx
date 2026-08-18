@@ -242,10 +242,10 @@ export function ListView({
       ],
     },
     {
-      id: 'dueThisWeek',
-      label: ar.tasks.facets.dueThisWeek,
+      id: 'dueSoon',
+      label: ar.tasks.facets.dueSoon,
       options: [
-        { value: BOOLEAN_FACET_VALUE, label: ar.tasks.facets.dueThisWeek, hue: 'amber' },
+        { value: BOOLEAN_FACET_VALUE, label: ar.tasks.facets.dueSoon, hue: 'amber' },
       ],
     },
   ]

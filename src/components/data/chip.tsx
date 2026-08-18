@@ -44,8 +44,7 @@ const chipVariants = cva(
 )
 
 export interface ChipProps
-  extends React.ComponentProps<'span'>,
-    VariantProps<typeof chipVariants> {
+  extends React.ComponentProps<'span'>, VariantProps<typeof chipVariants> {
   hue: Hue
   /** Draw the hue as a leading dot. Implied by `tone="ghost"`. */
   dot?: boolean

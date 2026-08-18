@@ -44,7 +44,10 @@ export function PriorityFlag({
       {...props}
     >
       <Flag
-        className={cn('size-3.5 shrink-0', isLow ? 'fill-none' : 'fill-hue-solid stroke-hue-solid')}
+        className={cn(
+          'size-3.5 shrink-0',
+          isLow ? 'fill-none' : 'fill-hue-solid stroke-hue-solid',
+        )}
         aria-hidden
       />
       <span className={showLabel ? undefined : 'sr-only'}>{text}</span>

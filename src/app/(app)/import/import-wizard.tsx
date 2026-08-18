@@ -3,6 +3,7 @@
 import { Download } from 'lucide-react'
 import * as React from 'react'
 
+import { useVirtualRows } from '@/components/shared/data-table/use-virtual-rows'
 import { useToast } from '@/components/shared/toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -65,6 +66,74 @@ function Stat({ label, value }: { label: string; value: number }) {
     <div className="flex flex-col gap-0.5">
       <span className="text-muted-foreground text-xs">{label}</span>
       <span className="text-lg font-semibold tabular-nums">{value}</span>
+    </div>
+  )
+}
+
+/**
+ * The dry-run preview, windowed.
+ *
+ * `MAX_IMPORT_ROWS` is 500 (`modules/import/parse.ts`), so this is the one
+ * table in the product that can genuinely exceed SPEC §9's 100-row
+ * virtualization threshold without a `page` parameter to cap it — the whole
+ * point of a dry run is that the operator sees *every* row before confirming,
+ * so paginating it would be the wrong answer. It reuses the same
+ * `useVirtualRows` window the DataTable and the board column use; below 100
+ * rows the hook does nothing at all.
+ */
+function PreviewRows({ rows }: { rows: ImportPreviewDto['rows'] }) {
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const firstRowRef = React.useRef<HTMLTableRowElement>(null)
+  const virtual = useVirtualRows({ count: rows.length, scrollRef, rowRef: firstRowRef })
+
+  const windowed = virtual.enabled
+    ? rows.slice(virtual.startIndex, virtual.endIndex)
+    : rows
+
+  return (
+    <div ref={scrollRef} className="max-h-[60vh] overflow-auto rounded-lg border">
+      <Table>
+        <TableHeader className="bg-surface-sunken sticky top-0 z-10">
+          <TableRow>
+            <TableHead>{ar.import.preview.row}</TableHead>
+            <TableHead>{ar.import.preview.status}</TableHead>
+            <TableHead>{ar.import.preview.summary}</TableHead>
+            <TableHead>{ar.import.preview.errors}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {virtual.paddingTop > 0 ? (
+            <tr aria-hidden style={{ height: virtual.paddingTop }} />
+          ) : null}
+
+          {windowed.map((row, index) => (
+            <TableRow key={row.rowNumber} ref={index === 0 ? firstRowRef : undefined}>
+              <TableCell className="tabular-nums">{row.rowNumber}</TableCell>
+              <TableCell>
+                <Badge variant={STATUS_VARIANT[row.action]}>
+                  {ar.import.rowStatus[row.action]}
+                </Badge>
+              </TableCell>
+              <TableCell>{row.summary}</TableCell>
+              <TableCell>
+                {row.errors.length > 0 ? (
+                  <ul className="flex flex-col gap-0.5">
+                    {row.errors.map((rowError) => (
+                      <li key={rowError.field} className="text-destructive text-xs">
+                        {rowError.message}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </TableCell>
+            </TableRow>
+          ))}
+
+          {virtual.paddingBottom > 0 ? (
+            <tr aria-hidden style={{ height: virtual.paddingBottom }} />
+          ) : null}
+        </TableBody>
+      </Table>
     </div>
   )
 }
@@ -219,40 +288,7 @@ export function ImportWizard() {
               <Stat label={ar.import.preview.invalidCount} value={preview.invalid} />
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{ar.import.preview.row}</TableHead>
-                  <TableHead>{ar.import.preview.status}</TableHead>
-                  <TableHead>{ar.import.preview.summary}</TableHead>
-                  <TableHead>{ar.import.preview.errors}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {preview.rows.map((row) => (
-                  <TableRow key={row.rowNumber}>
-                    <TableCell className="tabular-nums">{row.rowNumber}</TableCell>
-                    <TableCell>
-                      <Badge variant={STATUS_VARIANT[row.action]}>
-                        {ar.import.rowStatus[row.action]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{row.summary}</TableCell>
-                    <TableCell>
-                      {row.errors.length > 0 ? (
-                        <ul className="flex flex-col gap-0.5">
-                          {row.errors.map((rowError) => (
-                            <li key={rowError.field} className="text-destructive text-xs">
-                              {rowError.message}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <PreviewRows rows={preview.rows} />
 
             <div>
               <Button

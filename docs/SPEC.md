@@ -668,7 +668,8 @@ Penalty defaults · grace period · working days per month · weekend days ·
 holidays · leave types · payout cycle day · payment methods · notification rules
 & thresholds · performance weights · task priorities & categories · engagement
 types · project health thresholds · polling interval · status Arabic labels ·
-`penalizeRevisionLateness` · **login throttle & password policy**
+`penalizeRevisionLateness` · `tasks.dueSoonDays` · **login throttle & password
+policy**
 (`security.maxLoginAttempts`, `security.loginWindowMinutes`,
 `security.lockoutMinutes`, `security.minPasswordLength`).
 
@@ -692,6 +693,41 @@ same shape: `Leave.typeId` stores the id, so renaming "إجازة طارئة" do
 re-type every leave ever recorded under it. `payout.paymentMethods` is the one
 remaining plain list of Arabic strings, and correctly so — nothing stores a
 reference to it.
+
+### The page itself (built in Phase 12)
+
+`/settings`, gated on `settings.view` to open and `settings.edit` to change
+anything. One card per catalog group plus a **holidays** card — holidays are a
+table with their own permission (`calendar.manage`) and their own audit trail,
+but an operator does not care which storage shape a rule happens to have, and
+this section already lists them.
+
+Three properties the page commits to:
+
+- **One draft, one save.** Every field edits a local draft; the save button
+  writes the whole batch through `updateSettingsAction`, which wraps it in one
+  transaction. Half-applied settings would leave the business rules in a state
+  nobody chose — a new grace period with an old penalty rate is not a
+  configuration, it is an accident.
+- **Validated twice, on purpose.** Once in the browser against the same catalog
+  schema, so the operator sees which box is wrong; once in `parseSettingValue`
+  server-side, which is the check that counts (§11.3).
+- **Generated from the catalog, not hand-listed.** `field-map.ts` says which
+  control edits each key, and `tests/unit/settings/field-map.test.ts` fails if a
+  catalog key has no control, no Arabic label, or a control whose kind does not
+  match the value's shape. A setting cannot be added and left unreachable.
+
+**A taxonomy entry's id is read-only once saved.** `Task.categoryId` and
+`Leave.typeId` point at it; letting it be retyped in a text box would silently
+orphan every row filed under it, which is the exact failure the id/label split
+above exists to prevent. Renaming is what the label box is for.
+
+**`tasks.dueSoonDays` was added in Phase 12** by the hardcoded-number sweep: the
+"مستحقة قريبًا" list facet had a literal seven days inside `listTasks`. It is
+deliberately *not* `notifications.dueSoonHours` — that one decides when a منفّذ
+is paged (24h), this one decides what a manager's list shows (a week) — and the
+facet's Arabic label was changed from "this week" to "soon" so that moving the
+number cannot make the label a lie.
 
 ---
 
@@ -780,6 +816,31 @@ LCP < 1.8s on 4G · route JS < 180KB gzip · zero client-side data waterfalls ·
 Server Components by default · every list paginated & indexed · virtualize any
 list over 100 rows · no chart library on the initial dashboard bundle.
 
+**How it is enforced, and what it measured (Phase 12).** Three scripts, because
+a budget nobody can run is a wish:
+
+- `pnpm perf:bundle` gzips each route's real chunk list from
+  `.next/app-build-manifest.json` and **exits non-zero over 180 KB**. Heaviest
+  route today: `/projects` at 172.4 KB, i.e. 7.6 KB of headroom. The pass that
+  got there removed decimal.js from every client bundle — 12.5 KB of arithmetic
+  no browser performs (see `lib/money-format.ts`).
+- `pnpm perf:explain` runs the product's own heaviest read paths with Prisma
+  query logging on and re-runs the ten slowest under `EXPLAIN (ANALYZE,
+  BUFFERS)`. It found exactly one missing index — `ledger_entries(userId,
+  amount)`, which turns "every منفّذ's balance" from a sequential scan into an
+  index-only scan with zero heap fetches.
+- `pnpm perf:lcp` drives a real Chromium through a real sign-in on emulated
+  Fast 4G with 4× CPU throttling and reports the median LCP per route. It is
+  run on demand rather than in CI: it needs a built server and a seeded
+  database, and a performance gate that fails on an unrelated machine's load
+  average teaches people to ignore CI.
+
+**Virtualisation, in full.** `useVirtualRows` (threshold 100) covers the
+DataTable, the Kanban column, and — added in Phase 12 — the import dry-run
+preview, which is the one table in the product that can legitimately exceed the
+threshold with no `page` parameter to cap it: the point of a dry run is that the
+operator sees every row before confirming.
+
 ### How this is implemented (settled in Phase 2)
 
 **Tokens live in `src/app/globals.css`, not in a `tailwind.config`.** Tailwind v4
@@ -853,3 +914,21 @@ memory and discarded.
 8. Soft-delete respected by every query (Prisma middleware or explicit filters).
 9. The scheduler holds a Postgres advisory lock so a restart cannot double-charge.
 10. Tests never touch a database whose name doesn't end in `_test`.
+
+**The two documented exceptions to #7, both recorded in Phase 12.** Neither is a
+business value in the sense #7 means — a number whose change alters what
+somebody is paid — and each is named here so it reads as a decision rather than
+an oversight:
+
+- `BACKUP_RETENTION_DAYS` is an env var, because retention is a property of the
+  disk the container is mounted on. A Settings page that let an admin ask for
+  365 nights of dumps on a 20 GB volume would offer a promise the filesystem
+  cannot keep.
+- `SESSION_MAX_AGE_SECONDS` (12 h) is a constant in `lib/auth/edge-config.ts`,
+  because the middleware runs on the Edge runtime and has no database to read
+  Settings from.
+
+Everything else the Phase 12 sweep found was infrastructure — batch sizes, page
+sizes, job timeouts, the `Decimal(12,2)` bounds, the 1–5 quality scale SPEC §5.6
+fixes — and the one genuine survivor, the "due soon" list facet's seven days,
+became `tasks.dueSoonDays`.

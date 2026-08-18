@@ -68,7 +68,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin/prisma ./node_m
 USER nextjs
 EXPOSE 3000
 
+# `--max-redirect=0` is load-bearing. Without it, a middleware change that
+# starts redirecting `/api/health` to `/login` would be followed, return 200
+# from a page that never touches Postgres, and report a healthy container while
+# the database is down. That exact regression existed until Phase 12.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1
+  CMD wget --no-verbose --tries=1 --max-redirect=0 --spider http://127.0.0.1:3000/api/health || exit 1
 
 CMD ["node", "server.js"]

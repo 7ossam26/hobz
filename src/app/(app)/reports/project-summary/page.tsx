@@ -62,9 +62,15 @@ export default async function ProjectSummaryReportPage() {
                   <TableCell>
                     <HealthBadge health={row.health} />
                   </TableCell>
-                  <TableCell className="numeric-latn text-end">{row.totalTasks}</TableCell>
-                  <TableCell className="numeric-latn text-end">{row.completedTasks}</TableCell>
-                  <TableCell className="numeric-latn text-end">{row.overdueTasks}</TableCell>
+                  <TableCell className="numeric-latn text-end">
+                    {row.totalTasks}
+                  </TableCell>
+                  <TableCell className="numeric-latn text-end">
+                    {row.completedTasks}
+                  </TableCell>
+                  <TableCell className="numeric-latn text-end">
+                    {row.overdueTasks}
+                  </TableCell>
                   <TableCell className="numeric-latn text-end" dir="ltr">
                     {row.completionPercent}%
                   </TableCell>

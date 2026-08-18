@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest'
 import { MoneyText } from '@/components/data/money-text'
 import { render, screen } from '@tests/helpers/render'
 
-
 /**
  * `MoneyText` is the only way money reaches a screen in this product, so these
  * are not styling assertions.

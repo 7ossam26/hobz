@@ -15,7 +15,11 @@ const ARABIC_NAME = 'محمد عبد الرحمن'
 describe('buildWorkbook — الاتجاه من اليمين لليسار', () => {
   it('يضبط اتجاه الملف بالكامل من اليمين لليسار', () => {
     const buffer = buildWorkbook([
-      { name: 'ورقة', columns: [{ header: ARABIC_HEADER, width: 20 }], rows: [[ARABIC_NAME]] },
+      {
+        name: 'ورقة',
+        columns: [{ header: ARABIC_HEADER, width: 20 }],
+        rows: [[ARABIC_NAME]],
+      },
     ])
     const workbook = readWorkbook(buffer)
     expect(workbook.Workbook?.Views?.[0]?.RTL).toBe(true)
@@ -25,11 +29,17 @@ describe('buildWorkbook — الاتجاه من اليمين لليسار', () =
 describe('buildWorkbook — جولة كاملة للنص العربي بلا تشويه', () => {
   it('يحافظ على النص العربي حرفيًا بعد الكتابة والقراءة', () => {
     const buffer = buildWorkbook([
-      { name: 'كشف', columns: [{ header: ARABIC_HEADER, width: 20 }], rows: [[ARABIC_NAME]] },
+      {
+        name: 'كشف',
+        columns: [{ header: ARABIC_HEADER, width: 20 }],
+        rows: [[ARABIC_NAME]],
+      },
     ])
     const workbook = readWorkbook(buffer)
     const sheet = workbook.Sheets[workbook.SheetNames[0] as string]
-    const rows = XLSX.utils.sheet_to_json<string[]>(sheet as XLSX.WorkSheet, { header: 1 })
+    const rows = XLSX.utils.sheet_to_json<string[]>(sheet as XLSX.WorkSheet, {
+      header: 1,
+    })
 
     expect(rows[0]).toEqual([ARABIC_HEADER])
     expect(rows[1]).toEqual([ARABIC_NAME])

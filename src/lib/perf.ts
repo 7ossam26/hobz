@@ -23,7 +23,9 @@ export async function timed<T>(label: string, fn: () => Promise<T>): Promise<T> 
   } finally {
     const elapsedMs = performance.now() - startedAt
     if (elapsedMs > SLOW_QUERY_MS) {
-      console.warn(`[perf] ${label} took ${elapsedMs.toFixed(1)}ms (> ${SLOW_QUERY_MS}ms)`)
+      console.warn(
+        `[perf] ${label} took ${elapsedMs.toFixed(1)}ms (> ${SLOW_QUERY_MS}ms)`,
+      )
     }
   }
 }

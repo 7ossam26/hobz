@@ -7,7 +7,10 @@ import { Button } from '@/components/ui/button'
 import { ar } from '@/i18n/ar'
 import { projectStatusHue, taskStatusHue } from '@/lib/palette'
 import { cn } from '@/lib/utils'
-import { getGlobalCalendarEvents, type CalendarEventDto } from '@/modules/calendar/queries'
+import {
+  getGlobalCalendarEvents,
+  type CalendarEventDto,
+} from '@/modules/calendar/queries'
 import { getProjectOptions } from '@/modules/project/queries'
 import { getUserOptions } from '@/modules/user/queries'
 
@@ -37,7 +40,9 @@ function groupByDay(events: CalendarEventDto[]): Map<string, CalendarEventDto[]>
 }
 
 function eventHue(event: CalendarEventDto): ReturnType<typeof taskStatusHue> {
-  return event.type === 'TASK' ? taskStatusHue(event.status) : projectStatusHue(event.status)
+  return event.type === 'TASK'
+    ? taskStatusHue(event.status)
+    : projectStatusHue(event.status)
 }
 
 function fromMonthParam(raw: string | undefined, fallback: Date): Date {
@@ -110,7 +115,10 @@ export default async function GlobalCalendarPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1">
           <Button asChild variant="outline" size="icon-sm">
-            <Link href={hrefFor(addMonthsUtc(reference, -1))} aria-label={ar.common.previous}>
+            <Link
+              href={hrefFor(addMonthsUtc(reference, -1))}
+              aria-label={ar.common.previous}
+            >
               <ChevronRight />
             </Link>
           </Button>
@@ -131,13 +139,18 @@ export default async function GlobalCalendarPage({
       </div>
 
       {calendar.truncated ? (
-        <p className="text-fg-subtle text-xs">{ar.tasks.truncatedNotice.replace('{count}', '1000')}</p>
+        <p className="text-fg-subtle text-xs">
+          {ar.tasks.truncatedNotice.replace('{count}', '1000')}
+        </p>
       ) : null}
 
       <div className="flex flex-col overflow-hidden rounded-lg border">
         <div className="bg-surface-sunken grid grid-cols-7 border-b">
           {ar.weekdaysShort.map((label) => (
-            <div key={label} className="text-fg-muted p-2 text-center text-xs font-medium">
+            <div
+              key={label}
+              className="text-fg-muted p-2 text-center text-xs font-medium"
+            >
               {label}
             </div>
           ))}
@@ -184,7 +197,10 @@ export default async function GlobalCalendarPage({
                     ))}
                     {events.length > MAX_PER_DAY ? (
                       <span className="text-fg-subtle px-1.5 text-[0.6875rem]">
-                        {ar.common.andMore.replace('{count}', String(events.length - MAX_PER_DAY))}
+                        {ar.common.andMore.replace(
+                          '{count}',
+                          String(events.length - MAX_PER_DAY),
+                        )}
                       </span>
                     ) : null}
                   </div>

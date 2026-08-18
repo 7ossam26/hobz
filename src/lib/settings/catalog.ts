@@ -177,6 +177,19 @@ export const SETTINGS_CATALOG = {
 
   // ── Task & project taxonomy ──────────────────────────────────────────────
   'tasks.categories': define('tasks', taxonomyList, [...ar.defaults.taskCategories]),
+  /**
+   * The "مستحقة قريبًا" list facet's horizon (Phase 12's hardcoded-number
+   * sweep). It was `7 * 24 * 60 * 60 * 1000` inside `listTasks`, which is a
+   * business number in a service file and therefore a defect by CLAUDE.md
+   * invariant 4 — however innocuous a saved filter looks.
+   *
+   * Deliberately **not** `notifications.dueSoonHours`. That one decides when a
+   * منفّذ is *paged*, at 24 hours; this one decides what a manager's list shows,
+   * at a week. Collapsing them would make one of the two wrong, and the facet's
+   * Arabic label was changed from "this week" to "soon" so that an operator who
+   * moves this number does not make the label a lie.
+   */
+  'tasks.dueSoonDays': define('tasks', positiveInt, 7),
   'projects.engagementTypes': define('projects', z.array(engagementType).min(1), [
     'FIXED_PRICE',
     'RETAINER',

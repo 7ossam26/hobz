@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { scopeTasks } from '@/lib/rbac'
+import { SETTINGS_CATALOG } from '@/lib/settings'
 import { listTasksSchema } from '@/modules/task/schema'
 import { getDependencyGraph, listTasks } from '@/modules/task/service'
 
@@ -14,12 +15,15 @@ import { actorFor } from '../../helpers/actor-from-db'
 import { advanceDays, cairo } from '../../helpers/time'
 import { testDb } from '../../setup/reset'
 
+/** The facet horizon, from the catalog rather than a literal (docs/TESTING.md §5). */
+const DUE_SOON_DAYS = SETTINGS_CATALOG['tasks.dueSoonDays'].default
+
 const db = testDb()
 const NOW = cairo('2026-03-10T09:00')
 
 /**
  * Phase 5's two additive reads on top of the settled Phase 4 domain:
- * `listTasks`'s `dueThisWeek` facet (mirrors the pre-existing `overdueOnly`
+ * `listTasks`'s `dueSoon` facet (mirrors the pre-existing `overdueOnly`
  * block exactly) and `getDependencyGraph` (the sheet's manage-able
  * dependency list, alongside the unchanged `getDependencyWarnings`).
  */
@@ -32,7 +36,7 @@ async function fixture() {
   return { owner, project, actor }
 }
 
-describe('modules/task/service — listTasks(dueThisWeek)', () => {
+describe('modules/task/service — listTasks(dueSoon)', () => {
   it('يشمل مهمة مستحقة خلال ٧ أيام القادمة وتستبعد ما بعدها', async () => {
     const { project, actor } = await fixture()
 
@@ -47,8 +51,13 @@ describe('modules/task/service — listTasks(dueThisWeek)', () => {
       dueDate: advanceDays(NOW, 30),
     })
 
-    const filters = listTasksSchema.parse({ dueThisWeek: true })
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const filters = listTasksSchema.parse({ dueSoon: true })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
 
     expect(page.items.map((t) => t.id)).toEqual([dueTomorrow.id])
   })
@@ -65,13 +74,18 @@ describe('modules/task/service — listTasks(dueThisWeek)', () => {
       dueDate: advanceDays(NOW, 2),
     })
 
-    const filters = listTasksSchema.parse({ dueThisWeek: true })
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const filters = listTasksSchema.parse({ dueSoon: true })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
 
     expect(page.total).toBe(0)
   })
 
-  it('يستبعد مهمة مضى موعدها بالفعل — dueThisWeek ليس overdueOnly', async () => {
+  it('يستبعد مهمة مضى موعدها بالفعل — dueSoon ليس overdueOnly', async () => {
     const { project, actor } = await fixture()
 
     await createTask(db, {
@@ -80,8 +94,13 @@ describe('modules/task/service — listTasks(dueThisWeek)', () => {
       dueDate: advanceDays(NOW, -1),
     })
 
-    const filters = listTasksSchema.parse({ dueThisWeek: true })
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const filters = listTasksSchema.parse({ dueSoon: true })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
 
     expect(page.total).toBe(0)
   })
@@ -91,7 +110,12 @@ describe('modules/task/service — listTasks(dueThisWeek)', () => {
     await createTask(db, { projectId: project.id, title: 'أي مهمة' })
 
     const filters = listTasksSchema.parse({})
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
 
     expect(page.items[0]?.projectCode).toBe(project.code)
   })

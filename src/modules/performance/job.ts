@@ -66,10 +66,7 @@ export async function runPerformanceRecompute(
       // One unscoreable worker must not stop the rest of the agency from
       // getting a fresh number tonight.
       result.failed += 1
-      console.error(
-        `[${PERFORMANCE_RECOMPUTE_JOB_NAME}] user ${userId} failed`,
-        error,
-      )
+      console.error(`[${PERFORMANCE_RECOMPUTE_JOB_NAME}] user ${userId} failed`, error)
     }
   }
 

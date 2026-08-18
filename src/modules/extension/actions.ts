@@ -9,7 +9,7 @@ import { calendarFor } from '@/lib/calendar'
 import { prisma } from '@/lib/db'
 import { can } from '@/lib/rbac'
 import { getSettings } from '@/lib/settings'
-import { recomputeTaskSchedule } from '@/modules/calendar/job'
+import { recomputeTaskSchedule } from '@/modules/calendar/recompute'
 import {
   notificationExtensionEvents,
   notificationLatenessEvents,

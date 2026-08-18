@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { SETTING_KEYS } from '@/lib/settings'
+import { SETTING_KEYS } from '@/lib/settings/catalog'
 
 /**
  * One Zod schema per input, shared between the server action and the form

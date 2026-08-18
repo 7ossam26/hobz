@@ -46,9 +46,22 @@ test.describe('الأساس: الاتجاه والخط', () => {
     expect(externalRequests).toEqual([])
   })
 
-  test('يستجيب فحص الصحة', async ({ request }) => {
-    const response = await request.get('/api/health')
+  /**
+   * `maxRedirects: 0` is the whole point of this test.
+   *
+   * Until Phase 12 the middleware redirected `/api/health` to `/login`, and a
+   * following client — Playwright's default, and `wget --spider`'s — got a
+   * cheerful 200 from a page that never opens a database connection. The
+   * container therefore reported healthy while Postgres was unreachable, which
+   * is precisely the state the endpoint exists to detect.
+   */
+  test('يستجيب فحص الصحة دون تحويل ودون جلسة', async ({ request }) => {
+    const response = await request.get('/api/health', { maxRedirects: 0 })
+
     expect([200, 503]).toContain(response.status())
+    expect(['ok', 'degraded']).toContain(
+      ((await response.json()) as { status: string }).status,
+    )
   })
 })
 

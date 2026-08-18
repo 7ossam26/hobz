@@ -55,9 +55,7 @@ describe('components/data/user-chip — رابط واتساب', () => {
     const message = 'تذكير: مهمة "تصميم الشعار" تجاوزت موعد التسليم.'
     const href = whatsappHref('+201012345678', message)
 
-    expect(href).toBe(
-      `https://wa.me/201012345678?text=${encodeURIComponent(message)}`,
-    )
+    expect(href).toBe(`https://wa.me/201012345678?text=${encodeURIComponent(message)}`)
     // The encoded form must round-trip back to the exact Arabic sentence —
     // the only property that actually matters to a منفّذ reading the message.
     const [, query] = (href ?? '').split('?text=')

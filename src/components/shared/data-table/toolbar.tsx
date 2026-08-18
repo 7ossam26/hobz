@@ -4,7 +4,12 @@ import { Check, Columns3, ListFilter, Plus, Search, Trash2, X } from 'lucide-rea
 import * as React from 'react'
 
 import { Dot } from '@/components/data/chip'
-import { Popover, PopoverItem, PopoverLabel, PopoverSeparator } from '@/components/shared/popover'
+import {
+  Popover,
+  PopoverItem,
+  PopoverLabel,
+  PopoverSeparator,
+} from '@/components/shared/popover'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ar } from '@/i18n/ar'
@@ -50,7 +55,11 @@ export function DataTableToolbar<Row>({
 
   return (
     <div className="density-gap flex flex-wrap items-center">
-      <SearchBox value={state.search} placeholder={searchPlaceholder} onSearch={onSearch} />
+      <SearchBox
+        value={state.search}
+        placeholder={searchPlaceholder}
+        onSearch={onSearch}
+      />
 
       {facets.map((facet) => (
         <FacetFilter
@@ -145,7 +154,13 @@ function FacetFilter({
     <Popover
       label={facet.label}
       trigger={({ toggle, ...triggerProps }) => (
-        <Button type="button" variant="outline" size="sm" onClick={toggle} {...triggerProps}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={toggle}
+          {...triggerProps}
+        >
           <ListFilter />
           {facet.label}
           {selected.length > 0 ? (
@@ -227,7 +242,9 @@ function ColumnsMenu<Row>({
             aria-checked={visible}
             onClick={() => onToggle(column.id, !visible)}
           >
-            <Check className={cn('size-3.5 shrink-0', visible ? 'opacity-100' : 'opacity-0')} />
+            <Check
+              className={cn('size-3.5 shrink-0', visible ? 'opacity-100' : 'opacity-0')}
+            />
             {column.srHeader ?? column.header}
           </PopoverItem>
         )
@@ -260,10 +277,18 @@ function SavedViewsMenu({
       align="end"
       label={ar.table.savedViews}
       trigger={({ toggle, ...triggerProps }) => (
-        <Button type="button" variant="outline" size="sm" onClick={toggle} {...triggerProps}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={toggle}
+          {...triggerProps}
+        >
           {ar.table.savedViews}
           {views.length > 0 ? (
-            <span className="text-fg-subtle text-[0.6875rem] tabular-nums">{views.length}</span>
+            <span className="text-fg-subtle text-[0.6875rem] tabular-nums">
+              {views.length}
+            </span>
           ) : null}
         </Button>
       )}

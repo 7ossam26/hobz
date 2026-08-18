@@ -71,7 +71,11 @@ export function TaskListWidget({
           <div className="flex min-w-0 flex-col gap-1">
             <span className="truncate text-sm font-medium">{task.title}</span>
             <ProjectMark
-              project={{ id: task.projectId, code: task.projectCode, name: task.projectName }}
+              project={{
+                id: task.projectId,
+                code: task.projectCode,
+                name: task.projectName,
+              }}
               showName
               className="text-fg-subtle"
             />

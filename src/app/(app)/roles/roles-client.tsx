@@ -21,9 +21,17 @@ import {
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { ar } from '@/i18n/ar'
-import { createRoleAction, deleteRoleAction, updateRoleAction } from '@/modules/role/actions'
+import {
+  createRoleAction,
+  deleteRoleAction,
+  updateRoleAction,
+} from '@/modules/role/actions'
 import { createRoleSchema, updateRoleSchema } from '@/modules/role/schema'
-import type { PermissionGroupDto, RoleDetailDto, RoleSummaryDto } from '@/modules/role/types'
+import type {
+  PermissionGroupDto,
+  RoleDetailDto,
+  RoleSummaryDto,
+} from '@/modules/role/types'
 
 /**
  * The role editor.
@@ -178,7 +186,11 @@ export function RolesClient({ roles, groups, canManage, detailsById }: Props) {
       {roles.length === 0 ? (
         <EmptyState
           title={ar.roles.empty}
-          action={canManage ? <Button onClick={openCreate}>{ar.roles.emptyAction}</Button> : undefined}
+          action={
+            canManage ? (
+              <Button onClick={openCreate}>{ar.roles.emptyAction}</Button>
+            ) : undefined
+          }
         />
       ) : (
         <div className="rounded-lg border">
@@ -206,7 +218,10 @@ export function RolesClient({ roles, groups, canManage, detailsById }: Props) {
                       ) : null}
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground font-mono text-xs" dir="ltr">
+                  <TableCell
+                    className="text-muted-foreground font-mono text-xs"
+                    dir="ltr"
+                  >
                     {role.nameEn}
                   </TableCell>
                   <TableCell className="tabular-nums">
@@ -324,7 +339,10 @@ export function RolesClient({ roles, groups, canManage, detailsById }: Props) {
                 const allChecked = keys.every((k) => draft.permissions.has(k))
 
                 return (
-                  <div key={group.domain} className="flex flex-col gap-2 rounded-md border p-3">
+                  <div
+                    key={group.domain}
+                    className="flex flex-col gap-2 rounded-md border p-3"
+                  >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-medium">{group.labelAr}</span>
                       <label className="text-muted-foreground flex items-center gap-1.5 text-xs">

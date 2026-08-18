@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { scopeTasks } from '@/lib/rbac'
+import { SETTINGS_CATALOG } from '@/lib/settings'
 import { listTasksSchema } from '@/modules/task/schema'
 import { listTasks } from '@/modules/task/service'
 import { TASK_STATUSES } from '@/modules/task/state-machine'
@@ -16,6 +17,9 @@ import { setSessionActor } from '../../helpers/session-mock'
 import { cairo } from '../../helpers/time'
 import { testDb } from '../../setup/reset'
 
+/** The facet horizon, from the catalog rather than a literal (docs/TESTING.md §5). */
+const DUE_SOON_DAYS = SETTINGS_CATALOG['tasks.dueSoonDays'].default
+
 vi.mock('@/lib/auth/session', () => import('../../helpers/session-mock'))
 
 const { getTaskBoard, getTaskCalendar } = await import('@/modules/task/queries')
@@ -26,8 +30,8 @@ const NOW = cairo('2026-03-10T09:00')
 /**
  * Phase 5's board and calendar reads (`modules/task/queries.ts`): axis 1
  * (boundaries) and axis 12 (empty/null) of docs/TESTING.md §4, plus the exact
- * boundary `listTasks`'s `dueThisWeek` facet draws. `tests/integration/task/
- * phase5-reads.test.ts` already covers `dueThisWeek`'s ordinary in/out cases
+ * boundary `listTasks`'s `dueSoon` facet draws. `tests/integration/task/
+ * phase5-reads.test.ts` already covers `dueSoon`'s ordinary in/out cases
  * and `getDependencyGraph`; this file adds only the edges that file does not:
  * a project with zero tasks, multi-status bucketing, calendar-range
  * millisecond boundaries, and the RBAC scope proof for these two new
@@ -197,7 +201,7 @@ describe('modules/task/queries — getTaskCalendar', () => {
   })
 })
 
-describe('modules/task/service — listTasks(dueThisWeek) — الحدود الدقيقة', () => {
+describe('modules/task/service — listTasks(dueSoon) — الحدود الدقيقة', () => {
   async function serviceFixture() {
     await seedPermissionCatalog(db)
     const owner = await createUserWithPermissions(db, ['task.view.all'])
@@ -214,8 +218,13 @@ describe('modules/task/service — listTasks(dueThisWeek) — الحدود ال�
       dueDate: NOW,
     })
 
-    const filters = listTasksSchema.parse({ dueThisWeek: true })
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const filters = listTasksSchema.parse({ dueSoon: true })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
 
     expect(page.items.map((t) => t.id)).toEqual([dueNow.id])
   })
@@ -229,8 +238,13 @@ describe('modules/task/service — listTasks(dueThisWeek) — الحدود ال�
       dueDate: sevenDaysOut,
     })
 
-    const filters = listTasksSchema.parse({ dueThisWeek: true })
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const filters = listTasksSchema.parse({ dueSoon: true })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
 
     expect(page.items.map((t) => t.id)).toEqual([atEdge.id])
   })
@@ -244,8 +258,13 @@ describe('modules/task/service — listTasks(dueThisWeek) — الحدود ال�
       dueDate: justPastEdge,
     })
 
-    const filters = listTasksSchema.parse({ dueThisWeek: true })
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const filters = listTasksSchema.parse({ dueSoon: true })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
 
     expect(page.total).toBe(0)
   })
@@ -259,8 +278,13 @@ describe('modules/task/service — listTasks(dueThisWeek) — الحدود ال�
       dueDate: justBeforeNow,
     })
 
-    const filters = listTasksSchema.parse({ dueThisWeek: true })
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const filters = listTasksSchema.parse({ dueSoon: true })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
 
     expect(page.total).toBe(0)
   })

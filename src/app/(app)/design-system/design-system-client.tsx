@@ -9,11 +9,19 @@ import { HealthBadge } from '@/components/data/health-badge'
 import { MoneyText } from '@/components/data/money-text'
 import { PriorityFlag } from '@/components/data/priority-flag'
 import { RelativeTime } from '@/components/data/relative-time'
-import { LedgerTypeChip, ProjectStatusChip, StatusChip } from '@/components/data/status-chip'
+import {
+  LedgerTypeChip,
+  ProjectStatusChip,
+  StatusChip,
+} from '@/components/data/status-chip'
 import { PhoneText, UserChip } from '@/components/data/user-chip'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { DataTable } from '@/components/shared/data-table/data-table'
-import type { ColumnDef, FacetDef, TableState } from '@/components/shared/data-table/types'
+import type {
+  ColumnDef,
+  FacetDef,
+  TableState,
+} from '@/components/shared/data-table/types'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EntitySheet, EntitySheetFooter } from '@/components/shared/entity-sheet'
 import { FormField } from '@/components/shared/form-field'
@@ -156,8 +164,7 @@ export function DesignSystemClient({ tableState }: { tableState: TableState }) {
   const [theme, setTheme] = React.useState<ThemeChoice>('both')
   const [density, setDensity] = React.useState<DensityChoice>('comfortable')
 
-  const themes: Array<'light' | 'dark'> =
-    theme === 'both' ? ['light', 'dark'] : [theme]
+  const themes: Array<'light' | 'dark'> = theme === 'both' ? ['light', 'dark'] : [theme]
   const densities: Array<'comfortable' | 'compact'> =
     density === 'both' ? ['comfortable', 'compact'] : [density]
 
@@ -204,7 +211,10 @@ export function DesignSystemClient({ tableState }: { tableState: TableState }) {
           <section
             key={`${panel.theme}-${panel.density}`}
             data-density={panel.density}
-            className={cn('overflow-hidden rounded-xl border', panel.theme === 'dark' && 'dark')}
+            className={cn(
+              'overflow-hidden rounded-xl border',
+              panel.theme === 'dark' && 'dark',
+            )}
           >
             <div className="bg-background text-foreground flex flex-col gap-8 p-5">
               <p className="text-fg-subtle text-xs font-medium">
@@ -396,7 +406,9 @@ function Gallery({ tableState }: { tableState: TableState }) {
               hueKey={ar.defaults.taskCategories[1]!.id}
               index={1}
             />
-            <ProjectMark project={{ ...SAMPLES.projects[0]!, id: SAMPLES.projects[0]!.code }} />
+            <ProjectMark
+              project={{ ...SAMPLES.projects[0]!, id: SAMPLES.projects[0]!.code }}
+            />
           </Row>
         </div>
       </Section>
@@ -418,10 +430,19 @@ function Gallery({ tableState }: { tableState: TableState }) {
 
       <Section title={sections.forms}>
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField name="value" label={SAMPLES.formLabel} hint={SAMPLES.formHint} required>
+          <FormField
+            name="value"
+            label={SAMPLES.formLabel}
+            hint={SAMPLES.formHint}
+            required
+          >
             {(field) => <Input {...field} defaultValue="1500.00" dir="ltr" />}
           </FormField>
-          <FormField name="value-error" label={SAMPLES.formLabel} error={SAMPLES.formError}>
+          <FormField
+            name="value-error"
+            label={SAMPLES.formLabel}
+            error={SAMPLES.formError}
+          >
             {(field) => <Input {...field} defaultValue="abc" dir="ltr" />}
           </FormField>
           <FormField name="note" label={ar.common.notes}>
@@ -532,7 +553,11 @@ function Gallery({ tableState }: { tableState: TableState }) {
             <StatusChip status="IN_PROGRESS" size="sm" />
             <PriorityFlag priority="HIGH" />
             <UserChip
-              user={{ id: person.username, fullName: person.fullName, phone: person.phone }}
+              user={{
+                id: person.username,
+                fullName: person.fullName,
+                phone: person.phone,
+              }}
               size="sm"
               showWhatsapp={false}
             />

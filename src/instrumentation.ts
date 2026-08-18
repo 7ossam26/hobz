@@ -25,6 +25,7 @@ export async function register(): Promise<void> {
    */
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { startScheduler } = await import('@/lib/scheduler')
+    const { registerBackupJobs } = await import('@/modules/backup/job')
     const { registerCalendarJobs } = await import('@/modules/calendar/job')
     const { registerPayoutJobs } = await import('@/modules/payout/job')
     const { registerPenaltyJobs } = await import('@/modules/penalty/job')
@@ -40,12 +41,16 @@ export async function register(): Promise<void> {
     //             settings.notifications.digestHourCairo)         ← below
     //   Phase 10 — performance.recompute        (04:00 Cairo, after the two
     //             03:00 jobs settle `Task.overdueWorkingDays`)    ← below
+    //   Phase 12 — backup.nightly               (02:00 Cairo, only when
+    //             BACKUP_DIR is set)                              ← below
     //
     // `calendar.recomputeSchedule` and `penalty.recompute` share a time and
     // nothing else: one writes derived columns on `tasks`, the other writes to
     // the append-only ledger. They take *different* advisory-lock keys on
     // purpose, so a slow whole-table scan never delays somebody's deduction and
     // a failing deduction never rolls back the scan.
+    // Ahead of the 03:00 pair on purpose — see `modules/backup/job.ts`.
+    registerBackupJobs()
     registerCalendarJobs()
     registerPayoutJobs()
     registerPenaltyJobs()

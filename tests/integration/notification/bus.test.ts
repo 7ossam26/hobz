@@ -136,7 +136,9 @@ describe('modules/notification/bus — MoneyEventBus', () => {
     })
 
     expect(
-      await db.notification.count({ where: { userId: worker.id, type: 'MONEY_REVERSED' } }),
+      await db.notification.count({
+        where: { userId: worker.id, type: 'MONEY_REVERSED' },
+      }),
     ).toBe(1)
   })
 })
@@ -267,7 +269,9 @@ describe('modules/notification/bus — LatenessEventBus', () => {
     })
 
     expect(
-      await db.notification.count({ where: { userId: owner.id, type: 'TASK_ESCALATED' } }),
+      await db.notification.count({
+        where: { userId: owner.id, type: 'TASK_ESCALATED' },
+      }),
     ).toBe(1)
   })
 
@@ -341,7 +345,9 @@ describe('modules/notification/bus — LatenessEventBus', () => {
     })
 
     expect(
-      await db.notification.count({ where: { userId: assignee.id, type: 'TASK_DUE_SOON' } }),
+      await db.notification.count({
+        where: { userId: assignee.id, type: 'TASK_DUE_SOON' },
+      }),
     ).toBe(1)
   })
 })

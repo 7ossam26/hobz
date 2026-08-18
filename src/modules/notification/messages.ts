@@ -1,7 +1,10 @@
 import { ar } from '@/i18n/ar'
 import { formatDateTime } from '@/lib/datetime'
 import { format as money } from '@/lib/money'
-import type { ExtensionDecidedEvent, ExtensionRequestedEvent } from '@/modules/extension/ports'
+import type {
+  ExtensionDecidedEvent,
+  ExtensionRequestedEvent,
+} from '@/modules/extension/ports'
 import type {
   TaskDueSoonEvent,
   TaskEscalatedEvent,

@@ -44,7 +44,10 @@ describe('modules/notification/digest — تجميع الملخص', () => {
     // nightly `calendar.recomputeSchedule` job is what writes it in
     // production; this test is about the digest reading it, not about that
     // job).
-    const overdue1 = await createTask(db, { projectId: project.id, status: 'IN_PROGRESS' })
+    const overdue1 = await createTask(db, {
+      projectId: project.id,
+      status: 'IN_PROGRESS',
+    })
     const overdue2 = await createTask(db, { projectId: project.id, status: 'ASSIGNED' })
     await db.task.updateMany({
       where: { id: { in: [overdue1.id, overdue2.id] } },
@@ -120,7 +123,10 @@ describe('modules/notification/digest — التسليم', () => {
     await seedPermissionCatalog(db)
     await createUserWithPermissions(db, ['project.view.all'])
 
-    const first = await deliverManagerDigest(db, { now: NOW, healthThresholds: THRESHOLDS })
+    const first = await deliverManagerDigest(db, {
+      now: NOW,
+      healthThresholds: THRESHOLDS,
+    })
     const second = await deliverManagerDigest(db, {
       now: cairo('2026-08-16T18:00'),
       healthThresholds: THRESHOLDS,

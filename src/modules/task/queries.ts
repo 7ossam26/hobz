@@ -42,13 +42,23 @@ async function categories() {
   return getSetting('tasks.categories')
 }
 
+/** The "مستحقة قريبًا" facet's horizon (Settings, never a literal here). */
+async function dueSoonDays() {
+  return getSetting('tasks.dueSoonDays')
+}
+
 export async function getTasks(
   raw: Record<string, unknown> = {},
   now: Date = new Date(),
 ): Promise<TaskPageDto> {
   const actor = await requireActor()
   const filters = listTasksSchema.parse(raw)
-  return listTasks(prisma, { scope: scopeTasks(actor), filters, now })
+  return listTasks(prisma, {
+    scope: scopeTasks(actor),
+    filters,
+    now,
+    dueSoonDays: await dueSoonDays(),
+  })
 }
 
 export async function getTaskById(
@@ -148,7 +158,12 @@ async function scopedTaskSet(
 ): Promise<{ items: TaskSummaryDto[]; truncated: boolean }> {
   const actor = await requireActor()
   const filters = listTasksSchema.parse({ ...raw, page: 1, pageSize: 1000 })
-  const page = await listTasks(prisma, { scope: scopeTasks(actor), filters, now })
+  const page = await listTasks(prisma, {
+    scope: scopeTasks(actor),
+    filters,
+    now,
+    dueSoonDays: await dueSoonDays(),
+  })
   return { items: page.items, truncated: page.total > page.items.length }
 }
 

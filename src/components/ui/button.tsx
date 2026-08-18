@@ -44,6 +44,7 @@ function Button({
   variant = 'default',
   size = 'default',
   asChild = false,
+  type,
   ...props
 }: React.ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
@@ -56,6 +57,18 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
+      /**
+       * `type="button"` unless a caller asks otherwise. HTML's default is
+       * `submit`, so every button in this product that lives inside a form —
+       * "إلغاء" in a dialog, a filter's reset, a row action — was submitting it.
+       * The four buttons that genuinely submit say `type="submit"` explicitly
+       * (`login-form`, `change-password-form`, `audit-filters`, the saved-view
+       * toolbar), so making the default explicit changes none of them.
+       *
+       * `asChild` is left alone: `Slot` renders a `<Link>` or similar, and a
+       * `type` attribute on an anchor is meaningless markup.
+       */
+      {...(asChild ? {} : { type: type ?? 'button' })}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />

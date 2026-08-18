@@ -84,7 +84,12 @@ export function AuditFilters({ facets }: { facets: AuditFacetsDto }) {
 
       <FormField name="from" label={ar.audit.dateFrom}>
         {(field) => (
-          <Input {...field} type="date" defaultValue={params.get('from') ?? ''} dir="ltr" />
+          <Input
+            {...field}
+            type="date"
+            defaultValue={params.get('from') ?? ''}
+            dir="ltr"
+          />
         )}
       </FormField>
 

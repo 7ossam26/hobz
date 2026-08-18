@@ -2,7 +2,6 @@
 import * as React from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-
 import { EntitySheet, EntitySheetFooter } from '@/components/shared/entity-sheet'
 import { ar } from '@/i18n/ar'
 import { fireEvent, render, screen } from '@tests/helpers/render'
@@ -45,7 +44,11 @@ function Harness(props: Partial<React.ComponentProps<typeof EntitySheet>> = {}) 
 describe('EntitySheet', () => {
   it('لا يرسم شيئًا وهو مغلق', () => {
     render(
-      <EntitySheet open={false} onClose={vi.fn()} title={ar.designSystem.samples.sheetTitle}>
+      <EntitySheet
+        open={false}
+        onClose={vi.fn()}
+        title={ar.designSystem.samples.sheetTitle}
+      >
         <p>{ar.designSystem.samples.sheetBody}</p>
       </EntitySheet>,
     )
@@ -57,8 +60,9 @@ describe('EntitySheet', () => {
     const dialog = screen.getByRole('dialog')
 
     expect(dialog).toHaveAttribute('aria-modal', 'true')
-    expect(screen.getByRole('heading', { name: ar.designSystem.samples.sheetTitle }))
-      .toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: ar.designSystem.samples.sheetTitle }),
+    ).toBeInTheDocument()
   })
 
   it('يُبقي الصفحة خلفه ظاهرة — لا انتقال بعيدًا', () => {
@@ -104,7 +108,9 @@ describe('EntitySheet', () => {
 
     const focusable = screen
       .getByRole('dialog')
-      .querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled])')
+      .querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled])',
+      )
     expect(document.activeElement).toBe(focusable[0])
   })
 
@@ -116,7 +122,9 @@ describe('EntitySheet', () => {
 
   it('الخلفية مخفية عن قارئ الشاشة فلا يوجد زرّا إغلاق باسم واحد', () => {
     const { container } = render(<Harness />)
-    expect(container.querySelector('[data-slot="sheet-overlay"]')).toHaveAttribute('aria-hidden')
+    expect(container.querySelector('[data-slot="sheet-overlay"]')).toHaveAttribute(
+      'aria-hidden',
+    )
     expect(screen.getAllByRole('button', { name: ar.common.close })).toHaveLength(1)
   })
 
@@ -168,13 +176,17 @@ describe('EntitySheet', () => {
           {
             id: 'details',
             label: tabs.details,
-            content: <p data-testid="panel-details">{ar.designSystem.samples.sheetBody}</p>,
+            content: (
+              <p data-testid="panel-details">{ar.designSystem.samples.sheetBody}</p>
+            ),
           },
           {
             id: 'comments',
             label: tabs.comments,
             count: 3,
-            content: <p data-testid="panel-comments">{ar.designSystem.samples.paragraph}</p>,
+            content: (
+              <p data-testid="panel-comments">{ar.designSystem.samples.paragraph}</p>
+            ),
           },
         ]}
       />,

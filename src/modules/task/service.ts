@@ -238,6 +238,9 @@ const nowOf = (args: TaskMutationArgs): Date => args.now ?? new Date()
  */
 const ALIVE = { deletedAt: null, project: { deletedAt: null } } as const
 
+/** Wall-clock, not working time: a saved filter's horizon is calendar days. */
+const DAY_MS = 24 * 60 * 60 * 1000
+
 async function loadTask(db: Db, id: string) {
   const task = await db.task.findFirst({
     where: { id, ...ALIVE },
@@ -351,6 +354,8 @@ export interface ListTasksArgs {
   scope: WhereFragment
   filters: ListTasksInput
   now: Date
+  /** Settings `tasks.dueSoonDays` — the "مستحقة قريبًا" facet's horizon. */
+  dueSoonDays: number
 }
 
 export async function listTasks(db: Db, args: ListTasksArgs): Promise<TaskPageDto> {
@@ -375,10 +380,15 @@ export async function listTasks(db: Db, args: ListTasksArgs): Promise<TaskPageDt
   // Phase 5 list facet. Mirrors `overdueOnly` exactly: a delivered task's due
   // date no longer describes work still owed, so it is excluded here for the
   // same reason `isOverdue` excludes it above.
-  if (filters.dueThisWeek) {
-    const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+  //
+  // The horizon is `tasks.dueSoonDays`, injected by the caller. It was a
+  // hardcoded seven days until Phase 12's sweep — a business number in a
+  // service file, which CLAUDE.md invariant 4 calls a defect whatever it
+  // governs.
+  if (filters.dueSoon) {
+    const horizon = new Date(now.getTime() + args.dueSoonDays * DAY_MS)
     conditions.push({
-      dueDate: { gte: now, lte: weekFromNow },
+      dueDate: { gte: now, lte: horizon },
       status: { notIn: [...DELIVERED_STATUSES] },
     })
   }

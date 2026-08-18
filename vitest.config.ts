@@ -111,6 +111,11 @@ export default defineConfig({
       // framework was configured.
       include: [
         'src/lib/money.ts',
+        // Phase 12 — the display half of `lib/money`, split out to keep
+        // decimal.js out of the browser bundle. Same 90% gate as the
+        // arithmetic: a mis-rendered deduction is the failure this product
+        // exists to abolish, and it looks exactly like a correct one.
+        'src/lib/money-format.ts',
         'src/lib/settings/**/*.ts',
         'src/lib/rbac/**/*.ts',
         'src/lib/audit.ts',
@@ -231,6 +236,12 @@ export default defineConfig({
         statements: 70,
         // Financial and access-control code carries the 90% gate.
         'src/lib/money.ts': {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        'src/lib/money-format.ts': {
           lines: 90,
           functions: 90,
           branches: 90,

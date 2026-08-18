@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { MONEY_MAX } from '@/lib/money'
+import { MONEY_MAX_NUMBER } from '@/lib/money-format'
 import { moneyMagnitudeSchema } from '@/modules/ledger/schema'
 
 import { PENALTY_MODES } from './mode'
@@ -70,7 +70,7 @@ const profileValue = z
   .trim()
   .regex(/^\d{1,10}(\.\d{1,2})?$/, 'money')
   .refine((value) => Number(value) >= 0, 'nonNegative')
-  .refine((value) => Number(value) <= MONEY_MAX.toNumber(), 'range')
+  .refine((value) => Number(value) <= MONEY_MAX_NUMBER, 'range')
 
 export const penaltyProfileSchema = z.object({
   name: z.string().trim().min(2).max(60),

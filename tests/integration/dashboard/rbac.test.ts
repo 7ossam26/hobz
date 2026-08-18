@@ -16,9 +16,8 @@ import { testDb } from '../../setup/reset'
 
 vi.mock('@/lib/auth/session', () => import('../../helpers/session-mock'))
 
-const { getManagerDashboard, getWorkerDashboard, isManagerAudience } = await import(
-  '@/modules/dashboard/queries'
-)
+const { getManagerDashboard, getWorkerDashboard, isManagerAudience } =
+  await import('@/modules/dashboard/queries')
 
 const db = testDb()
 const NOW = cairo('2026-03-15T12:00')
@@ -52,7 +51,10 @@ describe('isManagerAudience', () => {
 describe('getManagerDashboard — المهام المتأخرة ونطاق الرؤية', () => {
   it('يرى مدير يملك task.view.all كل المهام المتأخرة عبر كل المشاريع', async () => {
     await seedPermissionCatalog(db)
-    const manager = await createUserWithPermissions(db, ['task.view.all', 'project.view.all'])
+    const manager = await createUserWithPermissions(db, [
+      'task.view.all',
+      'project.view.all',
+    ])
     const worker = await createUser(db)
     const project = await createProject(db, { ownerId: manager.id })
     await createTask(db, {

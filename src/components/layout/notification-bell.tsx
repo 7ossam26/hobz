@@ -95,7 +95,7 @@ export function NotificationBell({
             type="button"
             disabled={pending}
             onClick={markAllRead}
-            className="text-accent-solid hover:underline disabled:pointer-events-none disabled:opacity-50 text-xs font-medium"
+            className="text-accent-solid text-xs font-medium hover:underline disabled:pointer-events-none disabled:opacity-50"
           >
             {ar.notifications.markAllRead}
           </button>
@@ -114,7 +114,11 @@ export function NotificationBell({
         <ul className="max-h-96 overflow-y-auto py-1" role="list">
           {notifications.map((n) => (
             <li key={n.id}>
-              <NotificationRow notification={n} pending={pending} onMarkRead={markOneRead} />
+              <NotificationRow
+                notification={n}
+                pending={pending}
+                onMarkRead={markOneRead}
+              />
             </li>
           ))}
         </ul>

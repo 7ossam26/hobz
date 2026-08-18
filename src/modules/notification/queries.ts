@@ -23,7 +23,9 @@ export async function getMyUnreadCount(): Promise<number> {
   return getUnreadCount(prisma, actor.id)
 }
 
-export async function getMyNotificationPreferences(): Promise<NotificationPreferenceDto[]> {
+export async function getMyNotificationPreferences(): Promise<
+  NotificationPreferenceDto[]
+> {
   const actor = await requireActor()
   return listPreferences(prisma, actor.id)
 }

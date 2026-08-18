@@ -1,6 +1,10 @@
 import * as React from 'react'
 
-import { format, isNegative, isZero, type MoneyInput } from '@/lib/money'
+// `lib/money-format`, not `lib/money`: this component renders inside client
+// components, and `lib/money` would drag decimal.js (12.5 KB gzip) into every
+// route's browser bundle to do arithmetic no browser performs. Same formatter
+// either way — `lib/money` re-exports it.
+import { formatMoney, moneySign, type MoneyDisplayValue } from '@/lib/money-format'
 import { cn } from '@/lib/utils'
 
 /**
@@ -32,7 +36,7 @@ export function MoneyText({
   className,
   ...props
 }: Omit<React.ComponentProps<'span'>, 'children'> & {
-  value: MoneyInput
+  value: MoneyDisplayValue
   /** Append ج.م. Use once per group, not on every row. */
   withCurrency?: boolean
   /** Render a leading `+` for credits. Implied by `tone="ledger"`. */
@@ -41,10 +45,12 @@ export function MoneyText({
   tone?: 'plain' | 'ledger'
 }) {
   const showSign = signed || tone === 'ledger'
-  const text = format(value, { withCurrency, signDisplay: showSign })
+  const text = formatMoney(value, { withCurrency, signDisplay: showSign })
 
-  const hue =
-    tone === 'ledger' && !isZero(value) ? (isNegative(value) ? 'red' : 'emerald') : undefined
+  // One sign read, not three: `moneySign` normalises once, so `-0.00` is zero
+  // here for exactly the same reason it is zero in the ledger.
+  const sign = tone === 'ledger' ? moneySign(value) : 0
+  const hue = sign === 0 ? undefined : sign < 0 ? 'red' : 'emerald'
 
   return (
     <span

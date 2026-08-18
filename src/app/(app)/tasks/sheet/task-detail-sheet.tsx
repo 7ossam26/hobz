@@ -14,6 +14,7 @@ import { TaskActivityTab } from './task-activity-tab'
 import { TaskCommentsTab } from './task-comments-tab'
 import { TaskDependenciesTab } from './task-dependencies-tab'
 import { TaskDetailsTab } from './task-details-tab'
+import { TaskExtensionsTab } from './task-extensions-tab'
 import { TaskPenaltyTab } from './task-penalty-tab'
 import { TaskStatusControl } from './task-status-control'
 
@@ -31,6 +32,7 @@ export function TaskDetailSheet({
   userOptions,
   categories,
   permissions,
+  currentUserId,
   onMutated,
 }: {
   open: boolean
@@ -40,6 +42,7 @@ export function TaskDetailSheet({
   userOptions: UserOptionDto[]
   categories: readonly TaxonomyEntry[]
   permissions: TaskPermissions
+  currentUserId: string
   onMutated: () => void
 }) {
   const task = data?.task ?? null
@@ -107,6 +110,28 @@ export function TaskDetailSheet({
               taskId={task.id}
               panel={data?.penalty ?? null}
               permissions={permissions}
+              onMutated={onMutated}
+            />
+          ),
+        },
+        {
+          /**
+           * SPEC §5.3's تمديد. Next to الخصم on purpose — an extension is the
+           * one thing that moves the line a deduction is measured against, and
+           * the two questions ("why was I docked?" / "can I have more time?")
+           * are asked in the same breath.
+           */
+          id: 'extensions',
+          label: ar.tasks.detail.tabs.extensions,
+          ...(data && data.extensions.some((entry) => entry.status === 'PENDING')
+            ? { count: data.extensions.filter((e) => e.status === 'PENDING').length }
+            : {}),
+          content: (
+            <TaskExtensionsTab
+              task={task}
+              extensions={data?.extensions ?? []}
+              permissions={permissions}
+              currentUserId={currentUserId}
               onMutated={onMutated}
             />
           ),

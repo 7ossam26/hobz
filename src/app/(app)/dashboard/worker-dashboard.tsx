@@ -21,8 +21,15 @@ export async function WorkerDashboard() {
           <TaskListWidget tasks={data.dueNext} emptyLabel={w.dueNextEmpty} />
         </DashboardCard>
 
-        <DashboardCard title={w.activeTasks} total={data.activeTasks.total} viewAllHref="/tasks">
-          <TaskListWidget tasks={data.activeTasks.items} emptyLabel={w.activeTasksEmpty} />
+        <DashboardCard
+          title={w.activeTasks}
+          total={data.activeTasks.total}
+          viewAllHref="/tasks"
+        >
+          <TaskListWidget
+            tasks={data.activeTasks.items}
+            emptyLabel={w.activeTasksEmpty}
+          />
         </DashboardCard>
       </section>
 
@@ -43,7 +50,10 @@ export async function WorkerDashboard() {
           total={data.awaitingReview.total}
           viewAllHref="/tasks"
         >
-          <TaskListWidget tasks={data.awaitingReview.items} emptyLabel={ar.common.noResults} />
+          <TaskListWidget
+            tasks={data.awaitingReview.items}
+            emptyLabel={ar.common.noResults}
+          />
         </DashboardCard>
 
         <Card>

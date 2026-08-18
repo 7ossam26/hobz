@@ -69,7 +69,10 @@ export async function projectOwnerId(db: Db, projectId: string): Promise<string 
 
 /** Every watcher on a task (SPEC §8: watchers "are notified about it"). */
 export async function taskWatcherIds(db: Db, taskId: string): Promise<string[]> {
-  const rows = await db.taskWatcher.findMany({ where: { taskId }, select: { userId: true } })
+  const rows = await db.taskWatcher.findMany({
+    where: { taskId },
+    select: { userId: true },
+  })
   return rows.map((r) => r.userId)
 }
 

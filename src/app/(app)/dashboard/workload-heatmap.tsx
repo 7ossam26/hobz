@@ -20,7 +20,11 @@ import type { WorkerWorkloadDto } from '@/modules/workload/queries'
  */
 export function WorkloadHeatmap({ workers }: { workers: WorkerWorkloadDto[] }) {
   if (workers.length === 0) {
-    return <p className="text-muted-foreground text-sm">{ar.dashboard.manager.workloadEmpty}</p>
+    return (
+      <p className="text-muted-foreground text-sm">
+        {ar.dashboard.manager.workloadEmpty}
+      </p>
+    )
   }
 
   return (
@@ -28,7 +32,10 @@ export function WorkloadHeatmap({ workers }: { workers: WorkerWorkloadDto[] }) {
       {workers.map((worker) => (
         <li key={worker.userId} className="flex items-center gap-3">
           <span className="w-32 shrink-0 truncate text-sm">{worker.fullName}</span>
-          <CapacityBar utilisationPercent={worker.utilisationPercent} className="flex-1" />
+          <CapacityBar
+            utilisationPercent={worker.utilisationPercent}
+            className="flex-1"
+          />
         </li>
       ))}
     </ul>

@@ -7,7 +7,11 @@ import { Breadcrumb } from '@/components/layout/breadcrumb'
 import { PreferencesProvider } from '@/components/layout/preferences-provider'
 import { ar } from '@/i18n/ar'
 import { NAV_ITEMS, type NavItem } from '@/lib/navigation'
-import { DEFAULT_PREFERENCES, SIDEBAR_COOKIE, type ShellPreferences } from '@/lib/preferences'
+import {
+  DEFAULT_PREFERENCES,
+  SIDEBAR_COOKIE,
+  type ShellPreferences,
+} from '@/lib/preferences'
 import { fireEvent, render, screen, within } from '@tests/helpers/render'
 
 /**
@@ -93,7 +97,9 @@ describe('اتجاه الواجهة', () => {
 
     const offenders = Array.from(container.querySelectorAll<HTMLElement>('[class]'))
       .map((element) => element.className)
-      .filter((className) => typeof className === 'string' && PHYSICAL_CLASS.test(className))
+      .filter(
+        (className) => typeof className === 'string' && PHYSICAL_CLASS.test(className),
+      )
 
     expect(offenders).toEqual([])
   })
@@ -145,7 +151,9 @@ describe('AppSidebar', () => {
   it('عند الطيّ تبقى الأسماء متاحة لقارئ الشاشة وللتلميح', () => {
     // Icon-only is a *visual* collapse. Hiding the name from assistive
     // technology would make the sidebar unusable rather than narrow.
-    const sidebar = within(renderShell({ sidebar: 'collapsed' }).container.querySelector('aside')!)
+    const sidebar = within(
+      renderShell({ sidebar: 'collapsed' }).container.querySelector('aside')!,
+    )
 
     const link = sidebar.getByRole('link', { name: ar.nav.users })
     expect(link).toHaveAttribute('title', ar.nav.users)
@@ -160,9 +168,10 @@ describe('AppSidebar', () => {
 
     fireEvent.click(toggle)
 
-    expect(
-      screen.getByRole('button', { name: ar.shell.expandSidebar }),
-    ).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: ar.shell.expandSidebar })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
     expect(document.cookie).toContain(`${SIDEBAR_COOKIE}=collapsed`)
   })
 

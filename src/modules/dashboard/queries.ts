@@ -107,7 +107,9 @@ async function monthDeductionsTotal(now: Date): Promise<MonthDeductionsDto> {
  * renders one fewer card, never a forbidden error on the one route every
  * signed-in user lands on after login.
  */
-export async function getManagerDashboard(now: Date = new Date()): Promise<ManagerDashboardDto> {
+export async function getManagerDashboard(
+  now: Date = new Date(),
+): Promise<ManagerDashboardDto> {
   const actor = await requireActor()
 
   const [overdueTasks, projectsAtRisk, awaitingApproval] = await Promise.all([
@@ -119,12 +121,20 @@ export async function getManagerDashboard(now: Date = new Date()): Promise<Manag
       return { total: page.total, items: page.items }
     }),
     timed('dashboard.manager.projectsAtRisk', async () => {
-      const page = await getProjects({ health: ['RED'], pageSize: WIDGET_PREVIEW_SIZE }, now)
+      const page = await getProjects(
+        { health: ['RED'], pageSize: WIDGET_PREVIEW_SIZE },
+        now,
+      )
       return { total: page.total, items: page.items }
     }),
     timed('dashboard.manager.awaitingApproval', async () => {
       const page = await getTasks(
-        { status: ['IN_REVIEW'], sort: 'dueDate', dir: 'asc', pageSize: WIDGET_PREVIEW_SIZE },
+        {
+          status: ['IN_REVIEW'],
+          sort: 'dueDate',
+          dir: 'asc',
+          pageSize: WIDGET_PREVIEW_SIZE,
+        },
         now,
       )
       return { total: page.total, items: page.items }
@@ -143,11 +153,22 @@ export async function getManagerDashboard(now: Date = new Date()): Promise<Manag
       : Promise.resolve(null),
   ])
 
-  return { overdueTasks, projectsAtRisk, awaitingApproval, workload, pendingPayouts, monthDeductions }
+  return {
+    overdueTasks,
+    projectsAtRisk,
+    awaitingApproval,
+    workload,
+    pendingPayouts,
+    monthDeductions,
+  }
 }
 
 /** Ball is in the منفّذ's court — nobody else can move this task forward. */
-const AWAITING_SUBMISSION_STATUSES = ['ASSIGNED', 'IN_PROGRESS', 'REVISION_REQUESTED'] as const
+const AWAITING_SUBMISSION_STATUSES = [
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'REVISION_REQUESTED',
+] as const
 /** Delivered — waiting on a reviewer, not on the منفّذ. */
 const AWAITING_REVIEW_STATUSES = ['SUBMITTED', 'IN_REVIEW'] as const
 
@@ -163,7 +184,9 @@ export interface WorkerDashboardDto {
  * Deliberately carries no money — SPEC §2's B6-vs-J3 decision, restated by the
  * phase brief itself: earnings live on `مستحقاتي` and nowhere else.
  */
-export async function getWorkerDashboard(now: Date = new Date()): Promise<WorkerDashboardDto> {
+export async function getWorkerDashboard(
+  now: Date = new Date(),
+): Promise<WorkerDashboardDto> {
   const actor = await requireActor()
   const mine = { assigneeId: [actor.id] }
 
@@ -191,14 +214,22 @@ export async function getWorkerDashboard(now: Date = new Date()): Promise<Worker
       }),
       timed('dashboard.worker.awaitingMySubmission', async () => {
         const page = await getTasks(
-          { ...mine, status: [...AWAITING_SUBMISSION_STATUSES], pageSize: WIDGET_PREVIEW_SIZE },
+          {
+            ...mine,
+            status: [...AWAITING_SUBMISSION_STATUSES],
+            pageSize: WIDGET_PREVIEW_SIZE,
+          },
           now,
         )
         return { total: page.total, items: page.items }
       }),
       timed('dashboard.worker.awaitingReview', async () => {
         const page = await getTasks(
-          { ...mine, status: [...AWAITING_REVIEW_STATUSES], pageSize: WIDGET_PREVIEW_SIZE },
+          {
+            ...mine,
+            status: [...AWAITING_REVIEW_STATUSES],
+            pageSize: WIDGET_PREVIEW_SIZE,
+          },
           now,
         )
         return { total: page.total, items: page.items }

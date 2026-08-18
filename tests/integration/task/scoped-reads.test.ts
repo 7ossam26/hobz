@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { NotFoundError } from '@/lib/errors'
 import { scopeTasks } from '@/lib/rbac'
+import { SETTINGS_CATALOG } from '@/lib/settings'
 import { listTasksSchema } from '@/modules/task/schema'
 import { getTask, listTasks } from '@/modules/task/service'
 
@@ -14,6 +15,9 @@ import {
 import { actorFor } from '../../helpers/actor-from-db'
 import { cairo } from '../../helpers/time'
 import { testDb } from '../../setup/reset'
+
+/** The facet horizon, from the catalog rather than a literal (docs/TESTING.md §5). */
+const DUE_SOON_DAYS = SETTINGS_CATALOG['tasks.dueSoonDays'].default
 
 const db = testDb()
 const NOW = cairo('2026-03-10T09:00')
@@ -58,7 +62,12 @@ describe('modules/task — نطاق القراءة (SPEC §6)', () => {
     const { owner } = await fixture()
     const actor = await actorFor(db, owner.id)
 
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
     expect(page.total).toBe(3)
   })
 
@@ -66,7 +75,12 @@ describe('modules/task — نطاق القراءة (SPEC §6)', () => {
     const { assignee, mine } = await fixture()
     const actor = await actorFor(db, assignee.id)
 
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
     expect(page.items.map((t) => t.id)).toEqual([mine.id])
   })
 
@@ -74,7 +88,12 @@ describe('modules/task — نطاق القراءة (SPEC §6)', () => {
     const { watcher, watched } = await fixture()
     const actor = await actorFor(db, watcher.id)
 
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
     expect(page.items.map((t) => t.id)).toEqual([watched.id])
   })
 
@@ -82,7 +101,12 @@ describe('modules/task — نطاق القراءة (SPEC §6)', () => {
     const { stranger } = await fixture()
     const actor = await actorFor(db, stranger.id)
 
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
     expect(page.total).toBe(0)
   })
 
@@ -90,7 +114,12 @@ describe('modules/task — نطاق القراءة (SPEC §6)', () => {
     const { nobody } = await fixture()
     const actor = await actorFor(db, nobody.id)
 
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
     expect(page.total).toBe(0)
   })
 
@@ -126,7 +155,12 @@ describe('modules/task — نطاق القراءة (SPEC §6)', () => {
       data: { deletedAt: new Date() },
     })
 
-    const page = await listTasks(db, { scope: scopeTasks(actor), filters, now: NOW })
+    const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope: scopeTasks(actor),
+      filters,
+      now: NOW,
+    })
     expect(page.total).toBe(0)
 
     await expect(
@@ -145,6 +179,7 @@ describe('modules/task — الترشيح والبحث', () => {
     const actor = await actorFor(db, owner.id)
 
     const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
       scope: scopeTasks(actor),
       filters: listTasksSchema.parse({ search: 'احمد' }),
       now: NOW,
@@ -176,6 +211,7 @@ describe('modules/task — الترشيح والبحث', () => {
     const actor = await actorFor(db, owner.id)
 
     const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
       scope: scopeTasks(actor),
       filters: listTasksSchema.parse({ overdueOnly: true }),
       now: NOW,
@@ -215,6 +251,7 @@ describe('modules/task — الترشيح والبحث', () => {
     const actor = await actorFor(db, owner.id)
 
     const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
       scope: scopeTasks(actor),
       filters: listTasksSchema.parse({
         status: ['IN_PROGRESS'],
@@ -238,6 +275,7 @@ describe('modules/task — الترشيح والبحث', () => {
     const actor = await actorFor(db, owner.id)
 
     const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
       scope: scopeTasks(actor),
       filters: listTasksSchema.parse({ page: 2, pageSize: 2 }),
       now: NOW,

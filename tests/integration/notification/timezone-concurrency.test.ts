@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { addCairoDays, cairoDateKey, createCalendar } from '@/lib/calendar'
 import { SETTINGS_CATALOG } from '@/lib/settings'
-import { recomputeTaskSchedule } from '@/modules/calendar/job'
+import { recomputeTaskSchedule } from '@/modules/calendar/recompute'
 import type { EscalationThresholds } from '@/modules/lateness/escalation'
 import type { LatenessDomainEvent, LatenessEventBus } from '@/modules/lateness/ports'
 import { deliverManagerDigest } from '@/modules/notification/digest'

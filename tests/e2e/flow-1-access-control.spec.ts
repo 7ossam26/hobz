@@ -1,8 +1,9 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 import { ar } from '../../src/i18n/ar'
 
 import { E2E_ADMIN } from './global-setup'
+import { pageAlert, signIn, signOut } from './helpers'
 
 /**
  * docs/TESTING.md §6, flow #1:
@@ -29,22 +30,6 @@ const MEMBER = {
   // Required: the default pay type is PER_TASK, and a per-task worker with no
   // rate would have nothing to earn on approval in Phase 7.
   taskRate: '500.00',
-}
-
-/**
- * The app's own error banners, which are `<p role="alert">`.
- *
- * A bare `getByRole('alert')` also matches Next's `__next-route-announcer__`
- * div, which is always in the DOM and always empty — so it fails strict mode
- * on every assertion rather than on a real problem.
- */
-const pageAlert = (page: Page) => page.locator('p[role="alert"]')
-
-async function signIn(page: Page, username: string, password: string) {
-  await page.goto('/login')
-  await page.getByLabel(ar.auth.username).fill(username)
-  await page.getByLabel(ar.auth.password).fill(password)
-  await page.getByRole('button', { name: ar.auth.signIn }).click()
 }
 
 test('تدفّق ١: إنشاء دور ومستخدم ثم رؤية التنقّل المسموح فقط', async ({ page }) => {
@@ -117,8 +102,7 @@ test('تدفّق ١: إنشاء دور ومستخدم ثم رؤية التنقّ
   await expect(page.getByText('+20 10 1234 5678')).toBeVisible()
 
   // ── The new user signs in ───────────────────────────────────────────────
-  await page.getByRole('button', { name: ar.auth.signOut }).click()
-  await expect(page).toHaveURL(/\/login/)
+  await signOut(page)
 
   await signIn(page, MEMBER.username, MEMBER.password)
 

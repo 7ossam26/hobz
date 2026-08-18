@@ -2,7 +2,7 @@ import { RelativeTime } from '@/components/data/relative-time'
 import { Avatar } from '@/components/data/user-chip'
 import { ar } from '@/i18n/ar'
 import { formatDate } from '@/lib/datetime'
-import { format as formatMoney } from '@/lib/money'
+import { formatMoney } from '@/lib/money-format'
 import type { TaskActivityDto, TaskActivityKind } from '@/modules/task/types'
 import type { UserOptionDto } from '@/modules/user/queries'
 

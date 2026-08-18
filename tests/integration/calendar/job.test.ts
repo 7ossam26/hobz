@@ -2,11 +2,11 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { clearJobs, registerJob, runJob, withAdvisoryLock } from '@/lib/scheduler'
 import { SETTINGS_CATALOG } from '@/lib/settings'
+import { scheduleRecomputeJob } from '@/modules/calendar/job'
 import {
   runScheduleRecompute,
-  scheduleRecomputeJob,
   SCHEDULE_RECOMPUTE_JOB_NAME,
-} from '@/modules/calendar/job'
+} from '@/modules/calendar/recompute'
 import type { LatenessEventBus } from '@/modules/lateness/ports'
 import { computeProjectHealth, taskHealthSignals } from '@/modules/project/health'
 

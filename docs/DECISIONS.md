@@ -2207,12 +2207,12 @@ pins its grace on the project instead — with a comment saying why.
   delivered and not yet late.
 - **`recipients.ts`'s "manager" is a decision made on your behalf, flagged per
   CLAUDE.md.** Neither SPEC §8 nor the permission catalog names a manager
-  role. The digest and ADMIN-level escalation read "manager" as *whoever holds
-  `project.view.all`* — the one permission that means "sees the whole
+  role. The digest and ADMIN-level escalation read "manager" as _whoever holds
+  `project.view.all`_ — the one permission that means "sees the whole
   agency's work" — because SUPER_ADMIN holds it implicitly and a query for
   "who holds this permission" has to account for that the same way
   `lib/rbac.can()` already does. PM-level escalation, task-submitted and
-  extension-requested notifications go to the *project owner* instead — the
+  extension-requested notifications go to the _project owner_ instead — the
   narrower, per-project answer. Override in `docs/SPEC.md` §8 if the agency
   wants a role-based definition.
 - **The daily digest is one summary, computed once, delivered once per
@@ -2248,7 +2248,7 @@ pins its grace on the project instead — with a comment saying why.
 
 ### Decisions worth recording
 
-**A missing Settings *page* is not this phase's gap to close.** SPEC §8 says
+**A missing Settings _page_ is not this phase's gap to close.** SPEC §8 says
 WhatsApp templates are "configurable in Settings," and they are — every
 catalog key added here goes through the existing generic
 `modules/setting/actions.ts` write path unmodified. There is still no `/settings`
@@ -2296,7 +2296,7 @@ by breaking three pre-existing assertions.** `tests/integration/calendar/
 job.test.ts` asserted `bus.events` by exact array equality against
 `TaskEscalated` alone. A task recomputed for the first time after going
 overdue crosses two thresholds in the same sweep — `overdueWorkingDays` 0 →
-`PM_AFTER` *and* that figure already past the PM threshold — so `TaskOverdue`
+`PM_AFTER` _and_ that figure already past the PM threshold — so `TaskOverdue`
 and `TaskEscalated` now legitimately fire together on that one run. Fixed by
 updating the three assertions to the correct, larger event set (never by
 loosening `toHaveLength` into `toBeGreaterThan`) — the failures were the
@@ -2311,7 +2311,7 @@ triggering call, on its own read, and cannot join back to `tasks` to ask. Added
 
 **The edge-case sweep (two parallel subagents, timezone/concurrency and
 permission/soft-delete/empty) found one real defect: `recipients.ts.
-projectOwnerId` filtered the *project's* `deletedAt`, never the owner user
+projectOwnerId` filtered the _project's_ `deletedAt`, never the owner user
 row's own `deletedAt`/`isActive`.** A project whose owner had since left the
 agency kept receiving every new submission/extension/escalation targeting
 their old project, indefinitely — `managerIds` (via `usersWithPermission`)
@@ -2324,7 +2324,7 @@ relation nobody thought to re-check).
 **Both sweep agents also independently reproduced an intermittent,
 pre-existing flake** — random FK-constraint violations and "no record found"
 errors in ordinary factory calls, only ever surfacing when several test
-*files* ran together, never within one file alone. Root cause, found on
+_files_ ran together, never within one file alone. Root cause, found on
 request after the sweep flagged it rather than fixing it:
 `vitest.config.ts`'s integration project set `pool: 'forks'` +
 `poolOptions.forks.singleFork: true`, on the comment "a single fork
@@ -2332,7 +2332,7 @@ serialises the whole integration project" — true of the OS process count and
 false of what actually mattered. Traced into Vitest 3.2.7's own compiled
 source (`@vitest/runner`'s forks-pool `runWithFiles`,
 `node_modules/vitest/dist/chunks/coverage.DfSpMS-b.js`): a `singleFork`
-project's *entire* file list is handed to its one worker process in a single
+project's _entire_ file list is handed to its one worker process in a single
 batched `runFiles(...)` call, and it is that worker's own internal loop —
 gated by the separate `fileParallelism` option (default `true`, and
 inapplicable per-project — Vitest's own `ProjectConfig` type explicitly
@@ -2384,7 +2384,7 @@ tests each) against a run before the fix that had shown one flaky failure.
   entirely, so there is nothing here a REVERSAL-style correction would ever
   need to undo, only a fresher number to overwrite it with.
 - **`modules/performance/`** — `service.ts` (pure SPEC §5.6 maths: on-time 50%
-  / quality 30% / volume 10% / estimate accuracy 10%, weighted by the *actual*
+  / quality 30% / volume 10% / estimate accuracy 10%, weighted by the _actual_
   sum of the four Settings weights rather than an assumed 100, so a Settings
   edit that leaves them at 90 or 110 still produces a score inside `[0, 100]`),
   `facts.ts` (Prisma reads — reuses `Task.overdueWorkingDays`, already frozen
@@ -2397,7 +2397,7 @@ tests each) against a run before the fix that had shown one flaky failure.
   (04:00 Cairo — deliberately after the two 03:00 jobs that freeze
   `overdueWorkingDays`, not alongside them).
 - **`modules/workload/`** — `utilisation = Σ estimatedHours of
-  OPEN_TASK_STATUSES tasks ÷ weeklyCapacityHours`, reusing the state machine's
+OPEN_TASK_STATUSES tasks ÷ weeklyCapacityHours`, reusing the state machine's
   existing "still counts as owned work" set (`modules/task/state-machine.ts`)
   rather than inventing a second one. `getUserOptions()`
   (`modules/user/queries.ts`) now carries `utilisationPercent`/`overCapacity`
@@ -2600,7 +2600,7 @@ tests each) against a run before the fix that had shown one flaky failure.
 
 ### Decisions worth recording
 
-- **A row's create/update path calls the *real* `createUser`/`updateUser`/
+- **A row's create/update path calls the _real_ `createUser`/`updateUser`/
   `createClient`/`createProject`/`updateProject`/`createTask` — the exact
   functions `modules/*/actions.ts` call for a hand-filled form — never a
   parallel `db.user.create(...)`.** This is the load-bearing decision the
@@ -2613,7 +2613,7 @@ tests each) against a run before the fix that had shown one flaky failure.
 - **`previewImport` and `confirmImport` are the same `planImport` pipeline,
   called with a different `Db`** — `prisma` (read-only) for the dry run, the
   caller's interactive transaction for confirm. A confirm therefore
-  re-parses and re-validates against the database's *current* state rather
+  re-parses and re-validates against the database's _current_ state rather
   than trusting a preview that might be minutes old — the TOCTOU-safe
   reading of "nothing persists before confirmation" (SPEC §10) — and every
   create/update call happens inside that one transaction, so an unexpected
@@ -2622,7 +2622,7 @@ tests each) against a run before the fix that had shown one flaky failure.
   failure.
 - **Update-match keys are `username` (users) and `code` (projects) — both
   already the product's real natural key for that entity — and clients and
-  tasks are import-*create-only*.** `Client.name` carries no uniqueness
+  tasks are import-_create-only_.** `Client.name` carries no uniqueness
   constraint anywhere in the schema, and a task has no natural key at all
   (a title is not unique, deliberately). Inventing a matching heuristic for
   either (exact-name, or title-within-project) risks silently merging two
@@ -2631,7 +2631,7 @@ tests each) against a run before the fix that had shown one flaky failure.
   readable key would a person filling a spreadsheet expect to update
   against" for these two. Flagged here for override the same way SPEC §2's
   own "decisions I made on your behalf" section flags T4/M4/R2/B6 — bulk
-  *editing* of existing clients or tasks already has a dedicated UI.
+  _editing_ of existing clients or tasks already has a dedicated UI.
 - **A user-import row's password column is required to create a new
   account and silently ignored to update an existing one — it never
   touches `passwordHash` on update.** `updateUserSchema` has no password
@@ -2641,15 +2641,15 @@ tests each) against a run before the fix that had shown one flaky failure.
   spreadsheet column that looks like it controls a password but only does
   so half the time is worth naming explicitly.
 - **Every relationship (`clientId`, `ownerId`, `assigneeId`, `projectId`,
-  `categoryId`) is resolved to a real id *before* the entity's own schema
+  `categoryId`) is resolved to a real id _before_ the entity's own schema
   ever runs**, so a Zod refinement never has to re-discover "this string
   isn't a real project" — that is `resolve.ts`'s job, and its failure is
-  reported against the *human-readable* column (`كود المشروع`, `اسم
-  العميل`), never a raw id the person filling the sheet never typed.
+  reported against the _human-readable_ column (`كود المشروع`, `اسم
+العميل`), never a raw id the person filling the sheet never typed.
 - **Enum dropdowns show live Settings text, and the reverse map is built
   from that same live read — never a hardcoded list.** A category, a
   priority label or a project-status label an operator renamed in Settings
-  *after* a template was downloaded makes the old cell text fail to
+  _after_ a template was downloaded makes the old cell text fail to
   resolve, which is a correct, loud failure (the same "missing → default,
   invalid → throw" stance `lib/settings` already takes) rather than a
   silent misread — the fix is downloading a fresh template, not a bug
@@ -2657,7 +2657,7 @@ tests each) against a run before the fix that had shown one flaky failure.
 - **The template's third sheet is not documentation.** `parse.ts` reads
   it back — entity key and template version, both plain ASCII values in a
   visible sheet, not a hidden marker — and refuses a file whose meta
-  doesn't match *before* looking at a single data row (`wrongTemplate`).
+  doesn't match _before_ looking at a single data row (`wrongTemplate`).
   Structural header-set matching is a second, independent check for the
   same failure (a `.xlsx` that happens to have the right sheet names but a
   hand-edited header row), so both "an unrelated workbook" and "a stale or
@@ -2665,24 +2665,24 @@ tests each) against a run before the fix that had shown one flaky failure.
 - **Row-level errors are pre-resolved Arabic text, not message keys** — the
   `ImportRowResult`/`ImportPreviewDto` they live in is plain JSON data
   returned from a successful call, never a thrown error, so there is no
-  boundary for a key to cross. File-*level* problems (wrong template, empty
+  boundary for a key to cross. File-_level_ problems (wrong template, empty
   file, too many rows) are the opposite: `parse.ts` throws a `DomainError`
   with a key, and `actions.ts` catches it and returns `{ok:false,
-  messageKey, params}` instead of letting it propagate — because a thrown
+messageKey, params}` instead of letting it propagate — because a thrown
   `AppError`'s message is stripped crossing the Server Action boundary in
   production, the lesson `modules/auth/actions.ts` recorded in Phase 1.
   This phase's wizard (`import-wizard.tsx`) carries its own `resolveMessage`
   rather than reusing either auth form's: both existing ones only resolve a
   flat two-segment key, and `import.errors.*` is a level deeper.
 - **`MAX_IMPORT_FILE_BYTES` (5 MB) and `MAX_IMPORT_ROWS` (500) are plain
-  code constants, not Settings.** CLAUDE.md invariant 4 is about *business*
+  code constants, not Settings.** CLAUDE.md invariant 4 is about _business_
   numbers — grace periods, penalty rates, cycle days, the kind of figure an
   operator legitimately re-tunes without a redeploy. A parser safety bound
   is the same kind of thing `lib/auth/username.ts`'s
   `USERNAME_MAX_LENGTH` already is: a technical guard nobody tunes per
   agency. `security.*`'s login-throttle numbers are the nearby precedent
   for the other direction, and the difference is real: those are decisions
-  about how the *business* wants to handle an incident, not a memory/CPU
+  about how the _business_ wants to handle an incident, not a memory/CPU
   ceiling on parsing a file.
 - **No role assignment, no milestone assignment, no project override
   fields (`gracePeriodHours`, `penalizeRevisionLateness`, health override)
@@ -2714,14 +2714,14 @@ tests each) against a run before the fix that had shown one flaky failure.
 - **`node_modules` did not match `package.json`/the lockfile at the start of
   this phase** — `xlsx` (added in Phase 10) was resolved in
   `pnpm-lock.yaml` but had never actually been installed, so `import * as
-  XLSX from 'xlsx'` would have failed at runtime despite type-checking
+XLSX from 'xlsx'` would have failed at runtime despite type-checking
   cleanly against stale types. A plain `pnpm install` fixed it before any
   Phase 11 code was written against it; worth naming because it is exactly
   the kind of gap that looks like a Phase 11 bug and is not one.
 - **SheetJS's own writer source settled the data-validation question
   immediately, without any trial and error against a real Excel file.**
   `write_ws_xml` in the installed `xlsx@0.18.5` leaves `/* dataValidations
-  */` as a bare comment in the middle of an otherwise-complete tag
+*/` as a bare comment in the middle of an otherwise-complete tag
   sequence — reading that one line was enough to know writing dropdowns
   needed a second mechanism, rather than discovering it after a template
   silently shipped without them.
@@ -2740,7 +2740,7 @@ traced its DB-backed cases instead and left the live run to the end).
 
 **Axis 1 (boundaries) — one real bug, found and fixed.**
 `parseImportFile` assigned each surviving row's `rowNumber` from its
-*position among rows already filtered for blankness*, not its real
+_position among rows already filtered for blankness_, not its real
 position in the sheet: with row 2 real, row 3 blank and row 4 real, row 4
 was reported as row 3. A person fixing "row 3" in their own spreadsheet
 would have edited the wrong line. Fixed by computing `rowNumber` from the
@@ -2759,14 +2759,14 @@ mixed Arabic/Latin/digit content round-trips; whitespace around a dropdown
 value still resolves (trimming already benefits enum matching, not just
 plain text); an Arabic-script username is rejected through the same
 `ar.validation.usernameFormat` message the rest of the app uses; and
-`Client.name`/`Task.title`'s length limits are proven to count *characters*,
+`Client.name`/`Task.title`'s length limits are proven to count _characters_,
 not UTF-8 bytes, at their exact boundaries.
 
 **Axis 12 (empty/null) — no bug.** 9 integration tests confirming every
 schema default actually persists when its column is left blank (task →
 `BACKLOG`/no assignee/`taskValue` unforced to zero when typed explicitly;
 project → `clientId: null`, `status: 'DRAFT'`; new user → every real
-`@default` from `prisma/schema.prisma`; an *existing* user updated via
+`@default` from `prisma/schema.prisma`; an _existing_ user updated via
 import with blank optional columns genuinely resets them rather than
 preserving the old values, per this phase's own full-row-overwrite
 decision; blank `notes`/`phone` persist as `null`, never `''`).
@@ -2803,7 +2803,7 @@ renders as a real `<a>` via Radix `Slot`, so its accessible role is
 ### Known limitations
 
 - **A confirm's interactive transaction is given a 120s timeout** (`prisma
-  $transaction`'s default is 5s), sized for `MAX_IMPORT_ROWS` (500) worth of
+$transaction`'s default is 5s), sized for `MAX_IMPORT_ROWS` (500) worth of
   full `createTask`/`createUser`-style calls, each with its own audit
   write. The edge-case sweep's axis-1 pass proves `parseImportFile` itself
   accepts exactly 500 rows, but no test runs a real `confirmImport` at that
@@ -2817,3 +2817,223 @@ renders as a real `<a>` via Radix `Slot`, so its accessible role is
   `data-validation.test.ts` unit tests are what would catch it, and are
   written to fail clearly (an `xml.toContain('<dataValidations')`
   assertion) rather than pass on a no-op.
+
+---
+
+## Phase 12 — Settings UI, PWA, Performance, Security, E2E & Deploy
+
+### Built
+
+- **The Settings page** (`/settings`, SPEC §7) — one permission-gated screen
+  generated from the catalog rather than hand-listed. `settings.view` opens it,
+  `settings.edit` makes it writable, and both are re-checked server-side. Every
+  group in §7 has a card: penalty defaults and grace, weekend days, working days
+  per month, workday hours, leave types, cycle day, payment methods,
+  notification thresholds and polling, performance weights, health thresholds,
+  task categories, engagement types, Arabic status/priority labels, WhatsApp
+  templates, `penalizeRevisionLateness`, and the security group. **Holidays got a
+  card on the same page** even though they are a table with their own
+  permission — an operator does not care which storage shape a rule has.
+- **`field-map.ts`, and the test that makes it non-optional.** The catalog says
+  what a value _is_; the field map says which control edits it.
+  `tests/unit/settings/field-map.test.ts` fails when a catalog key has no
+  control, no Arabic label, a control whose kind does not match the value's
+  shape, or a `min`/`max` the schema would itself reject. A setting cannot be
+  added and left unreachable.
+- **Installable PWA** — manifest (a metadata route, so the Arabic name comes
+  from `ar.app`), six generated icons, an offline shell, and a dismissible
+  install bar. `scripts/generate-icons.mjs` draws the icons in code from the
+  accent colour; there is no committed binary nobody can regenerate.
+- **A service worker that caches assets and nothing else.** Static chunks, fonts
+  and icons are cache-first; navigations are network-only with a pre-cached
+  `/offline` fallback; POSTs, server actions and `/api/*` are never touched.
+  Every page here is behind a session, so a cached HTML response would be one
+  user's payouts served to whoever opens the browser next.
+- **Security headers**, including a nonce-based CSP with `strict-dynamic` minted
+  per request in the middleware. The static headers live in `next.config.ts` so
+  they also cover the paths the middleware deliberately skips.
+- **`tests/integration/rbac/every-action-is-gated.test.ts`** — the phase brief's
+  "enumerate all actions" test. `import.meta.glob` finds every module's
+  `actions.ts`, and each export is called with deliberate garbage under an
+  unprivileged actor: a gated action rejects with `ForbiddenError` before it
+  ever reaches `schema.parse`. **70 of 83 actions are gated; the 13 that are not
+  are listed with a reason**, and they still have to reject a caller with no
+  session.
+- **`scripts/scan-client-bundle.mjs`** — greps `.next/static` for the live
+  values of `AUTH_SECRET` / `DATABASE_URL` / `SEED_ADMIN_PASSWORD`, for
+  server-only env var _names_, and for secret _shapes_ (a credentialed postgres
+  URL, a PEM header, a bcrypt hash). Clean: 70 files scanned, nothing found.
+- **`scripts/bundle-report.mjs`** and **`scripts/lcp-report.ts`** — the SPEC §9
+  budgets, measured rather than asserted. The bundle report gzips each route's
+  real chunk list and exits non-zero over 180 KB; the LCP report drives a real
+  Chromium through a real sign-in on emulated Fast 4G and reports the median of
+  N loads per route.
+- **`scripts/explain-heaviest.ts`** — runs the product's own heaviest read paths
+  with Prisma query logging on, ranks the emitted SQL by wall time, and re-runs
+  the top ten under `EXPLAIN (ANALYZE, BUFFERS)` with their real parameters.
+  `--load` first inserts a ~100-person agency-year so the planner is answering
+  the question production will ask.
+- **Nightly `pg_dump`** (`modules/backup`, 02:00 Cairo) with filename-based
+  14-night retention, plus `pnpm db:backup` for taking one by hand. **No
+  download button, and nothing under `src/app` imports the module.**
+- **The extension UI** (`task-extensions-tab.tsx`) — deferred to this phase by
+  Phase 6's own entry, and required by e2e flow #4.
+- **`prisma/seed-demo.ts`** — 12 منفّذين, 2 managers, 4 clients, 5 projects, 60
+  tasks across all ten statuses, 13 earnings, 5 salaries, 3 deductions, 2
+  bonuses, an advance, one closed cycle with 12 payouts (8 paid, 4 approved and
+  half-paid), 18 notifications. **Every row goes through the real services** —
+  not one `prisma.task.create` with a hand-picked status — so the demo cannot
+  show a state the product could not reach.
+- **`docs/RUNBOOK.md`** — how to add a permission, add a setting, add a penalty
+  mode, close a cycle by hand, restore a backup, plus what runs at night and
+  what to do during an incident.
+
+### Decisions worth recording
+
+**`lib/money` was split, and the seam is the browser.** `MoneyText` renders
+inside client components, so importing `lib/money` put **decimal.js (12.5 KB
+gzip) into every route's bundle** — for arithmetic no browser performs.
+`/tasks` was 1.5 KB over the SPEC §9 budget because of it. `lib/money-format.ts`
+now holds display formatting with no `Decimal` dependency, `lib/money`
+re-exports `format` from it so there is still exactly one formatter, and the
+money column bounds live there as strings so a Zod schema can import the ceiling
+without importing the arithmetic. Every route is now inside the budget, with
+7.6 KB of headroom at worst.
+
+**One index was added, and it was measured, not guessed.** `balancesFor` —
+every منفّذ's balance at once, which the manager dashboard and the payouts
+screen both open with — was a `Seq Scan` over the whole ledger: 674 buffers,
+9.7 ms at 30 000 entries. `@@index([userId, amount])` makes it an `Index Only
+Scan` with **Heap Fetches: 0**: 184 buffers, 6.1 ms, and the gap widens with
+every month of history. The other nine heaviest queries were already on indexed
+paths; the sequential scans that remain are on tables of 2 to 45 rows, where a
+scan _is_ the fast plan.
+
+**`tasks.dueSoonDays` is the hardcoded-number sweep's only survivor.** The
+"مستحقة هذا الأسبوع" facet had `7 * 24 * 60 * 60 * 1000` inside `listTasks`. It
+is now a Settings key, deliberately _not_ `notifications.dueSoonHours` — that
+one decides when a منفّذ is paged (24 h), this one decides what a manager's list
+shows (a week) — and the label was changed to "مستحقة قريبًا" so that moving the
+number cannot make the label a lie.
+
+**Backup retention is an env var, not a Setting** — the one deliberate
+departure from invariant 4. Invariant 4 is about business values: numbers whose
+change alters what somebody is paid. Retention is a property of the disk the
+container is mounted on, chosen by whoever sized it, and a settings page that
+let an admin ask for 365 nights on a 20 GB volume would be offering a promise
+the filesystem cannot keep.
+
+**A job's work must not require the thing that schedules it.** `lib/scheduler`
+imports `node-cron`, which reaches for `child_process`. `modules/extension/
+actions.ts` calls `recomputeTaskSchedule`, which lived in `modules/calendar/
+job.ts` next to its cron registration — so the moment this phase put an
+extensions tab (a **client** component) on the task sheet, `node-cron` entered
+the client module graph. The work now lives in `modules/calendar/recompute.ts`;
+`job.ts` holds only the schedule.
+
+**`upgrade-insecure-requests` was removed from the CSP.** It rewrites every
+`http://` request the document makes to `https://`, including the RSC fetches
+and server-action POSTs the App Router lives on. Against a plain-HTTP origin
+that is a TLS handshake with a server that speaks none. HSTS covers the same
+concern for the real domain and cannot break a local one.
+
+### Surprises
+
+**`/api/health` was being redirected to `/login`, and the container did not
+notice.** The middleware matched it, there was no session, so it 307'd — and
+Docker's `HEALTHCHECK` follows redirects, got a 200 from the login page, and
+reported a healthy container **without ever touching Postgres**, which is
+precisely the state the endpoint exists to detect. Fixed in three places: the
+middleware answers it before anything else, the Dockerfile passes
+`--max-redirect=0`, and `tests/e2e/foundation.spec.ts` now asserts a direct
+`{"status":"ok"}` with `maxRedirects: 0`.
+
+**Every `EntitySheet` in the product had no accessible name.** `Sheet` sets
+`aria-labelledby={titleId}`, `EntitySheet` replaces the whole header, and its
+`<h2>` never carried that id — so the attribute pointed at nothing. Invisible on
+screen, invisible in review, immediately obvious to a screen reader. Found by a
+Playwright locator that could not name the project sheet. `Sheet`'s `header` is
+now a render prop that hands the id to whoever draws the title.
+
+**`<Button>` had no default `type`, so every one of them was a submit button.**
+Four buttons in this codebase genuinely submit and say so; the rest were one
+`<form>` ancestor away from submitting it by accident. The default is now
+`type="button"`.
+
+**A `Dialog` opened from inside a `Sheet` was being centred inside the sheet.**
+`Sheet`'s slide-in uses a `transform`, which makes it the containing block for
+`position: fixed` descendants — so the modal's overlay covered only the sheet.
+`Dialog` now renders through a portal to `document.body`.
+
+**Next's build table already reports gzip.** `scripts/bundle-report.mjs` was
+written on the assumption that it printed raw bytes; it does not, and the two
+agree to within a few KB. The script earns its place anyway — it _fails_ over
+budget, prints `--json` for CI, and attributes a route's total to individual
+chunk files, which is how decimal.js was found sitting in `/tasks`.
+
+### The e2e suite (docs/TESTING.md §6)
+
+**Ten of the twelve specs pass.** Flows #1, #3, #4 and #6 pass end to end, as do
+the four foundation checks. Flow #3 in particular now proves the whole thesis in
+a browser: a task goes eight days late, the nightly job runs under its real
+advisory lock, an automatic deduction appears in the register marked تلقائي with
+its arithmetic spelled out, the منفّذ is notified and sees it on مستحقاتي, a
+manager reverses it with a mandatory reason, and `/audit` carries
+`penalty.applied` **and** `penalty.reversed` — with `penalty.created` absent,
+because nobody typed this deduction.
+
+Writing flow #3 corrected a wrong assumption of ours, not the product's: a
+reversal corrects _that entry_, it does not waive the debt, so the next sweep
+charges again as a new row and the statement reads خصم / عكس / خصم. That is what
+`tests/integration/penalty/axis7-reversal.test.ts` has always pinned, and the
+way to actually forgive lateness is an approved extension — which is flow #4.
+
+**Flows #2 and #5 fail on one open defect**, described under Known limitations.
+They are left in the suite, failing, rather than deleted or skipped
+(docs/TESTING.md §5).
+
+### Deferred
+
+- **Leave management UI.** Phase 6's entry deferred "holidays, leave and
+  extensions" to this phase; holidays and extensions shipped, leave did not. No
+  item in the Phase 12 brief and no e2e flow needs it, and inventing a screen
+  nobody asked for at the end of a hardening phase is how hardening phases stop
+  hardening. The services, actions and queries are all in place.
+- **A dedicated service-worker spec.** The worker is exercised incidentally by
+  every e2e run; nothing yet asserts that `/offline` is served when the network
+  drops.
+
+### Known limitations
+
+- **Approving a task from its detail sheet does not reach the server, and fails
+  silently.** This is the phase's one unresolved defect, and it blocks e2e flows
+  #2 and #5. What is established: `approveTaskAction` is a genuine Next server
+  reference in the client bundle (a `createServerReference` proxy, id
+  `7f88ee4b…`); that id **is** present in
+  `.next/server/server-reference-manifest.json`; the click handler runs;
+  `await approveTaskAction(...)` _resolves_, which is why the dialog closes —
+  but no POST carrying that action id is ever sent, the server handler never
+  executes (a `console.info` as its first statement never printed), the task
+  stays `IN_REVIEW`, and no error surfaces anywhere. The same `approveTask`
+  service call from Node writes the `EARNING` correctly, and
+  `tests/integration/task/transitions.test.ts` covers it. Ruled out by
+  experiment: the service worker (blocked — same result),
+  `upgrade-insecure-requests` (removed — same result), the implicit
+  `type="submit"` (fixed — same result), the `node-cron` leak into the client
+  graph (fixed — same result), the `Dialog` portal (added — same result), a
+  synthetic click instead of a pointer sequence, an action-id collision (all 72
+  ids are distinct), and a race with an in-flight `router.refresh()`. Every
+  _other_ dialog in the same sheet dispatches correctly — flow #4's extension
+  request and decision both work — which narrows it to the five actions imported
+  by `transition-dialogs.tsx`.
+- **`SESSION_MAX_AGE_SECONDS` (12 h) stays a constant in
+  `lib/auth/edge-config.ts`, not a Setting.** The middleware runs on the Edge
+  runtime, which has no database to read Settings from. Named here so the
+  exception reads as a decision rather than an oversight.
+- **LCP is measured on demand, not in CI.** `pnpm perf:lcp` needs a built server
+  and a seeded database, and a performance gate that fails on an unrelated
+  machine's load average teaches people to ignore CI.
+- **`pnpm build` on Windows needs `NEXT_DISABLE_STANDALONE=1`** (which the
+  Playwright config sets), because file tracing writes the standalone tree as
+  symlinks and Windows refuses those without Developer Mode. The Docker build,
+  which is the one that ships, is unaffected.

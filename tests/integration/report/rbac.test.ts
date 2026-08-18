@@ -69,18 +69,24 @@ describe('modules/report — report.view مطلوب لكل التقارير', ()
     const nobody = await createUserWithPermissions(db, [])
     setSessionActor(await actorFor(db, nobody.id))
 
-    await expect(getMonthlyAgencySummary(undefined, NOW)).rejects.toBeInstanceOf(ForbiddenError)
+    await expect(getMonthlyAgencySummary(undefined, NOW)).rejects.toBeInstanceOf(
+      ForbiddenError,
+    )
     clearSessionActor()
   })
 
   it('يرفض كل التقارير لغير المسجَّل دخوله', async () => {
     clearSessionActor()
     await expect(getPayoutStatementReport()).rejects.toBeInstanceOf(UnauthenticatedError)
-    await expect(getProjectSummaryReport(NOW)).rejects.toBeInstanceOf(UnauthenticatedError)
-    await expect(getWorkerPerformanceReport()).rejects.toBeInstanceOf(UnauthenticatedError)
-    await expect(
-      getMonthlyAgencySummary(undefined, NOW),
-    ).rejects.toBeInstanceOf(UnauthenticatedError)
+    await expect(getProjectSummaryReport(NOW)).rejects.toBeInstanceOf(
+      UnauthenticatedError,
+    )
+    await expect(getWorkerPerformanceReport()).rejects.toBeInstanceOf(
+      UnauthenticatedError,
+    )
+    await expect(getMonthlyAgencySummary(undefined, NOW)).rejects.toBeInstanceOf(
+      UnauthenticatedError,
+    )
   })
 
   it('لا يحتاج تقرير كشف المستحقات إلى payout.view — report.view وحدها تكفي', async () => {
@@ -141,7 +147,10 @@ describe('modules/report — كشف المستحقات لكل دورة صرف', 
 describe('modules/report — ملخص المشاريع', () => {
   it('يحسب الإجمالي والمكتمل والمتأخر ونسبة الإنجاز', async () => {
     await seedPermissionCatalog(db)
-    const reporter = await createUserWithPermissions(db, ['report.view', 'project.view.all'])
+    const reporter = await createUserWithPermissions(db, [
+      'report.view',
+      'project.view.all',
+    ])
     const owner = await createUser(db)
     const project = await createProject(db, { ownerId: owner.id, status: 'ACTIVE' })
 
@@ -181,7 +190,10 @@ describe('modules/report — ملخص المشاريع', () => {
 
   it('مشروع بلا مهام: نسبة الإنجاز صفر لا خطأ قسمة على صفر', async () => {
     await seedPermissionCatalog(db)
-    const reporter = await createUserWithPermissions(db, ['report.view', 'project.view.all'])
+    const reporter = await createUserWithPermissions(db, [
+      'report.view',
+      'project.view.all',
+    ])
     const owner = await createUser(db)
     const project = await createProject(db, { ownerId: owner.id })
     setSessionActor(await actorFor(db, reporter.id))

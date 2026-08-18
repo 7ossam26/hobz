@@ -44,7 +44,9 @@ export function NotificationPreferencesClient({
         // Roll back the optimistic flip — the same shape every optimistic
         // mutation in this app uses (CLAUDE.md: "optimistic updates + toast").
         setPreferences((current) =>
-          current.map((p) => (p.type === pref.type ? { ...p, enabled: pref.enabled } : p)),
+          current.map((p) =>
+            p.type === pref.type ? { ...p, enabled: pref.enabled } : p,
+          ),
         )
         toast({ title: ar.errors.unexpected, tone: 'error' })
       })
@@ -56,7 +58,10 @@ export function NotificationPreferencesClient({
       {preferences.map((pref) => {
         const id = `notification-pref-${pref.type}`
         return (
-          <li key={pref.type} className="flex items-start justify-between gap-4 px-4 py-3">
+          <li
+            key={pref.type}
+            className="flex items-start justify-between gap-4 px-4 py-3"
+          >
             <div className="flex min-w-0 flex-col gap-0.5">
               <Label htmlFor={id} className="font-medium">
                 {ar.notifications.types[pref.type]}

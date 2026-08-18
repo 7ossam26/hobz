@@ -238,7 +238,10 @@ export function DataTable<Row>({
                     />
                   ) : (
                     (empty ?? (
-                      <EmptyState className="rounded-none border-0" title={ar.table.empty} />
+                      <EmptyState
+                        className="rounded-none border-0"
+                        title={ar.table.empty}
+                      />
                     ))
                   )}
                 </td>

@@ -80,7 +80,7 @@ export default async function AuditPage({
               <TableBody>
                 {page.items.map((entry) => (
                   <TableRow key={entry.id} className="align-top">
-                    <TableCell className="text-muted-foreground text-xs tabular-nums whitespace-nowrap">
+                    <TableCell className="text-muted-foreground text-xs whitespace-nowrap tabular-nums">
                       {dateFormatter.format(entry.createdAt)}
                     </TableCell>
 
@@ -99,7 +99,10 @@ export default async function AuditPage({
                         <span className="text-muted-foreground">{ar.audit.system}</span>
                       )}
                       {entry.ip ? (
-                        <div className="text-muted-foreground mt-0.5 font-mono text-[11px]" dir="ltr">
+                        <div
+                          className="text-muted-foreground mt-0.5 font-mono text-[11px]"
+                          dir="ltr"
+                        >
                           {entry.ip}
                         </div>
                       ) : null}
@@ -121,7 +124,10 @@ export default async function AuditPage({
                       <div className="font-mono" dir="ltr">
                         {entry.entity}
                       </div>
-                      <div className="text-muted-foreground font-mono text-[11px]" dir="ltr">
+                      <div
+                        className="text-muted-foreground font-mono text-[11px]"
+                        dir="ltr"
+                      >
                         {entry.entityId}
                       </div>
                     </TableCell>

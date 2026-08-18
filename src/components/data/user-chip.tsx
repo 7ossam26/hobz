@@ -191,8 +191,11 @@ export function PhoneText({
   phone,
   className,
   ...props
-}: Omit<React.ComponentProps<'span'>, 'children'> & { phone: string | null | undefined }) {
-  if (!phone) return <span className={cn('text-fg-subtle', className)}>{ar.common.none}</span>
+}: Omit<React.ComponentProps<'span'>, 'children'> & {
+  phone: string | null | undefined
+}) {
+  if (!phone)
+    return <span className={cn('text-fg-subtle', className)}>{ar.common.none}</span>
 
   return (
     <span

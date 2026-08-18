@@ -141,6 +141,33 @@ export const ar = {
     },
   },
 
+  /**
+   * Bare unit suffixes for a number input — `24` `ساعة`.
+   *
+   * Deliberately *not* `time.units` above: those inflect for count because they
+   * appear inside a sentence ("منذ ساعتين"). A suffix pinned beside an editable
+   * box would have to re-inflect on every keystroke, which reads worse than the
+   * uninflected noun and is what every form in this product already does.
+   */
+  /** Installable-app chrome (Phase 12). No offline data sync — see `public/sw.js`. */
+  pwa: {
+    installTitle: 'ثبِّت التطبيق',
+    installHint: 'افتحه من الشاشة الرئيسية مباشرة، بنافذة مستقلة.',
+    install: 'تثبيت',
+    later: 'لاحقًا',
+    offlineTitle: 'لا يوجد اتصال',
+    offlineHint:
+      'هذا النظام يقرأ بياناته من الخادم لحظيًا، فلا تتوفّر الشاشات دون اتصال. أعد المحاولة بعد عودة الشبكة.',
+  },
+
+  units: {
+    minute: 'دقيقة',
+    hour: 'ساعة',
+    day: 'يوم',
+    second: 'ثانية',
+    task: 'مهمة',
+  },
+
   nav: {
     dashboard: 'لوحة التحكم',
     projects: 'المشاريع',
@@ -556,7 +583,12 @@ export const ar = {
       priority: 'الأولوية',
       category: 'التصنيف',
       overdueOnly: 'المتأخرة فقط',
-      dueThisWeek: 'مستحقة هذا الأسبوع',
+      /**
+       * "Soon", not "this week": the horizon is `tasks.dueSoonDays` and an
+       * operator may move it (Phase 12). A label that named a week would
+       * become a lie the moment they did.
+       */
+      dueSoon: 'مستحقة قريبًا',
     },
 
     board: {
@@ -606,6 +638,7 @@ export const ar = {
         comments: 'التعليقات',
         activity: 'السجل',
         penalty: 'الخصم',
+        extensions: 'التمديد',
       },
     },
 
@@ -1705,6 +1738,20 @@ export const ar = {
 
   settings: {
     title: 'الإعدادات',
+    subtitle:
+      'كل رقم تحكمه قاعدة عمل في مكان واحد — يُطبَّق فور الحفظ ويُسجَّل في سجل التدقيق.',
+    save: 'حفظ التغييرات',
+    saved: 'تم حفظ الإعدادات',
+    saveFailed: 'تعذّر حفظ الإعدادات',
+    discard: 'تراجع عن التغييرات',
+    /** `{count}` is substituted at render time. */
+    unsavedChanges: '{count} تغيير غير محفوظ',
+    noChanges: 'لا توجد تغييرات',
+    readOnly: 'لديك صلاحية الاطّلاع على الإعدادات دون تعديلها.',
+    isDefault: 'القيمة الافتراضية',
+    restoreDefault: 'استعادة الافتراضي',
+    invalidValue: 'قيمة غير صالحة',
+    sections: 'الأقسام',
     groups: {
       penalty: 'الخصومات',
       calendar: 'التقويم وأيام العمل',
@@ -1717,6 +1764,48 @@ export const ar = {
       labels: 'المسميات العربية',
       whatsapp: 'قوالب واتساب',
       security: 'الأمان وتسجيل الدخول',
+      holidays: 'العطلات الرسمية',
+    },
+    groupHints: {
+      penalty:
+        'الطريقة الافتراضية لاحتساب الخصم ومهلة السماح. تُطبَّق على كل منفّذ ليس له ملف خصم خاص.',
+      calendar:
+        'أيام العطلة الأسبوعية وساعات العمل وعدد أيام العمل في الشهر — الأساس الذي يُقاس عليه كل تأخير.',
+      payout: 'يوم إغلاق دورة الصرف وطرق الصرف المتاحة.',
+      performance:
+        'أوزان مؤشر الأداء. تُنسَب إلى مجموعها الفعلي، فلا يلزم أن يكون 100 بالضبط.',
+      health: 'حدود تحوّل حالة المشروع إلى تحذير أو خطر.',
+      notifications: 'مواعيد التصعيد والتذكير وفترة تحديث الإشعارات.',
+      tasks: 'تصنيفات المهام. المعرّف ثابت والاسم قابل للتعديل.',
+      projects: 'أنواع التعاقد المتاحة عند إنشاء مشروع.',
+      labels: 'الأسماء العربية للحالات والأولويات. القيم البرمجية ثابتة ولا تتغيّر.',
+      whatsapp: 'نص رسائل واتساب الجاهزة. المتغيّرات بين قوسين معقوفين تُستبدل تلقائيًا.',
+      security:
+        'حدود محاولات الدخول وطول كلمة المرور — قابلة للتشديد أو التخفيف دون إعادة نشر.',
+      holidays: 'الأيام التي لا يُحتسب فيها تأخير ولا وقت عمل.',
+    },
+    /** The taxonomy / list editors. */
+    list: {
+      addItem: 'إضافة عنصر',
+      itemId: 'المعرّف',
+      itemLabel: 'الاسم بالعربية',
+      idHint: 'حروف لاتينية صغيرة وأرقام وشرطات فقط. ثابت بعد الحفظ.',
+      idLocked: 'معرّف مستخدَم في سجلات قائمة — لا يمكن تغييره.',
+      atLeastOne: 'يجب إبقاء عنصر واحد على الأقل',
+      duplicateId: 'المعرّف مكرر',
+      empty: 'لا توجد عناصر',
+    },
+    weights: {
+      total: 'مجموع الأوزان',
+      /**
+       * Advisory, not a validation error: `computePerformanceScore` divides by
+       * the actual sum, so 90 or 110 still yields a score inside 0–100. Saying
+       * "must" here would contradict the engine.
+       */
+      notHundred: 'المجموع لا يساوي 100 — تُنسَب الأوزان إلى مجموعها الفعلي.',
+    },
+    templates: {
+      variablesHint: 'المتغيّرات المتاحة: {list}',
     },
     keys: {
       'security.maxLoginAttempts': 'عدد محاولات الدخول قبل الإيقاف المؤقت',
@@ -1747,6 +1836,7 @@ export const ar = {
       'notifications.pollingIntervalSeconds': 'فترة تحديث البيانات (ثانية)',
       'notifications.dueSoonHours': 'التذكير قبل الموعد النهائي (بالساعات)',
       'tasks.categories': 'تصنيفات المهام',
+      'tasks.dueSoonDays': 'مدى "مستحقة قريبًا" (بالأيام)',
       'projects.engagementTypes': 'أنواع التعاقد',
       'labels.taskStatus': 'مسميات حالات المهام',
       'labels.projectStatus': 'مسميات حالات المشاريع',
@@ -2015,6 +2105,20 @@ export const ar = {
     /** `{name}` is substituted at render time. */
     openWith: 'مراسلة {name} عبر واتساب',
     noPhone: 'لا يوجد رقم موبايل مسجّل',
+    /** Editable in Settings — these name each template, not its content. */
+    templateNames: {
+      taskAssigned: 'إسناد مهمة',
+      taskOverdue: 'تأخّر مهمة',
+      payoutPaid: 'صرف مستحقات',
+      penaltyApplied: 'تطبيق خصم',
+    },
+    /** The four `{placeholder}` tokens `lib/whatsapp` substitutes. */
+    variables: {
+      name: 'اسم المنفّذ',
+      task: 'عنوان المهمة',
+      due: 'موعد التسليم',
+      amount: 'المبلغ',
+    },
   },
 
   /**

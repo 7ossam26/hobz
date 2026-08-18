@@ -56,6 +56,11 @@ export default defineConfig({
     env: {
       NODE_ENV: 'production',
       ENABLE_SCHEDULER: 'false',
+      // `next start` serves from `.next/`, never from `.next/standalone`, so
+      // the file-tracing step buys an e2e run nothing — and it is what makes
+      // `pnpm build` fail on Windows without Developer Mode (it writes the
+      // standalone tree as symlinks). See the note in `next.config.ts`.
+      NEXT_DISABLE_STANDALONE: '1',
       DATABASE_URL: testDatabaseUrl,
       AUTH_SECRET: process.env.AUTH_SECRET ?? 'e2e-only-secret-not-for-production',
       AUTH_URL: baseURL,

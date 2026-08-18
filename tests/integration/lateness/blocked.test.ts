@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { calendarFor } from '@/lib/calendar'
-import { runScheduleRecompute } from '@/modules/calendar/job'
+import { runScheduleRecompute } from '@/modules/calendar/recompute'
 import { latenessForTask } from '@/modules/lateness/service'
 import { blockTask, submitTask, unblockTask } from '@/modules/task/service'
 

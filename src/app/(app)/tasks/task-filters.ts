@@ -10,7 +10,7 @@ import type { TableState } from '@/components/shared/data-table/types'
  * all call through here, so a facet added once behaves identically in all
  * three instead of being reinterpreted per view.
  *
- * Boolean facets (`overdueOnly`, `dueThisWeek`) are modelled as a one-option
+ * Boolean facets (`overdueOnly`, `dueSoon`) are modelled as a one-option
  * facet, present or absent, rather than a special-cased control — the same
  * `FacetFilter` checkbox list every other facet uses.
  */
@@ -22,7 +22,7 @@ export interface TaskQueryFilters {
   priority?: string[]
   categoryId?: string[]
   overdueOnly?: boolean
-  dueThisWeek?: boolean
+  dueSoon?: boolean
 }
 
 export const BOOLEAN_FACET_VALUE = 'true'
@@ -38,8 +38,6 @@ export function toTaskQueryFilters(state: TableState): TaskQueryFilters {
     ...(state.filters.overdueOnly?.includes(BOOLEAN_FACET_VALUE)
       ? { overdueOnly: true }
       : {}),
-    ...(state.filters.dueThisWeek?.includes(BOOLEAN_FACET_VALUE)
-      ? { dueThisWeek: true }
-      : {}),
+    ...(state.filters.dueSoon?.includes(BOOLEAN_FACET_VALUE) ? { dueSoon: true } : {}),
   }
 }

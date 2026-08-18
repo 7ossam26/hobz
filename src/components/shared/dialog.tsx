@@ -2,6 +2,7 @@
 
 import { X } from 'lucide-react'
 import * as React from 'react'
+import { createPortal } from 'react-dom'
 
 import { useModalBehaviour } from '@/components/shared/use-modal'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,14 @@ import { cn } from '@/lib/utils'
  * it and interrupts. Anything the user should be able to reference while
  * typing belongs in a sheet; anything they must answer before continuing
  * belongs here.
+ *
+ * **Rendered through a portal to `document.body`.** A dialog opened from
+ * inside a sheet — approving a task from its detail sheet, confirming a
+ * reversal — is a `position: fixed` box inside an ancestor that carries a
+ * `transform` (the sheet's slide-in). A transform makes that ancestor the
+ * containing block for fixed descendants, so the dialog was being centred
+ * inside the *sheet* rather than the viewport, and its overlay covered only
+ * the sheet. The portal is what makes "in front of everything" true.
  */
 
 const DIALOG_SIZES = {
@@ -62,8 +71,11 @@ export function Dialog({
   })
 
   if (!open) return null
+  // `document` is absent during the server render; a modal has nothing to say
+  // in HTML that has not been interacted with yet.
+  if (typeof document === 'undefined') return null
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       data-slot="dialog"
@@ -136,6 +148,7 @@ export function Dialog({
           </footer>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

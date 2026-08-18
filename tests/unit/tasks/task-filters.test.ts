@@ -52,12 +52,12 @@ describe('toTaskQueryFilters', () => {
     expect(toTaskQueryFilters(wrongValue)).toEqual({})
   })
 
-  it('يحوّل تصفية dueThisWeek المنطقية بنفس الطريقة، مستقلة عن overdueOnly', () => {
+  it('يحوّل تصفية dueSoon المنطقية بنفس الطريقة، مستقلة عن overdueOnly', () => {
     const state = {
       ...DEFAULT_TABLE_STATE,
-      filters: { dueThisWeek: [BOOLEAN_FACET_VALUE] },
+      filters: { dueSoon: [BOOLEAN_FACET_VALUE] },
     }
-    expect(toTaskQueryFilters(state)).toEqual({ dueThisWeek: true })
+    expect(toTaskQueryFilters(state)).toEqual({ dueSoon: true })
   })
 
   it('يدمج كل أنواع التصفية معًا دون أن يطغى نوع على آخر', () => {

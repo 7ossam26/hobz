@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { MONEY_MAX } from '@/lib/money'
+import { MONEY_MAX_NUMBER } from '@/lib/money-format'
 
 /**
  * Money is a string at the boundary, for the reason `modules/ledger/schema.ts`
@@ -17,7 +17,7 @@ export const paymentAmountSchema = z
   .string()
   .trim()
   .regex(MONEY_PATTERN, 'money')
-  .refine((value) => Number(value) <= MONEY_MAX.toNumber(), 'range')
+  .refine((value) => Number(value) <= MONEY_MAX_NUMBER, 'range')
 
 export const closeCycleSchema = z.object({
   cycleId: z.string().min(1).optional(),

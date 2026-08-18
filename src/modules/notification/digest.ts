@@ -65,7 +65,13 @@ async function atRiskProjectCount(
 ): Promise<number> {
   const projects = await db.project.findMany({
     where: { deletedAt: null, status: { notIn: [...TERMINAL_PROJECT_STATUSES] } },
-    select: { id: true, status: true, dueDate: true, healthOverride: true, healthReason: true },
+    select: {
+      id: true,
+      status: true,
+      dueDate: true,
+      healthOverride: true,
+      healthReason: true,
+    },
   })
 
   const lookup = taskHealthSignals(now)

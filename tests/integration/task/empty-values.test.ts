@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { DomainError } from '@/lib/errors'
 import { scopeTasks } from '@/lib/rbac'
+import { SETTINGS_CATALOG } from '@/lib/settings'
 import { taskHealthSignals } from '@/modules/project/health'
 import { listTasksSchema } from '@/modules/task/schema'
 import {
@@ -28,6 +29,9 @@ import { actorFor } from '../../helpers/actor-from-db'
 import { businessDayCalendar } from '../../helpers/calendar'
 import { cairo } from '../../helpers/time'
 import { testDb } from '../../setup/reset'
+
+/** The facet horizon, from the catalog rather than a literal (docs/TESTING.md §5). */
+const DUE_SOON_DAYS = SETTINGS_CATALOG['tasks.dueSoonDays'].default
 
 const db = testDb()
 
@@ -215,6 +219,7 @@ describe('قيم فارغة — مستخدم جديد ومشروع جديد', ()
     const { actor } = await fixture()
 
     const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
       scope: scopeTasks(actor),
       filters: listTasksSchema.parse({}),
       now: NOW,
@@ -264,6 +269,7 @@ describe('قيم فارغة — مرشّحات ونصوص فارغة', () => {
     await createTaskRow(db, { projectId: project.id })
 
     const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
       scope: scopeTasks(actor),
       filters: listTasksSchema.parse({
         status: [],
@@ -284,6 +290,7 @@ describe('قيم فارغة — مرشّحات ونصوص فارغة', () => {
     await createTaskRow(db, { projectId: project.id })
 
     const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
       scope: scopeTasks(actor),
       filters: listTasksSchema.parse({ search: '   ' }),
       now: NOW,

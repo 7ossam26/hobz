@@ -278,7 +278,10 @@ export function UsersClient({
                       ) : null}
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground font-mono text-xs" dir="ltr">
+                  <TableCell
+                    className="text-muted-foreground font-mono text-xs"
+                    dir="ltr"
+                  >
                     {user.username}
                   </TableCell>
                   <TableCell className="tabular-nums" dir="ltr">

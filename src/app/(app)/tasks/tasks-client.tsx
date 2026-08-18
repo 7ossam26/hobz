@@ -278,6 +278,7 @@ export function TasksClient({
         userOptions={userOptions}
         categories={categories}
         permissions={permissions}
+        currentUserId={currentUserId}
         onMutated={onMutated}
       />
 

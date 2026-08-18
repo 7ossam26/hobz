@@ -73,7 +73,10 @@ export async function completedVolumeByUserId(
 }
 
 /** The busiest completed-task count among a set of workers — "vs peers". */
-export async function peerMaxVolume(db: Db, activeWorkerIds: readonly string[]): Promise<number> {
+export async function peerMaxVolume(
+  db: Db,
+  activeWorkerIds: readonly string[],
+): Promise<number> {
   const counts = await completedVolumeByUserId(db, activeWorkerIds)
   let max = 0
   for (const count of counts.values()) {

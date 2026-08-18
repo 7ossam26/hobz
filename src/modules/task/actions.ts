@@ -9,6 +9,8 @@ import { calendarFor } from '@/lib/calendar'
 import { prisma } from '@/lib/db'
 import { fanOut } from '@/lib/events'
 import { getSetting } from '@/lib/settings'
+import { getExtensionList } from '@/modules/extension/queries'
+import type { ExtensionRequestDto } from '@/modules/extension/types'
 import { prismaLeaveLookup } from '@/modules/leave/lookup'
 import { ledgerTaskEvents } from '@/modules/ledger/earnings'
 import { prismaLedgerPort } from '@/modules/ledger/port'
@@ -435,6 +437,16 @@ export interface TaskSheetDataDto {
    */
   penalty: TaskPenaltyPanelDto | null
   /**
+   * SPEC §5.3's تمديد, on the task it belongs to (Phase 12).
+   *
+   * Fetched here rather than by the tab, for the same reason everything else
+   * on this sheet is: one round trip on open, never a client waterfall
+   * (CLAUDE.md UI rules). `getExtensionList` is `requireAuth`-level — asking
+   * for more time is not confidential — and the decision is what
+   * `task.extend` gates.
+   */
+  extensions: ExtensionRequestDto[]
+  /**
    * SPEC §8's WhatsApp templates, fetched once for the whole sheet rather than
    * by the assignee chip reaching for Settings itself — the chip is a shared,
    * data-only component (`components/data/user-chip.tsx`) and stays that way.
@@ -456,20 +468,29 @@ export interface TaskSheetDataDto {
  */
 export const getTaskSheetDataAction = requireAuth(
   async (_actor, taskId: string): Promise<TaskSheetDataDto> => {
-    const [task, comments, activity, warnings, graph, penalty, whatsappTemplates] =
-      await Promise.all([
-        getTaskById(taskId),
-        getTaskComments(taskId),
-        getTaskActivity(taskId),
-        getTaskDependencyWarnings(taskId),
-        getTaskDependencyGraph(taskId),
-        // Reading a penalty must never *create* one, and it does not:
-        // `taskPenaltyPanel` assesses without writing. A caller who may not see
-        // it gets `null` rather than an error, so one missing key does not take
-        // the whole sheet down.
-        getTaskPenaltyPanel({ taskId }).catch(() => null),
-        getSetting('whatsapp.templates'),
-      ])
+    const [
+      task,
+      comments,
+      activity,
+      warnings,
+      graph,
+      penalty,
+      extensions,
+      whatsappTemplates,
+    ] = await Promise.all([
+      getTaskById(taskId),
+      getTaskComments(taskId),
+      getTaskActivity(taskId),
+      getTaskDependencyWarnings(taskId),
+      getTaskDependencyGraph(taskId),
+      // Reading a penalty must never *create* one, and it does not:
+      // `taskPenaltyPanel` assesses without writing. A caller who may not see
+      // it gets `null` rather than an error, so one missing key does not take
+      // the whole sheet down.
+      getTaskPenaltyPanel({ taskId }).catch(() => null),
+      getExtensionList({ taskId, page: 1, pageSize: 25 }),
+      getSetting('whatsapp.templates'),
+    ])
     return {
       task,
       comments,
@@ -478,6 +499,7 @@ export const getTaskSheetDataAction = requireAuth(
       dependencies: graph.dependencies,
       dependents: graph.dependents,
       penalty,
+      extensions: extensions.items,
       whatsappTemplates,
     }
   },

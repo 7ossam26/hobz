@@ -70,7 +70,8 @@ export function buildProjectSummaryWorkbook(report: ProjectSummaryReportDto): Bu
   const rows = report.rows.map((row) => [
     row.code,
     row.name,
-    ar.enums.projectStatus[row.status as keyof typeof ar.enums.projectStatus] ?? row.status,
+    ar.enums.projectStatus[row.status as keyof typeof ar.enums.projectStatus] ??
+      row.status,
     ar.health[row.health as keyof typeof ar.health] ?? row.health,
     row.totalTasks,
     row.completedTasks,
@@ -96,7 +97,9 @@ export function buildProjectSummaryWorkbook(report: ProjectSummaryReportDto): Bu
   ])
 }
 
-export function buildWorkerPerformanceWorkbook(report: WorkerPerformanceReportDto): Buffer {
+export function buildWorkerPerformanceWorkbook(
+  report: WorkerPerformanceReportDto,
+): Buffer {
   const c = ar.reports.workerPerformance.columns
   const rows = report.rows.map((row) => [
     row.fullName,
@@ -135,7 +138,9 @@ export function buildWorkerPerformanceWorkbook(report: WorkerPerformanceReportDt
  * the count, the two percentages and the two money figures each keep their
  * own Excel number format instead of falling back to plain digits.
  */
-export function buildMonthlyAgencySummaryWorkbook(report: MonthlyAgencySummaryDto): Buffer {
+export function buildMonthlyAgencySummaryWorkbook(
+  report: MonthlyAgencySummaryDto,
+): Buffer {
   const a = ar.reports.agencySummary
   const rows = [
     [

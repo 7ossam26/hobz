@@ -69,8 +69,8 @@ function onTimeRateOf(facts: readonly TaskPerformanceFact[]): number {
 
 /** 1–5 average, rescaled to 0–100. Tasks with no captured rating are excluded. */
 function qualityScoreOf(facts: readonly TaskPerformanceFact[]): number {
-  const rated = facts.filter((f): f is TaskPerformanceFact & { qualityRating: number } =>
-    f.qualityRating !== null,
+  const rated = facts.filter(
+    (f): f is TaskPerformanceFact & { qualityRating: number } => f.qualityRating !== null,
   )
   if (rated.length === 0) return 0
 
@@ -86,7 +86,10 @@ function qualityScoreOf(facts: readonly TaskPerformanceFact[]): number {
  * defensive fallback for that otherwise-unreachable pairing, not a designed
  * path.
  */
-function volumeScoreOf(facts: readonly TaskPerformanceFact[], peerMaxVolume: number): number {
+function volumeScoreOf(
+  facts: readonly TaskPerformanceFact[],
+  peerMaxVolume: number,
+): number {
   if (facts.length === 0) return 0
   if (peerMaxVolume <= 0) return 100
   return round1(Math.min(100, (facts.length / peerMaxVolume) * 100))
@@ -125,7 +128,8 @@ export function computePerformanceScore(
   const volumeScore = volumeScoreOf(facts, peerMaxVolume)
   const estimateAccuracy = estimateAccuracyOf(facts)
 
-  const weightSum = weights.onTime + weights.quality + weights.volume + weights.estimateAccuracy
+  const weightSum =
+    weights.onTime + weights.quality + weights.volume + weights.estimateAccuracy
   const weighted =
     onTimeRate * weights.onTime +
     qualityScore * weights.quality +

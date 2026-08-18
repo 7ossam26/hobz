@@ -1,0 +1,18 @@
+-- Phase 12 — the one index the query-plan audit actually justified.
+--
+-- `balancesFor` (modules/ledger/service.ts) answers "what does every منفّذ have
+-- coming?" with SUM(amount) … WHERE "userId" IN (…) GROUP BY "userId". It is on
+-- the manager dashboard and the payouts screen, and CLAUDE.md invariant 1 means
+-- it can never be replaced by a cached column.
+--
+-- Measured on 30 000 entries / 100 workers (scripts/explain-heaviest.ts):
+--
+--   before  Seq Scan on ledger_entries — 674 buffers, 9.7 ms
+--   after   Index Only Scan, Heap Fetches: 0 — 184 buffers, 6.1 ms
+--
+-- CONCURRENTLY is deliberately NOT used: Prisma runs migrations inside a
+-- transaction, which CREATE INDEX CONCURRENTLY cannot join. On a table this
+-- size the exclusive lock is measured in milliseconds; if the ledger ever grows
+-- to where that matters, the index is built by hand out-of-band and this
+-- migration is marked applied (see docs/RUNBOOK.md).
+CREATE INDEX "ledger_entries_userId_amount_idx" ON "ledger_entries" ("userId", "amount");

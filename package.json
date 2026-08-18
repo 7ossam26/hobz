@@ -25,7 +25,14 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:demo": "tsx prisma/seed-demo.ts",
+    "db:backup": "tsx scripts/backup.ts",
     "db:studio": "prisma studio",
+    "perf:bundle": "node scripts/bundle-report.mjs",
+    "perf:lcp": "tsx scripts/lcp-report.ts",
+    "perf:explain": "tsx scripts/explain-heaviest.ts",
+    "security:scan-bundle": "node scripts/scan-client-bundle.mjs",
+    "icons:generate": "node scripts/generate-icons.mjs",
     "postinstall": "prisma generate"
   },
   "prisma": {

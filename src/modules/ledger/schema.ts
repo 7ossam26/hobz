@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { MONEY_MAX } from '@/lib/money'
+import { MONEY_MAX_NUMBER } from '@/lib/money-format'
 
 import { LEDGER_TYPES } from './sign'
 
@@ -21,7 +21,7 @@ export const moneyMagnitudeSchema = z
   .trim()
   .regex(MONEY_PATTERN, 'money')
   .refine((value) => Number(value) > 0, 'positive')
-  .refine((value) => Number(value) <= MONEY_MAX.toNumber(), 'range')
+  .refine((value) => Number(value) <= MONEY_MAX_NUMBER, 'range')
 
 /** Signed, non-zero: what an adjustment asks for. */
 export const signedMoneySchema = z
@@ -29,7 +29,7 @@ export const signedMoneySchema = z
   .trim()
   .regex(MONEY_PATTERN, 'money')
   .refine((value) => Number(value) !== 0, 'nonZero')
-  .refine((value) => Math.abs(Number(value)) <= MONEY_MAX.toNumber(), 'range')
+  .refine((value) => Math.abs(Number(value)) <= MONEY_MAX_NUMBER, 'range')
 
 const reason = z.string().trim().min(3).max(500)
 

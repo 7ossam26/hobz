@@ -207,8 +207,12 @@ export const listTasksSchema = z.object({
   assigneeId: z.array(z.string()).optional(),
   /** Tasks past `dueDate` and not yet delivered. */
   overdueOnly: z.boolean().optional(),
-  /** Due within the next 7 days and not yet delivered (Phase 5 list facet). */
-  dueThisWeek: z.boolean().optional(),
+  /**
+   * Due within `tasks.dueSoonDays` and not yet delivered (Phase 5 list facet).
+   * Renamed from `dueThisWeek` in Phase 12, when the seven days became a
+   * Settings value and "this week" stopped being guaranteed true.
+   */
+  dueSoon: z.boolean().optional(),
   sort: z.string().optional(),
   dir: z.enum(['asc', 'desc']).optional(),
   page: z.number().int().min(1).default(1),

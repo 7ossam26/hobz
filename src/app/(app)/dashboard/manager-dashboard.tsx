@@ -92,7 +92,11 @@ export async function ManagerDashboard() {
               <CardTitle className="text-sm font-medium">{m.monthDeductions}</CardTitle>
             </CardHeader>
             <CardContent>
-              <MoneyText value={data.monthDeductions.amount} withCurrency className="text-2xl" />
+              <MoneyText
+                value={data.monthDeductions.amount}
+                withCurrency
+                className="text-2xl"
+              />
             </CardContent>
           </Card>
         ) : null}

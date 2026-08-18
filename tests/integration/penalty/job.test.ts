@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { advisoryLockKey, registeredJobs, clearJobs } from '@/lib/scheduler'
-import { SCHEDULE_RECOMPUTE_JOB_NAME } from '@/modules/calendar/job'
+import { SCHEDULE_RECOMPUTE_JOB_NAME } from '@/modules/calendar/recompute'
 import { PENALTY_RECOMPUTE_JOB_NAME, runPenaltyRecompute } from '@/modules/penalty/job'
 import { registerPenaltyJobs, penaltyRecomputeJob } from '@/modules/penalty/job'
 

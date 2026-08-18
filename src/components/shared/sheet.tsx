@@ -53,8 +53,17 @@ export interface SheetProps {
    * an overflow menu.
    */
   headerExtra?: React.ReactNode
-  /** Replaces the whole default header. */
-  header?: React.ReactNode
+  /**
+   * Replaces the whole default header.
+   *
+   * The function form receives `titleId`, and a custom header **must** put it
+   * on the element carrying the title. The panel is `aria-labelledby={titleId}`;
+   * a header that does not stamp the id leaves every sheet in the product with
+   * no accessible name at all — which is invisible on screen, invisible in
+   * review, and immediately visible to a screen reader. Found in Phase 12 by a
+   * Playwright locator that could not name the project sheet.
+   */
+  header?: React.ReactNode | ((ids: { titleId: string }) => React.ReactNode)
   /**
    * A form with unsaved edits passes `false` so a stray click on the page
    * behind cannot discard typing. Escape and the close button still work: an
@@ -131,7 +140,7 @@ export function Sheet({
           className,
         )}
       >
-        {header ?? (
+        {(typeof header === 'function' ? header({ titleId }) : header) ?? (
           <header className="flex items-start justify-between gap-4 border-b px-5 py-4">
             <div className="flex min-w-0 flex-col gap-1">
               <h2

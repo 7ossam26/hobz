@@ -41,7 +41,7 @@ export function DateText({ value, variant = 'full', className, ...props }: DateP
       data-slot="date"
       dateTime={value.toISOString()}
       title={formatDateTime(value)}
-      className={cn('tabular-nums whitespace-nowrap', className)}
+      className={cn('whitespace-nowrap tabular-nums', className)}
       {...props}
     >
       {variant === 'short' ? formatDateShort(value) : formatDate(value)}
@@ -76,13 +76,15 @@ export function DurationText({
   minutes,
   className,
   ...props
-}: Omit<React.ComponentProps<'span'>, 'children'> & { minutes: number | null | undefined }) {
+}: Omit<React.ComponentProps<'span'>, 'children'> & {
+  minutes: number | null | undefined
+}) {
   if (minutes == null) return <Empty className={className} />
 
   return (
     <span
       data-slot="duration"
-      className={cn('tabular-nums whitespace-nowrap', className)}
+      className={cn('whitespace-nowrap tabular-nums', className)}
       {...props}
     >
       {formatDuration(minutes)}

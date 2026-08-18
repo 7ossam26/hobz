@@ -63,7 +63,7 @@ export function DataTablePagination({
           </Select>
         </label>
 
-        <span className="tabular-nums whitespace-nowrap">
+        <span className="whitespace-nowrap tabular-nums">
           {ar.table.pageOf
             .replace('{page}', String(state.page))
             .replace('{pages}', String(pages))}

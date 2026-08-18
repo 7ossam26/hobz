@@ -44,7 +44,8 @@ export default async function PayoutStatementReportPage({
           <h1 className="text-xl font-semibold">{ar.reports.payoutStatement.title}</h1>
           {report.cycle ? (
             <p className="text-muted-foreground text-sm">
-              {formatDate(report.cycle.periodStart)} — {formatDate(report.cycle.periodEnd)}
+              {formatDate(report.cycle.periodStart)} —{' '}
+              {formatDate(report.cycle.periodEnd)}
             </p>
           ) : null}
         </div>
@@ -58,7 +59,10 @@ export default async function PayoutStatementReportPage({
         ) : null}
       </header>
 
-      <nav className="flex flex-wrap gap-2" aria-label={ar.reports.payoutStatement.selectCycle}>
+      <nav
+        className="flex flex-wrap gap-2"
+        aria-label={ar.reports.payoutStatement.selectCycle}
+      >
         {cycles.map((cycle) => (
           <Link
             key={cycle.id}

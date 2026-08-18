@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { DomainError } from '@/lib/errors'
 import { MONEY_MAX } from '@/lib/money'
 import { scopeTasks } from '@/lib/rbac'
+import { SETTINGS_CATALOG } from '@/lib/settings'
 import { taskHealthSignals } from '@/modules/project/health'
 import { listTasksSchema } from '@/modules/task/schema'
 import {
@@ -25,6 +26,9 @@ import {
 import { actorFor } from '../../helpers/actor-from-db'
 import { cairo } from '../../helpers/time'
 import { testDb } from '../../setup/reset'
+
+/** The facet horizon, from the catalog rather than a literal (docs/TESTING.md §5). */
+const DUE_SOON_DAYS = SETTINGS_CATALOG['tasks.dueSoonDays'].default
 
 const db = testDb()
 
@@ -302,8 +306,14 @@ describe('حدود التأخير — لحظة الموعد بالضبط', () =>
     const scope = scopeTasks(actor)
     const filters = listTasksSchema.parse({ overdueOnly: true })
 
-    const atDeadline = await listTasks(db, { scope, filters, now: DUE })
+    const atDeadline = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
+      scope,
+      filters,
+      now: DUE,
+    })
     const oneMsAfter = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
       scope,
       filters,
       now: new Date(DUE.getTime() + 1),
@@ -361,6 +371,7 @@ describe('حدود التقسيم إلى صفحات', () => {
     const { actor } = await fixture()
 
     const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
       scope: scopeTasks(actor),
       filters: listTasksSchema.parse({}),
       now: NOW,
@@ -375,6 +386,7 @@ describe('حدود التقسيم إلى صفحات', () => {
     await createTaskRow(db, { projectId: project.id })
 
     const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
       scope: scopeTasks(actor),
       filters: listTasksSchema.parse({ pageSize: 1 }),
       now: NOW,
@@ -389,6 +401,7 @@ describe('حدود التقسيم إلى صفحات', () => {
     await createTaskRow(db, { projectId: project.id })
 
     const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
       scope: scopeTasks(actor),
       filters: listTasksSchema.parse({ page: 5, pageSize: 25 }),
       now: NOW,
@@ -403,6 +416,7 @@ describe('حدود التقسيم إلى صفحات', () => {
     for (let i = 0; i < 3; i += 1) await createTaskRow(db, { projectId: project.id })
 
     const page = await listTasks(db, {
+      dueSoonDays: DUE_SOON_DAYS,
       scope: scopeTasks(actor),
       filters: listTasksSchema.parse({ page: 2, pageSize: 2 }),
       now: NOW,

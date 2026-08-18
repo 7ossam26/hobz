@@ -41,7 +41,10 @@ function startOfCairoMonth(now: Date): Date {
 }
 
 /** `[from, to)` for a given `YYYY-MM` Cairo month, clamped so `to` never exceeds `now`. */
-function cairoMonthBounds(monthKey: string | undefined, now: Date): { from: Date; to: Date } {
+function cairoMonthBounds(
+  monthKey: string | undefined,
+  now: Date,
+): { from: Date; to: Date } {
   if (!monthKey) return { from: startOfCairoMonth(now), to: now }
 
   const [yearPart, monthPart] = monthKey.split('-')
@@ -74,7 +77,9 @@ export async function getPayoutStatementReport(
 
   return timed('report.payoutStatement', async () => {
     const cycles = await listCycles(prisma, { limit: 60 })
-    const cycle = cycleId ? (cycles.find((c) => c.id === cycleId) ?? null) : (cycles[0] ?? null)
+    const cycle = cycleId
+      ? (cycles.find((c) => c.id === cycleId) ?? null)
+      : (cycles[0] ?? null)
     if (!cycle) return { cycle: null, rows: [] }
 
     const rows = await listPayouts(prisma, { cycleId: cycle.id, scope: {} })
@@ -109,7 +114,11 @@ export async function getProjectSummaryReport(
     const [statusCounts, overdueCounts] = await Promise.all([
       prisma.task.groupBy({
         by: ['projectId', 'status'],
-        where: { projectId: { in: projectIds }, deletedAt: null, project: { deletedAt: null } },
+        where: {
+          projectId: { in: projectIds },
+          deletedAt: null,
+          project: { deletedAt: null },
+        },
         _count: { _all: true },
       }),
       prisma.task.groupBy({
@@ -128,7 +137,10 @@ export async function getProjectSummaryReport(
     const totalByProject = new Map<string, number>()
     const completedByProject = new Map<string, number>()
     for (const row of statusCounts) {
-      totalByProject.set(row.projectId, (totalByProject.get(row.projectId) ?? 0) + row._count._all)
+      totalByProject.set(
+        row.projectId,
+        (totalByProject.get(row.projectId) ?? 0) + row._count._all,
+      )
       if ((COMPLETED_TASK_STATUSES as readonly string[]).includes(row.status)) {
         completedByProject.set(
           row.projectId,
@@ -136,7 +148,9 @@ export async function getProjectSummaryReport(
         )
       }
     }
-    const overdueByProject = new Map(overdueCounts.map((row) => [row.projectId, row._count._all]))
+    const overdueByProject = new Map(
+      overdueCounts.map((row) => [row.projectId, row._count._all]),
+    )
 
     return {
       rows: page.items.map((project) => {
@@ -151,7 +165,8 @@ export async function getProjectSummaryReport(
           totalTasks,
           completedTasks,
           overdueTasks: overdueByProject.get(project.id) ?? 0,
-          completionPercent: totalTasks === 0 ? 0 : round1((completedTasks / totalTasks) * 100),
+          completionPercent:
+            totalTasks === 0 ? 0 : round1((completedTasks / totalTasks) * 100),
         }
       }),
     }

@@ -47,7 +47,10 @@ export function xlsxResponse(buffer: Buffer, filename: string): NextResponse {
  */
 export function reportErrorResponse(error: unknown): NextResponse {
   if (isAppError(error)) {
-    return NextResponse.json({ error: error.messageKey }, { status: STATUS_BY_CODE[error.code] })
+    return NextResponse.json(
+      { error: error.messageKey },
+      { status: STATUS_BY_CODE[error.code] },
+    )
   }
   console.error('[api/reports] unexpected error', error)
   return NextResponse.json({ error: 'errors.unexpected' }, { status: 500 })

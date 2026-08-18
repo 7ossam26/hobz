@@ -1,9 +1,16 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { DataTable, defaultHiddenColumns } from '@/components/shared/data-table/data-table'
+import {
+  DataTable,
+  defaultHiddenColumns,
+} from '@/components/shared/data-table/data-table'
 import { DEFAULT_TABLE_STATE } from '@/components/shared/data-table/state'
-import type { ColumnDef, FacetDef, TableState } from '@/components/shared/data-table/types'
+import type {
+  ColumnDef,
+  FacetDef,
+  TableState,
+} from '@/components/shared/data-table/types'
 import { ar } from '@/i18n/ar'
 import { fireEvent, render, screen, within } from '@tests/helpers/render'
 
@@ -41,9 +48,21 @@ const ROWS: Row[] = [
 ]
 
 const COLUMNS: ColumnDef<Row>[] = [
-  { id: 'title', header: 'المهمة', sortable: true, hideable: false, cell: (row) => row.title },
+  {
+    id: 'title',
+    header: 'المهمة',
+    sortable: true,
+    hideable: false,
+    cell: (row) => row.title,
+  },
   { id: 'status', header: 'الحالة', cell: (row) => row.status },
-  { id: 'value', header: 'القيمة', align: 'end', sortable: true, cell: (row) => row.value },
+  {
+    id: 'value',
+    header: 'القيمة',
+    align: 'end',
+    sortable: true,
+    cell: (row) => row.value,
+  },
   { id: 'due', header: 'التسليم', defaultHidden: true, cell: () => '—' },
 ]
 
@@ -58,7 +77,10 @@ const FACETS: FacetDef[] = [
   },
 ]
 
-function renderTable(state: Partial<TableState> = {}, props: Record<string, unknown> = {}) {
+function renderTable(
+  state: Partial<TableState> = {},
+  props: Record<string, unknown> = {},
+) {
   return render(
     <DataTable
       id="tasks"
@@ -129,7 +151,10 @@ describe('DataTable rendering', () => {
     renderTable({ page: 2 })
     expect(
       screen.getByText(
-        ar.table.range.replace('{from}', '26').replace('{to}', '50').replace('{total}', '137'),
+        ar.table.range
+          .replace('{from}', '26')
+          .replace('{to}', '50')
+          .replace('{total}', '137'),
       ),
     ).toBeInTheDocument()
   })
@@ -175,7 +200,9 @@ describe('DataTable → URL', () => {
     renderTable()
     fireEvent.click(screen.getByRole('button', { name: ar.table.columns }))
 
-    expect(screen.queryByRole('menuitemcheckbox', { name: 'المهمة' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('menuitemcheckbox', { name: 'المهمة' }),
+    ).not.toBeInTheDocument()
   })
 
   it('التنقل بين الصفحات يكتب رقم الصفحة', () => {
@@ -193,7 +220,9 @@ describe('DataTable → URL', () => {
 
   it('تغيير حجم الصفحة يكتبه ويعود للصفحة الأولى', () => {
     renderTable({ page: 4 })
-    fireEvent.change(screen.getByLabelText(ar.table.rowsPerPage), { target: { value: '50' } })
+    fireEvent.change(screen.getByLabelText(ar.table.rowsPerPage), {
+      target: { value: '50' },
+    })
 
     const query = lastQuery()
     expect(query.get('size')).toBe('50')
@@ -205,7 +234,9 @@ describe('DataTable → URL', () => {
     renderTable()
     fireEvent.click(screen.getByRole('button', { name: /المهمة/ }))
 
-    expect(replace).toHaveBeenCalledWith(expect.stringContaining('/tasks'), { scroll: false })
+    expect(replace).toHaveBeenCalledWith(expect.stringContaining('/tasks'), {
+      scroll: false,
+    })
   })
 })
 
@@ -252,9 +283,12 @@ describe('DataTable empty states', () => {
     )
 
     fireEvent.click(
-      within(screen.getByText(ar.table.emptyFiltered).closest('div')!).getByRole('button', {
-        name: ar.table.clearFilters,
-      }),
+      within(screen.getByText(ar.table.emptyFiltered).closest('div')!).getByRole(
+        'button',
+        {
+          name: ar.table.clearFilters,
+        },
+      ),
     )
 
     expect(lastQuery().has('q')).toBe(false)

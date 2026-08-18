@@ -133,6 +133,18 @@ const config = [
     rules: { 'no-restricted-syntax': 'off' },
   },
 
+  // ── Seeds and perf fixtures write Arabic *content*, not Arabic *copy* ────
+  // Same distinction as above, from the other side. `prisma/seed-demo.ts`
+  // invents client and task names for a demo; `scripts/explain-heaviest.ts`
+  // invents 8 000 task titles so the planner sees realistic text. Neither is
+  // wording a translator would ever change, and Arabic is load-bearing in both:
+  // it is what makes the demo readable and what makes the query plans honest
+  // about how `normalizeArabic` search actually costs.
+  {
+    files: ['prisma/seed-demo.ts', 'scripts/**/*.{ts,mjs}'],
+    rules: { 'no-restricted-syntax': 'off' },
+  },
+
   // ── Services must stay framework-free and unit-testable ────────────────
   {
     files: ['src/modules/*/service.ts', 'src/lib/**/*.ts'],

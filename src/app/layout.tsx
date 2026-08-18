@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { cookies } from 'next/headers'
 
 import { PreferencesProvider } from '@/components/layout/preferences-provider'
+import { PwaProvider } from '@/components/layout/pwa-provider'
 import { ToastProvider } from '@/components/shared/toast'
 import { ar, DIRECTION } from '@/i18n/ar'
 import { readPreferences } from '@/lib/preferences'
@@ -16,6 +17,16 @@ export const metadata: Metadata = {
   description: ar.app.description,
   // Internal tool: never index, never follow.
   robots: { index: false, follow: false },
+  manifest: '/manifest.webmanifest',
+  // iOS ignores the manifest's icon list and reads this one.
+  appleWebApp: { capable: true, title: ar.app.shortName, statusBarStyle: 'default' },
+  icons: {
+    icon: [
+      { url: '/icons/icon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
 }
 
 export const viewport: Viewport = {
@@ -74,6 +85,9 @@ export default async function RootLayout({
       <body className="min-h-dvh">
         <PreferencesProvider initial={preferences}>
           <ToastProvider>{children}</ToastProvider>
+          {/* Service-worker registration and the install bar. Renders nothing
+              until the browser says the app is installable. */}
+          <PwaProvider />
         </PreferencesProvider>
       </body>
     </html>

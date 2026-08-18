@@ -49,7 +49,10 @@ export async function computeAllActiveWorkerScores(
   const results: UserScoreBreakdown[] = []
   for (const userId of ids) {
     const facts = await taskFactsForUser(db, userId)
-    results.push({ userId, breakdown: computePerformanceScore(facts, maxVolume, weights) })
+    results.push({
+      userId,
+      breakdown: computePerformanceScore(facts, maxVolume, weights),
+    })
   }
   return results
 }

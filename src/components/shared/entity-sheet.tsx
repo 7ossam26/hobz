@@ -118,7 +118,7 @@ export function EntitySheet({
       bare
       closeOnOverlayClick={!dirty}
       footer={footer}
-      header={
+      header={({ titleId }) => (
         <header
           {...(hue ? { 'data-hue': hue } : {})}
           className="relative shrink-0 border-b px-5 pt-4 pb-0"
@@ -132,7 +132,14 @@ export function EntitySheet({
 
           <div className="flex items-start justify-between gap-4">
             <div className="flex min-w-0 flex-col gap-1">
-              <h2 className="truncate text-base font-semibold tracking-tight">{title}</h2>
+              {/* The id the panel's `aria-labelledby` points at. Without it this
+                  sheet has no accessible name — see `Sheet`'s `header` prop. */}
+              <h2
+                id={titleId}
+                className="truncate text-base font-semibold tracking-tight"
+              >
+                {title}
+              </h2>
               {subtitle ? (
                 <p className="text-fg-muted truncate text-sm">{subtitle}</p>
               ) : null}
@@ -195,7 +202,7 @@ export function EntitySheet({
             </div>
           ) : null}
         </header>
-      }
+      )}
     >
       {/* An indeterminate bar rather than a spinner over the content: the
           reader keeps their place while a save is in flight. */}
