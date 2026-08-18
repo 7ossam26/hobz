@@ -201,6 +201,10 @@ function NotificationRow({
   return (
     <Link
       href={notification.href}
+      // Same reason as the calendar grid: opening the bell would otherwise
+      // prefetch a detail page per notification, and the reader clicks at
+      // most one of them.
+      prefetch={false}
       onClick={() => {
         if (!notification.isRead) onMarkRead(notification.id)
       }}

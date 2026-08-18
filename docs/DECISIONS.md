@@ -3032,7 +3032,24 @@ They are left in the suite, failing, rather than deleted or skipped
   exception reads as a decision rather than an oversight.
 - **LCP is measured on demand, not in CI.** `pnpm perf:lcp` needs a built server
   and a seeded database, and a performance gate that fails on an unrelated
-  machine's load average teaches people to ignore CI.
+  machine's load average teaches people to ignore CI. Measured against the demo
+  data on emulated Fast 4G with 4× CPU throttling, median of three loads: the
+  slowest route is `/audit` at 592 ms, then `/tasks` 576 ms, `/tasks?view=board`
+  552 ms, `/settings` 540 ms, `/users` 500 ms, `/dashboard` 488 ms, `/penalties`
+  476 ms; everything else is under 210 ms. The full table is in SPEC §9. The
+  slowest route uses a third of the 1800 ms budget.
+- **Next's link prefetch is a query multiplier, and the calendar was the proof.**
+  Running the LCP report is what found it: `/calendar` never reached network
+  idle, so it could not be measured at all. Every event in the month grid is a
+  `<Link>` to `/tasks/{id}`, and Next prefetches every link in the viewport —
+  around thirty full detail-page renders, each with its own queries, fired on
+  arrival for a page nobody had clicked. The count is the agency's workload, so
+  it only gets worse in production. Event links and notification-bell links now
+  set `prefetch={false}`; `/calendar` measures 208 ms. The rule is written into
+  SPEC §9: a `<Link>` inside a `.map()` over business rows opts out.
+  `lcp-report.ts` also learned to report a route that never idles instead of
+  aborting the whole run, because the first symptom of this bug was fourteen
+  routes going unmeasured.
 - **`pnpm build` on Windows needs `NEXT_DISABLE_STANDALONE=1`** (which the
   Playwright config sets), because file tracing writes the standalone tree as
   symlinks and Windows refuses those without Developer Mode. The Docker build,

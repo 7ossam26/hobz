@@ -835,6 +835,34 @@ a budget nobody can run is a wish:
   database, and a performance gate that fails on an unrelated machine's load
   average teaches people to ignore CI.
 
+  Measured against the demo dataset (`prisma/seed-demo.ts`), median of three
+  loads per route, budget 1800 ms:
+
+  | route | LCP | route | LCP |
+  |---|---:|---|---:|
+  | `/dashboard` | 488 ms | `/penalties` | 476 ms |
+  | `/tasks` | 576 ms | `/reports` | 160 ms |
+  | `/tasks?view=board` | 552 ms | `/users` | 500 ms |
+  | `/projects` | 188 ms | `/roles` | 176 ms |
+  | `/clients` | 172 ms | `/settings` | 540 ms |
+  | `/calendar` | 208 ms | `/audit` | 592 ms |
+  | `/my-earnings` | 176 ms | `/import` | 180 ms |
+  | `/payouts` | 164 ms | | |
+
+  The slowest route uses a third of the budget. The measurement is worth
+  repeating after any change to the app shell, because the number that matters
+  is not the margin but whether the margin is still there.
+
+**Link prefetch is opt-out where a list is unbounded.** Next prefetches every
+`<Link>` that enters the viewport, and each prefetch of an entity route is a
+full server render with its own queries. That is fine for the eight sidebar
+destinations and wrong for a list whose length is the agency's workload: the
+calendar month grid was firing one task-detail render per event — around thirty
+on the demo data, unbounded in production — and never reached network idle, so
+its LCP could not even be measured. Event links and notification-bell links now
+carry `prefetch={false}`. **A `<Link>` rendered inside a `.map()` over
+business rows should set it too.**
+
 **Virtualisation, in full.** `useVirtualRows` (threshold 100) covers the
 DataTable, the Kanban column, and — added in Phase 12 — the import dry-run
 preview, which is the one table in the product that can legitimately exceed the

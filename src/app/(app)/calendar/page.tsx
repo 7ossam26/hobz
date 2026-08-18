@@ -187,6 +187,12 @@ export default async function GlobalCalendarPage({
                       <Link
                         key={event.id}
                         href={event.href}
+                        // A month grid can hold a hundred events, and Next
+                        // prefetches every link in the viewport. Without this
+                        // the calendar fires one full detail-page render per
+                        // event on arrival — the page never reaches network
+                        // idle, and the cost grows with the agency's workload.
+                        prefetch={false}
                         data-hue={eventHue(event)}
                         className="bg-hue-surface text-hue-text flex items-center gap-1 truncate rounded px-1.5 py-0.5 text-[0.6875rem]"
                         title={`${ar.globalCalendar.types[event.type]}: ${event.title}`}

@@ -162,10 +162,20 @@ async function main(): Promise<void> {
   console.info('-'.repeat(width + 20))
 
   const over: string[] = []
+  const unmeasured: string[] = []
 
   for (const route of ROUTES) {
     const samples: number[] = []
-    for (let run = 0; run < RUNS; run += 1) samples.push(await measure(page, route))
+    try {
+      for (let run = 0; run < RUNS; run += 1) samples.push(await measure(page, route))
+    } catch {
+      // A route that never reaches network idle is a finding, not a reason to
+      // abandon the other fourteen. `/calendar` was exactly this before it
+      // stopped prefetching a detail page per event.
+      unmeasured.push(route)
+      console.info(`${route.padEnd(width)}   ${'no idle'.padStart(9)}  ← NOT MEASURED`)
+      continue
+    }
 
     const value = median(samples)
     const flag = value > LCP_BUDGET_MS ? '  ← OVER BUDGET' : ''
@@ -178,10 +188,17 @@ async function main(): Promise<void> {
 
   await browser.close()
 
+  if (unmeasured.length > 0) {
+    console.error(
+      `\n${unmeasured.length} route(s) never reached network idle: ${unmeasured.join(', ')}`,
+    )
+    process.exitCode = 1
+  }
+
   if (over.length > 0) {
     console.error(`\n${over.length} route(s) over the ${LCP_BUDGET_MS} ms budget.`)
     process.exitCode = 1
-  } else {
+  } else if (unmeasured.length === 0) {
     console.info('\nevery route inside the budget.')
   }
 }
