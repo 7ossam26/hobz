@@ -20,6 +20,7 @@ test-results
 # env — never commit real secrets
 .env
 .env.local
+.env.production
 .env.*.local
 !.env.example
 
