@@ -56,7 +56,7 @@ export function EarningsClient({
                 <button
                   type="button"
                   onClick={() => setOpen(statement)}
-                  className="border-border hover:bg-accent/40 flex w-full flex-col gap-2 rounded-lg border p-3 text-start transition-colors"
+                  className="border-border hover:bg-accent flex w-full flex-col gap-2 rounded-lg border p-3 text-start transition-colors"
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span className="text-sm font-medium">

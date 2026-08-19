@@ -1,3 +1,5 @@
+import { cache } from 'react'
+
 import { prisma } from '@/lib/db'
 import { UnauthenticatedError } from '@/lib/errors'
 import {
@@ -30,6 +32,23 @@ import { resolveActor } from './resolve'
  * morning would otherwise keep granting a permission an admin revoked at noon —
  * and "revoke" that takes effect at next sign-out is not a revoke. The token's
  * copy exists for the middleware, which runs at the edge where Prisma does not.
+ *
+ * ── Once per request, not once per caller ──────────────────────────────────
+ *
+ * "Re-read on every call" was taken literally, and it cost more than anyone
+ * checked. `resolveActor` is four statements (Prisma issues one per relation
+ * level), and a single `/tasks` render called it six times — the layout, the
+ * header's notification read, the page, and each of the four scoped queries —
+ * for **17 of the 25 statements that render issued**, plus a JWE decode each
+ * time.
+ *
+ * `cache()` scopes one resolution to one request. The invariant is untouched:
+ * every *request* still re-reads permissions from the database, which is what
+ * makes a revoke take effect at noon. What it stops is the same request asking
+ * the same question six times. The trade, named: a server action that changed
+ * its own actor's roles and then re-read them within the same request would see
+ * the pre-change answer — no path does (`updateUserAction` resolves the actor
+ * once, before the write, and the next request re-resolves).
  */
 
 export interface SessionState {
@@ -47,7 +66,7 @@ export interface SessionState {
  * impersonator their own permissions instead would defeat the purpose: the
  * point of "عرض كـ" is to see what that person sees.
  */
-export async function getSessionState(): Promise<SessionState> {
+export const getSessionState = cache(async (): Promise<SessionState> => {
   const session = await auth()
   const userId = session?.user?.id
   if (!userId) return { actor: null, mustChangePassword: false }
@@ -79,7 +98,7 @@ export async function getSessionState(): Promise<SessionState> {
   if (!resolved) return { actor: null, mustChangePassword: false }
 
   return { actor: resolved.actor, mustChangePassword: resolved.mustChangePassword }
-}
+})
 
 export async function getActor(): Promise<Actor | null> {
   return (await getSessionState()).actor

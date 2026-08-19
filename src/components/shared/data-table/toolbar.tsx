@@ -188,7 +188,7 @@ function FacetFilter({
                 checked ? 'bg-accent-solid border-transparent' : 'border-input',
               )}
             >
-              {checked ? <Check className="size-3 text-white" /> : null}
+              {checked ? <Check className="size-3 text-accent-on-solid" /> : null}
             </span>
             {option.hue ? <Dot hue={option.hue} /> : null}
             <span className="flex-1">{option.label}</span>

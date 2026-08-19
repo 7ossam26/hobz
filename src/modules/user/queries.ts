@@ -5,7 +5,7 @@ import { activeHoursByUserId } from '@/modules/workload/queries'
 import { computeUtilisation } from '@/modules/workload/service'
 
 import { listUsersSchema, type ListUsersInput } from './schema'
-import { getUser, listUsers } from './service'
+import { getUser, listUsers, listUsersWithDetails } from './service'
 import type { UserDetailDto, UserPageDto } from './types'
 
 /**
@@ -21,6 +21,19 @@ export async function getUsers(raw: Partial<ListUsersInput> = {}): Promise<UserP
   const actor = await requireActor()
   assertCan(actor, 'user.view')
   return listUsers(prisma, listUsersSchema.parse(raw))
+}
+
+/**
+ * The directory page's read: the page *and* every row's detail, so the edit
+ * sheet opens with no client-side fetch and no per-row query. One statement
+ * instead of one per user — see `listUsersWithDetails`.
+ */
+export async function getUsersWithDetails(
+  raw: Partial<ListUsersInput> = {},
+): Promise<UserPageDto & { details: UserDetailDto[] }> {
+  const actor = await requireActor()
+  assertCan(actor, 'user.view')
+  return listUsersWithDetails(prisma, listUsersSchema.parse(raw))
 }
 
 export async function getUserById(id: string): Promise<UserDetailDto> {

@@ -169,6 +169,17 @@ const config = [
     files: ['src/lib/utils.ts'],
     rules: { 'no-restricted-imports': 'off' },
   },
+  {
+    // `lib/auth/session.ts` is the Next.js wiring seam, not a service. It
+    // already pulls in Auth.js (`./next-auth`) and is already excluded from
+    // coverage for exactly that reason (DECISIONS.md, Phase 1) — the rule above
+    // never protected it, because `next-auth` is not matched by `next`/`next/*`.
+    // It needs React's `cache()` to resolve the actor once per request instead
+    // of six times; every alternative is a hand-rolled request-scoped store.
+    // Deliberately one file: the rule stays on for the rest of `lib/`.
+    files: ['src/lib/auth/session.ts'],
+    rules: { 'no-restricted-imports': 'off' },
+  },
 
   // ── Money must never be a float (CLAUDE.md invariant 2) ────────────────
   {

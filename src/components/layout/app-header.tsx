@@ -42,7 +42,7 @@ export async function AppHeader({
   ])
 
   return (
-    <header className="bg-background sticky top-0 z-30 flex h-(--shell-header-h) shrink-0 items-center gap-3 border-b px-4 md:px-6">
+    <header className="bg-surface-raised sticky top-0 z-30 flex h-(--shell-header-h) shrink-0 items-center gap-3 border-b px-4 md:px-6">
       <Breadcrumb />
 
       <div className="ms-auto flex shrink-0 items-center gap-2">

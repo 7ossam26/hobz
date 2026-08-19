@@ -69,9 +69,11 @@ function resolveColor(vars: Record<string, string>, name: string): string {
   throw new Error(`Cyclic token: ${name}`)
 }
 
+const DARK_THEME_NAME = 'dark'
+
 const THEMES = [
   { name: 'light', vars: LIGHT_VARS },
-  { name: 'dark', vars: DARK_VARS },
+  { name: DARK_THEME_NAME, vars: DARK_VARS },
 ] as const
 
 const HUES = [
@@ -88,8 +90,47 @@ const HUES = [
   'pink',
 ] as const
 
-/** Every neutral ground a chip or a piece of body text can land on. */
-const SURFACES = ['--surface-sunken', '--surface-base', '--surface-raised'] as const
+/**
+ * Every neutral ground a chip or a piece of body text can land on.
+ *
+ * `--surface-overlay` was added when sheets, dialogs, popovers and toasts
+ * stopped sharing a colour with cards. It is the *lightest* step in dark, so
+ * leaving it out meant hue text was being verified against the second-lightest
+ * ground it actually sits on — the assertion looked complete and was not.
+ */
+const SURFACES = [
+  '--surface-sunken',
+  '--surface-base',
+  '--surface-raised',
+  '--surface-overlay',
+] as const
+
+/**
+ * The full ramp, deepest first — `--surface-inset` included, which `SURFACES`
+ * leaves out because it is a well rather than a general ground for text.
+ *
+ * `--surface-field` is deliberately *not* here. It is a role, not a rung: in
+ * dark it sits below `sunken`, and in light it is the page colour, which reads
+ * as a well only because a card is lighter still. What has to be true of it in
+ * both themes is asserted separately below.
+ */
+const RAMP = [
+  '--surface-inset',
+  '--surface-sunken',
+  '--surface-base',
+  '--surface-raised',
+  '--surface-overlay',
+] as const
+
+/**
+ * The minimum separation between two adjacent surfaces.
+ *
+ * This is the assertion whose absence let the dark theme go flat: the suite
+ * checked only that the steps were *ordered*, so a ramp spanning L 0.145→0.216
+ * — 1.04:1 between neighbours, invisible on any real display — passed 58 tests.
+ * 1.03 is a floor, not a target; the real ramp clears 1.04–1.11.
+ */
+const MIN_STEP_RATIO = 1.03
 
 describe('ألوان البيانات', () => {
   for (const theme of THEMES) {
@@ -213,6 +254,96 @@ describe('ألوان الواجهة', () => {
         // the assertion is identical because both ramps are ordered the same way.
         expect(sunken).toBeLessThan(base)
         expect(base).toBeLessThan(raised)
+      })
+
+      it('السلّم كله مرتّب: الغائر أعمق درجة في كلا الوضعين', () => {
+        // `--surface-inset` used to be the *lightest* step in dark and the
+        // *darkest* in light — the same token meaning "a well" on one theme and
+        // "a lift" on the other, which is worse than having no token.
+        const lightness = RAMP.map((s) => parseOklch(resolveColor(theme.vars, s)).l)
+        for (let i = 1; i < lightness.length; i += 1) {
+          expect(lightness[i - 1]!, `${RAMP[i - 1]} < ${RAMP[i]}`).toBeLessThanOrEqual(
+            lightness[i]!,
+          )
+        }
+      })
+
+      it('كل درجة سطح تفصلها عن جارتها مسافة مرئية', () => {
+        // Light's `raised` is capped at L 0.993 (pure white is banned), so the
+        // top of the light ramp is legitimately tight and `overlay` aliases it.
+        // The floor applies wherever two steps are genuinely distinct colours.
+        for (let i = 1; i < SURFACES.length; i += 1) {
+          const lower = resolveColor(theme.vars, SURFACES[i - 1]!)
+          const upper = resolveColor(theme.vars, SURFACES[i]!)
+          if (lower === upper) continue
+          expect(
+            ratio(lower, upper),
+            `${SURFACES[i - 1]} → ${SURFACES[i]}`,
+          ).toBeGreaterThanOrEqual(MIN_STEP_RATIO)
+        }
+      })
+
+      it('حقل الإدخال أغمق من البطاقة واللوحة في كلا الوضعين', () => {
+        // Whatever step it picks, a field must read as a well against the two
+        // surfaces it is ever placed on. It used to be `--surface-base` in both
+        // themes — in dark, the exact colour of the page behind the card.
+        const field = parseOklch(resolveColor(theme.vars, '--surface-field')).l
+        expect(field).toBeLessThan(parseOklch(resolveColor(theme.vars, '--card')).l)
+        expect(field).toBeLessThan(
+          parseOklch(resolveColor(theme.vars, '--surface-overlay')).l,
+        )
+      })
+
+      it('الحدود تُرى فعلًا على كل سطح', () => {
+        for (const surface of SURFACES) {
+          const ground = resolveColor(theme.vars, surface)
+          expect(
+            ratio(resolveColor(theme.vars, '--line'), ground),
+            `--line on ${surface}`,
+          ).toBeGreaterThanOrEqual(1.15)
+          expect(
+            ratio(resolveColor(theme.vars, '--line-strong'), ground),
+            `--line-strong on ${surface}`,
+          ).toBeGreaterThanOrEqual(1.4)
+        }
+      })
+
+      if (theme.name === DARK_THEME_NAME) {
+        it('الحدود في الوضع الداكن أقوى — الظل لا يعمل هناك', () => {
+          // The floor is genuinely stricter in dark, and the reason is a
+          // mechanism rather than a preference: light separates surfaces with a
+          // shadow *and* a border, dark has only the border and the ramp step,
+          // because a black blur on a near-black ground renders as nothing.
+          // The old dark `--line` measured 1.21:1 against a card.
+          for (const surface of SURFACES) {
+            const ground = resolveColor(theme.vars, surface)
+            expect(
+              ratio(resolveColor(theme.vars, '--line'), ground),
+              `--line on ${surface}`,
+            ).toBeGreaterThanOrEqual(1.3)
+            expect(
+              ratio(resolveColor(theme.vars, '--line-strong'), ground),
+              `--line-strong on ${surface}`,
+            ).toBeGreaterThanOrEqual(1.9)
+          }
+        })
+      }
+
+      it('تلوين الشرائح يبقى مرئيًا فوق أعلى سطح', () => {
+        // A chip tint has to sit clear of the *lightest* surface in dark and the
+        // *darkest* in light, or a status chip vanishes the moment it is
+        // rendered inside a sheet.
+        const top = parseOklch(resolveColor(theme.vars, '--surface-overlay')).l
+        const bottom = parseOklch(resolveColor(theme.vars, '--surface-sunken')).l
+
+        for (const hue of HUES) {
+          const tint = parseOklch(resolveColor(theme.vars, `--data-${hue}-surface`)).l
+          if (theme.name === DARK_THEME_NAME) {
+            expect(tint, `--data-${hue}-surface vs overlay`).toBeGreaterThan(top)
+          } else {
+            expect(tint, `--data-${hue}-surface vs sunken`).toBeLessThan(bottom)
+          }
+        }
       })
     })
   }

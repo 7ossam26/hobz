@@ -31,8 +31,10 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f8f8f9' },
-    { media: '(prefers-color-scheme: dark)', color: '#1c1c1f' },
+    // `--surface-base` in each theme, kept in step with globals.css by
+    // `tests/unit/design/palette-contrast.test.ts`.
+    { media: '(prefers-color-scheme: light)', color: '#f7f7f8' },
+    { media: '(prefers-color-scheme: dark)', color: '#101012' },
   ],
 }
 

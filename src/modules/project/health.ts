@@ -57,17 +57,42 @@ export interface ProjectHealthSignals {
   adminEscalationCount: number
 }
 
-export type TaskHealthLookup = (
-  db: Db,
-  projectId: string,
-) => Promise<ProjectHealthSignals>
+/**
+ * The port, unchanged — one project, one answer.
+ *
+ * `batch` is an *optional capability* on the same function, not a second port.
+ * A list screen asks a hundred projects the same three questions, and asking
+ * them one project at a time is three statements per row: `/projects` measured
+ * 25 statements for six projects, and the manager dashboard and the project
+ * report both go through the same path. A caller that has the whole page in
+ * hand calls `batch`; a caller with one project calls the function; a test that
+ * injects a fake lookup keeps working without providing either.
+ */
+export interface TaskHealthLookup {
+  (db: Db, projectId: string): Promise<ProjectHealthSignals>
+  batch?: (
+    db: Db,
+    projectIds: readonly string[],
+  ) => Promise<Map<string, ProjectHealthSignals>>
+}
 
-/** No tasks, nothing overdue or blocked. The baseline for pure-computation tests. */
-export const noTaskHealthSignals: TaskHealthLookup = async () => ({
+const NO_SIGNALS: ProjectHealthSignals = {
   overdueTaskCount: 0,
   maxBlockedDays: 0,
   adminEscalationCount: 0,
-})
+}
+
+/** No tasks, nothing overdue or blocked. The baseline for pure-computation tests. */
+export const noTaskHealthSignals: TaskHealthLookup = Object.assign(
+  async (): Promise<ProjectHealthSignals> => ({ ...NO_SIGNALS }),
+  {
+    batch: async (
+      _db: Db,
+      projectIds: readonly string[],
+    ): Promise<Map<string, ProjectHealthSignals>> =>
+      new Map(projectIds.map((id) => [id, { ...NO_SIGNALS }])),
+  },
+)
 
 /**
  * Statuses in which a task's due date is still the worker's problem. Time in
@@ -98,20 +123,47 @@ export const UNDELIVERED_TASK_STATUSES = [
  * top of this file.
  */
 export function taskHealthSignals(now: Date = new Date()): TaskHealthLookup {
-  return async (db, projectId) => {
-    const [overdueTaskCount, blocked, adminEscalationCount] = await Promise.all([
-      db.task.count({
+  const single = async (db: Db, projectId: string): Promise<ProjectHealthSignals> => {
+    const signals = await batch(db, [projectId])
+    return signals.get(projectId) ?? { ...NO_SIGNALS }
+  }
+
+  /**
+   * The same three questions, asked once for a whole page.
+   *
+   * Two `groupBy`s and one `findMany`, keyed on `projectId IN (…)` — the shape
+   * `modules/report/queries.ts` already uses. Both counts ride the indexes the
+   * per-project version used (`[status, dueDate]`, `[projectId, escalationLevel]`);
+   * grouping does not change which rows are read, only how many round trips it
+   * takes to read them.
+   */
+  const batch = async (
+    db: Db,
+    projectIds: readonly string[],
+  ): Promise<Map<string, ProjectHealthSignals>> => {
+    const result = new Map<string, ProjectHealthSignals>(
+      projectIds.map((id) => [id, { ...NO_SIGNALS }]),
+    )
+    if (projectIds.length === 0) return result
+
+    const ids = [...projectIds]
+
+    const [overdue, blocked, escalated] = await Promise.all([
+      db.task.groupBy({
+        by: ['projectId'],
         where: {
-          projectId,
+          projectId: { in: ids },
           deletedAt: null,
           status: { in: [...UNDELIVERED_TASK_STATUSES] },
           dueDate: { lt: now },
         },
+        _count: { _all: true },
       }),
       db.task.findMany({
-        where: { projectId, deletedAt: null, status: 'BLOCKED' },
+        where: { projectId: { in: ids }, deletedAt: null, status: 'BLOCKED' },
         select: {
           id: true,
+          projectId: true,
           activity: {
             where: { type: 'STATUS_CHANGED', to: 'BLOCKED' },
             orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -120,22 +172,35 @@ export function taskHealthSignals(now: Date = new Date()): TaskHealthLookup {
           },
         },
       }),
-      // Indexed by `[projectId, escalationLevel]` — a count, not a walk of the
-      // calendar, which is the whole reason the level is a stored column.
-      db.task.count({
-        where: { projectId, deletedAt: null, escalationLevel: 'ADMIN' },
+      db.task.groupBy({
+        by: ['projectId'],
+        where: { projectId: { in: ids }, deletedAt: null, escalationLevel: 'ADMIN' },
+        _count: { _all: true },
       }),
     ])
 
-    const maxBlockedDays = blocked.reduce((worst, task) => {
-      const blockedAt = task.activity[0]?.createdAt
-      if (!blockedAt) return worst
-      const days = Math.floor((now.getTime() - blockedAt.getTime()) / DAY_MS)
-      return Math.max(worst, days)
-    }, 0)
+    for (const row of overdue) {
+      const signals = result.get(row.projectId)
+      if (signals) signals.overdueTaskCount = row._count._all
+    }
 
-    return { overdueTaskCount, maxBlockedDays, adminEscalationCount }
+    for (const row of escalated) {
+      const signals = result.get(row.projectId)
+      if (signals) signals.adminEscalationCount = row._count._all
+    }
+
+    for (const task of blocked) {
+      const signals = result.get(task.projectId)
+      const blockedAt = task.activity[0]?.createdAt
+      if (!signals || !blockedAt) continue
+      const days = Math.floor((now.getTime() - blockedAt.getTime()) / DAY_MS)
+      signals.maxBlockedDays = Math.max(signals.maxBlockedDays, days)
+    }
+
+    return result
   }
+
+  return Object.assign(single, { batch })
 }
 
 export interface HealthThresholds {

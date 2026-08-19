@@ -11,6 +11,7 @@ import {
   noTaskHealthSignals,
   type ComputedHealth,
   type HealthThresholds,
+  type ProjectHealthSignals,
   type TaskHealthLookup,
 } from './health'
 import {
@@ -102,6 +103,27 @@ type SummaryRow = {
   _count: { milestones: number; members: number }
 }
 
+/**
+ * Health signals for a whole page in one go.
+ *
+ * The list paths used to call the lookup per row, which is three statements per
+ * project — measured at 25 statements for six projects, and the same path backs
+ * the manager dashboard's at-risk card and the project-summary report. A lookup
+ * that advertises `batch` answers the page in three; one that does not (a test
+ * fake) falls back to the per-row call and behaves exactly as before.
+ */
+async function signalsFor(
+  db: Db,
+  lookup: TaskHealthLookup,
+  rows: readonly SummaryRow[],
+): Promise<Map<string, ProjectHealthSignals> | null> {
+  if (!lookup.batch || rows.length === 0) return null
+  return lookup.batch(
+    db,
+    rows.map((row) => row.id),
+  )
+}
+
 type DetailRow = SummaryRow & {
   gracePeriodHours: number | null
   penalizeRevisionLateness: boolean | null
@@ -121,8 +143,10 @@ async function toSummaryDto(
   now: Date,
   thresholds: HealthThresholds,
   lookup: TaskHealthLookup,
+  /** Prefetched by `signalsFor` on list paths; absent for a single project. */
+  precomputed?: ProjectHealthSignals,
 ): Promise<ProjectSummaryDto> {
-  const signals = await lookup(db, row.id)
+  const signals = precomputed ?? (await lookup(db, row.id))
   const computed = computeProjectHealth({
     status: row.status,
     dueDate: row.dueDate,
@@ -249,8 +273,18 @@ export async function listProjects(
               normalizeArabic(row.code).includes(needle),
           )
 
+    const signals = await signalsFor(db, lookup, textMatched)
     const computed = await Promise.all(
-      textMatched.map((row) => toSummaryDto(db, row, args.now, args.thresholds, lookup)),
+      textMatched.map((row) =>
+        toSummaryDto(
+          db,
+          row,
+          args.now,
+          args.thresholds,
+          lookup,
+          signals?.get(row.id),
+        ),
+      ),
     )
     const matched =
       healthFilter === null
@@ -277,8 +311,11 @@ export async function listProjects(
     db.project.count({ where }),
   ])
 
+  const signals = await signalsFor(db, lookup, rows)
   const items = await Promise.all(
-    rows.map((row) => toSummaryDto(db, row, args.now, args.thresholds, lookup)),
+    rows.map((row) =>
+      toSummaryDto(db, row, args.now, args.thresholds, lookup, signals?.get(row.id)),
+    ),
   )
 
   return { items, total, page: filters.page, pageSize: filters.pageSize }

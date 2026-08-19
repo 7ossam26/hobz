@@ -3054,3 +3054,194 @@ They are left in the suite, failing, rather than deleted or skipped
   Playwright config sets), because file tracing writes the standalone tree as
   symlinks and Windows refuses those without Developer Mode. The Docker build,
   which is the one that ships, is unaffected.
+
+---
+
+## Phase 13 — QA remediation: performance, user creation, date input, dark theme
+
+**Date:** 2026-08-19 · **Model:** Opus 5
+
+Not a feature phase. Four defects from a manual QA pass, each traced to a root
+cause before anything was changed.
+
+### Built
+
+- **`lib/action-result` + `lib/error-message`** — the `AppError` → Arabic
+  boundary that `lib/errors`'s own docstring had promised since Phase 0 and
+  nothing implemented.
+- **A policy-aware password rule** in the create-user and admin-reset forms, and
+  a real penalty-profile picker replacing the free-text id box.
+- **`components/ui/date-input`** — the product's one date field.
+- **`listUsersWithDetails`**, and a `batch` capability on the project health
+  lookup: both N+1s are now constant in the row count.
+- **`getSessionState` memoised per request**, `experimental.staleTimes`, the
+  duplicate `/tasks` poller removed, the calendar's month range pushed into SQL.
+- **Six named surface steps, three washes and a scrim** in `globals.css`, a
+  re-spread dark ramp, and every remaining hardcoded colour bound to a hue.
+- **21 new unit tests and 19 new integration tests.** Suite: 1667 unit + 1215
+  integration, all passing.
+
+### Decisions worth recording
+
+**The headline performance finding was that there was no performance bug.**
+The app was being run under `next dev` with webpack, against a database holding
+one user and zero tasks, with no production build ever made in the tree. A static
+route with no queries and no logic cost 243 ms warm and 1.3 s cold there, and
+Next **disables `<Link>` prefetch entirely in development**, so every sidebar
+click was a cold on-demand compile. A production build puts every route inside
+the LCP budget and inside the 180 KB bundle budget. The real defects underneath
+were worth fixing and were fixed, but they are not what the report described, and
+saying so was more useful than shipping a tuned query.
+
+**`pnpm perf:bundle` was reporting nonsense, and that is its own finding.** It
+read `/projects` at 2,304 KB against a 180 KB budget and exited non-zero on all
+fifteen routes. Two causes: dev chunks are unminified and carry the HMR runtime,
+and — the part worth writing down — **a running dev server rewrites
+`.next/app-build-manifest.json` after a `next build` finishes**, so the script
+silently measures the dev manifest even when a production build has just been
+made. Stop the dev server, rebuild, and it reads 172.4 KB and exits 0.
+
+**"Re-read permissions on every call" was taken literally and cost 68% of a
+render.** Phase 1 recorded it as "one indexed query per request". It was four
+statements (Prisma issues one per relation level; the `relationJoins` preview is
+not enabled), six times per `/tasks` render — the layout, the header's
+notification read, the page, and four scoped queries: 17 of the 25 statements
+that render issued. React's `cache()` scopes it to one resolution per request.
+The invariant is unchanged — every *request* still re-reads, which is what makes
+a revoke take effect at noon rather than at next sign-out. `lib/auth/session.ts`
+needed a scoped ESLint exception to import `react`; it is one file, it is already
+the Auth.js wiring seam, and it was already excluded from coverage for that
+reason. The rule stays on for the rest of `lib/`.
+
+**`staleTimes.dynamic` is 5 seconds, and the first answer of 30 was wrong.**
+Thirty looked defensible — SPEC §2 already promises only 30s freshness via
+polling. But the poll refreshes the page you are *looking at*, while this cache
+serves a page you are *arriving at*. Approving a task and then opening the
+مستحقات screen is two different routes, and `router.refresh()` covers only the
+first. A منفّذ reading a stale balance is the exact failure this product exists
+to prevent. Five seconds still removes the double fetch on an immediate
+back/forward, which is the case that actually feels slow.
+
+**An N+1 is a correct query issued N times, which is why two survived twelve
+phases.** `/users` called `getUser` per row — and `getUser` uses `findFirst`,
+which Prisma's DataLoader does **not** batch, unlike `findUnique` — for 49
+statements at fifteen users. `listProjects` called the health lookup per row at
+three statements each. Neither failed a functional test, because neither was
+wrong. `tests/integration/perf/query-count.test.ts` now doubles the fixture and
+asserts the statement count does not move, which is the only form of this
+assertion that stays meaningful as the data grows.
+
+**The health lookup grew a `batch` capability rather than a second port.**
+`TaskHealthLookup` is still a function of one project; `batch` is an optional
+property on it. A caller with a page in hand uses it, a caller with one project
+does not, and a test injecting a fake provides neither. An integration test
+compares the two answers project-by-project on one fixture, plus one asserting
+non-zero values — two implementations that both return zero agree perfectly and
+prove nothing.
+
+**The user-creation bug was two bugs wearing the same message.** The server
+rejected passwords under `security.minPasswordLength` (default 10) while the
+shared Zod schema asked for `min(1)`, so the client parse always passed and the
+`DomainError` was swallowed by a bare `catch {}` into the generic Arabic string.
+Separately, `penaltyProfileId` was still the Phase 0 "free-form id that Phase 8
+will constrain to a real foreign key" — Phase 8 added the FK and never
+constrained the input, so any typed value was a raw P2003. That generic message
+appears in **32 client files**; the mechanism now exists for all of them and was
+wired into `/users`.
+
+**Only business failures become data; access errors keep throwing.** A
+`ForbiddenError` is not a message to render — it is a request that should never
+have been made, and the RBAC suite asserts these reject. That split exposed a
+misclassification: `assertMayChangeSuperAdminRole` threw a `DomainError`, so the
+privilege-escalation guard would have been softened into a renderable field
+error. It throws `FORBIDDEN` now, keeping its specific `messageKey`. Three
+failing boundary tests caught it, and the tests were right.
+
+**The date field was fixed as a class, not as a hypothesis.** Three things were
+independently true: the RTL document put Blink's calendar indicator at the left
+edge where nobody looks (two screens had already worked around this with
+`dir="ltr"`, six had not); `Input`'s `min-w-0` let a two-column sheet squeeze the
+field until the indicator clipped out entirely; and **nothing in the repo ever
+called `showPicker()`**, so that indicator was the only affordance. A shared
+`DateInput` closes all three. `showPicker()` is bound to `click` and deliberately
+**not** to `focus`: `use-modal.ts` focuses the first control in a sheet's body on
+open, so a focus binding would pop a calendar nobody asked for every time a sheet
+led with a date. There is a test for that, through the real `Sheet`.
+
+**The dark theme was flat because the test only measured text.** Its single
+surface-to-surface assertion was that three steps were *ordered*, so a ramp
+spanning L 0.145→0.216 — 1.04:1 and 1.07:1 between neighbours — passed all 58
+tests. Nine distinct UI surfaces resolved to two colours (`--card` ===
+`--popover`; `--accent` === `--muted` === `--secondary`), and because `--accent`
+is every hover in the app and pointed at a step *below* a card, **hovering a row
+in dark mode pushed it away from the viewer**. Inputs had no token at all and
+were painted the page colour. The fix is six named steps, three washes and a
+scrim; the guard is five new assertions — minimum step ratio, whole-ramp
+monotonicity, field-below-card, border visibility, chip-tint-above-overlay —
+because the values were never the problem, the missing assertion was.
+
+**`--surface-inset` meant opposite things in the two themes.** Darkest in light
+(a well), lightest in dark (a lift). It was referenced in exactly one place, the
+gallery's own swatch grid, which is why nobody noticed. Now the deepest step in
+both, asserted.
+
+**Dark elevation leads with a light rim, and this is a deliberate SPEC reading.**
+`globals.css` already said "on a dark ground a drop shadow is nearly invisible
+and a border does the work instead" — and then kept the black blur anyway, so
+`shadow-xs` was a paint that bought nothing. SPEC §9 bans "drop-shadow stacks"
+and allows two layers only on the overlay step. A 1px inset rim is a border
+substitute rather than decoration, so `--elevation-raised` now leads with one.
+Flagged here rather than absorbed silently, per CLAUDE.md's working agreement.
+
+**Two live AA failures the contrast suite could not see.** `button.tsx` used
+`text-white` on dark `--danger-solid` (~2.9:1) and the table toolbar used it on
+`--accent-solid` (~2.8:1) — while `--danger-on-solid` and `--accent-on-solid`,
+both asserted by the suite, sat unused. A test that measures tokens cannot catch
+a component that bypasses them. Every hardcoded colour is now gone from `src/`
+outside the dev-only gallery.
+
+**Per-route `loading.tsx` was planned and then dropped.** The plan called for one
+each on `/tasks`, `/projects`, `/dashboard` and `/users` "so the shell paints
+before the slowest query resolves". `src/app/(app)/loading.tsx` already exists
+and, being a parent segment's boundary, already covers every nested route. Four
+files duplicating it would have been noise.
+
+### Surprises
+
+- **Three of the six Playwright journeys were already failing before this work.**
+  Flows 2, 4 and 5 fail on an unmodified `HEAD` — verified by stashing every
+  change, rebuilding, and re-running. They are recorded as a pre-existing defect
+  below, not as a regression, and were not investigated further here because they
+  are outside this pass's scope.
+- **The first `/projects` measurement understated the N+1 by 3×**, because the
+  measuring script called `listProjects` without a `taskHealthLookup` and got the
+  no-op default. A perf harness that omits an injected dependency measures the
+  wrong program — and it looks like good news.
+- **The `escalationLevel` column has no test factory option.** It is written by
+  the Phase 6 escalation job, so the health-batch fixture sets it with a direct
+  `update`. Worth a factory option next time something needs it.
+
+### Deferred
+
+| Deferred | Notes |
+| --- | --- |
+| Playwright flows 2, 4, 5 | Failing on `HEAD` before this pass; unrelated to it |
+| The other 31 `catch { ar.errors.unexpected }` call sites | The mechanism exists; conversion is mechanical |
+| Splitting `src/i18n/ar.ts` (108 KB) out of the client graph | Imported by 63 of 74 `'use client'` files |
+| `pnpm perf:explain --load` at 8,000-task volume | Index coverage unproven above demo scale |
+| `taskOrderBy` allows `sort=createdAt`/`title` with no index | Irrelevant at ~100 rows |
+| `--shadow-xs` and `--shadow-sm` are still the same token | Harmless, but one of them is a lie |
+
+### Known limitations
+
+- **LCP figures moved in both directions and must be read as a band.** Medians of
+  three on a developer machine do not resolve 100 ms; the script's own header
+  says one background compile moves a run by hundreds of milliseconds. Every
+  route is inside budget before and after, and that is the whole claim. The
+  statement counts are the reproducible measurement.
+- **`experimental.staleTimes` is not covered by a test.** It is a framework
+  cache-policy knob; asserting it would assert that a config file was written.
+- **The dark palette was verified by test and by numbers, not by eye.** The
+  contrast suite passes and `/design-system` now renders the sidebar, header,
+  input and popover panel it previously omitted — but a human should still look
+  at it in both densities before this is called done.

@@ -6,6 +6,7 @@ import { Dialog } from '@/components/shared/dialog'
 import { FormField } from '@/components/shared/form-field'
 import { useToast } from '@/components/shared/toast'
 import { Button } from '@/components/ui/button'
+import { DateInput } from '@/components/ui/date-input'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { ar } from '@/i18n/ar'
@@ -210,9 +211,8 @@ export function TaskQuickCreateDialog({
 
           <FormField name="quick-due-date" label={ar.tasks.dueDate} required>
             {(field) => (
-              <Input
+              <DateInput
                 {...field}
-                type="date"
                 value={dueDate}
                 onChange={(event) => setDueDate(event.target.value)}
               />

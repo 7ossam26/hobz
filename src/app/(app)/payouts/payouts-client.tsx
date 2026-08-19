@@ -143,7 +143,7 @@ export function PayoutsClient({
                 type="button"
                 onClick={() => selectCycle(cycle.id)}
                 aria-current={cycle.id === selectedCycleId ? 'true' : undefined}
-                className="border-border data-[current=true]:border-primary hover:bg-accent/40 flex min-w-44 shrink-0 flex-col gap-1 rounded-lg border p-3 text-start transition-colors"
+                className="border-border data-[current=true]:border-primary hover:bg-accent flex min-w-44 shrink-0 flex-col gap-1 rounded-lg border p-3 text-start transition-colors"
                 data-current={cycle.id === selectedCycleId}
               >
                 <span className="flex items-center justify-between gap-2">

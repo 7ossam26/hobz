@@ -7,7 +7,7 @@ import { Dialog } from '@/components/shared/dialog'
 import { FormField } from '@/components/shared/form-field'
 import { useToast } from '@/components/shared/toast'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { ar } from '@/i18n/ar'
@@ -302,9 +302,8 @@ export function RevisionDialog({
           required
         >
           {(field) => (
-            <Input
+            <DateInput
               {...field}
-              type="date"
               value={newDueDate}
               onChange={(event) => setNewDueDate(event.target.value)}
             />

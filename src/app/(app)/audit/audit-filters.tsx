@@ -5,7 +5,7 @@ import { useTransition } from 'react'
 
 import { FormField } from '@/components/shared/form-field'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Select } from '@/components/ui/select'
 import { ar } from '@/i18n/ar'
 import type { AuditFacetsDto } from '@/modules/audit/types'
@@ -84,18 +84,13 @@ export function AuditFilters({ facets }: { facets: AuditFacetsDto }) {
 
       <FormField name="from" label={ar.audit.dateFrom}>
         {(field) => (
-          <Input
-            {...field}
-            type="date"
-            defaultValue={params.get('from') ?? ''}
-            dir="ltr"
-          />
+          <DateInput {...field} defaultValue={params.get('from') ?? ''} />
         )}
       </FormField>
 
       <FormField name="to" label={ar.audit.dateTo}>
         {(field) => (
-          <Input {...field} type="date" defaultValue={params.get('to') ?? ''} dir="ltr" />
+          <DateInput {...field} defaultValue={params.get('to') ?? ''} />
         )}
       </FormField>
 

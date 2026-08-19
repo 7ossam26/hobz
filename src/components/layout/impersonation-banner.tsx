@@ -24,7 +24,8 @@ export function ImpersonationBanner({ impersonatedName }: { impersonatedName: st
   return (
     <div
       role="status"
-      className="flex items-center justify-between gap-4 border-b border-amber-300 bg-amber-100 px-4 py-2 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
+      data-hue="amber"
+      className="bg-hue-surface text-hue-text border-hue-line flex items-center justify-between gap-4 border-b px-4 py-2"
     >
       <div className="flex items-center gap-2.5">
         <Eye className="size-4 shrink-0" aria-hidden />
@@ -41,7 +42,7 @@ export function ImpersonationBanner({ impersonatedName }: { impersonatedName: st
         size="sm"
         variant="outline"
         disabled={pending}
-        className="border-amber-400 bg-amber-50 hover:bg-amber-200 dark:border-amber-700 dark:bg-amber-900"
+        className="border-hue-line hover:bg-hue-surface"
         onClick={() => {
           startTransition(async () => {
             await stopImpersonationAction()

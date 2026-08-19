@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 
+import { toActionResult, type ActionResult } from '@/lib/action-result'
 import { clientIpFromHeaders } from '@/lib/auth/ip'
 import { getPasswordPolicy } from '@/lib/auth/policy'
 import { requirePermission } from '@/lib/auth/session'
@@ -34,60 +35,65 @@ async function ip(): Promise<string | undefined> {
 
 export const createUserAction = requirePermission(
   'user.create',
-  async (actor, raw: unknown): Promise<UserDetailDto> => {
-    const input = createUserSchema.parse(raw)
-    const user = await createUser(prisma, {
-      actor,
-      input,
-      policy: await getPasswordPolicy(),
-      ip: await ip(),
-    })
-    revalidatePath('/users')
-    return user
-  },
+  async (actor, raw: unknown): Promise<ActionResult<UserDetailDto>> =>
+    toActionResult(async () => {
+      const input = createUserSchema.parse(raw)
+      const user = await createUser(prisma, {
+        actor,
+        input,
+        policy: await getPasswordPolicy(),
+        ip: await ip(),
+      })
+      revalidatePath('/users')
+      return user
+    }),
 )
 
 export const updateUserAction = requirePermission(
   'user.edit',
-  async (actor, raw: unknown): Promise<UserDetailDto> => {
-    const input = updateUserSchema.parse(raw)
-    const user = await updateUser(prisma, { actor, input, ip: await ip() })
-    revalidatePath('/users')
-    // Roles may have changed, and the navigation is rendered from permissions.
-    revalidatePath('/', 'layout')
-    return user
-  },
+  async (actor, raw: unknown): Promise<ActionResult<UserDetailDto>> =>
+    toActionResult(async () => {
+      const input = updateUserSchema.parse(raw)
+      const user = await updateUser(prisma, { actor, input, ip: await ip() })
+      revalidatePath('/users')
+      // Roles may have changed, and the navigation is rendered from permissions.
+      revalidatePath('/', 'layout')
+      return user
+    }),
 )
 
 export const deactivateUserAction = requirePermission(
   'user.deactivate',
-  async (actor, raw: unknown): Promise<void> => {
-    const { id } = userIdSchema.parse(raw)
-    await deactivateUser(prisma, { actor, id, ip: await ip() })
-    revalidatePath('/users')
-  },
+  async (actor, raw: unknown): Promise<ActionResult<void>> =>
+    toActionResult(async () => {
+      const { id } = userIdSchema.parse(raw)
+      await deactivateUser(prisma, { actor, id, ip: await ip() })
+      revalidatePath('/users')
+    }),
 )
 
 export const activateUserAction = requirePermission(
   'user.deactivate',
-  async (actor, raw: unknown): Promise<void> => {
-    const { id } = userIdSchema.parse(raw)
-    await activateUser(prisma, { actor, id, ip: await ip() })
-    revalidatePath('/users')
-  },
+  async (actor, raw: unknown): Promise<ActionResult<void>> =>
+    toActionResult(async () => {
+      const { id } = userIdSchema.parse(raw)
+      await activateUser(prisma, { actor, id, ip: await ip() })
+      revalidatePath('/users')
+    }),
 )
 
 export const resetUserPasswordAction = requirePermission(
   'user.resetPassword',
-  async (actor, raw: unknown): Promise<void> => {
-    const input = resetPasswordSchema.parse(raw)
-    await adminResetPassword(prisma, {
-      actor,
-      id: input.id,
-      newPassword: input.newPassword,
-      policy: await getPasswordPolicy(),
-      ip: await ip(),
-    })
-    revalidatePath('/users')
-  },
+  async (actor, raw: unknown): Promise<ActionResult<void>> =>
+    toActionResult(async () => {
+      const input = resetPasswordSchema.parse(raw)
+      await adminResetPassword(prisma, {
+        actor,
+        id: input.id,
+        newPassword: input.newPassword,
+        policy: await getPasswordPolicy(),
+        ip: await ip(),
+      })
+      revalidatePath('/users')
+    }),
 )

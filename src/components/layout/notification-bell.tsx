@@ -152,7 +152,7 @@ function NotificationRow({
     <div
       className={cn(
         'flex items-start gap-2 px-3 py-2.5',
-        !notification.isRead && 'bg-muted/60',
+        !notification.isRead && 'bg-surface-selected',
       )}
     >
       <span

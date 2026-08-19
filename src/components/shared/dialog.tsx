@@ -85,7 +85,7 @@ export function Dialog({
         tabIndex={-1}
         aria-hidden
         className={cn(
-          'absolute inset-0 bg-zinc-950/40 transition-opacity duration-150',
+          'absolute inset-0 bg-scrim transition-opacity duration-150',
           entered ? 'opacity-100' : 'opacity-0',
         )}
         onClick={requestClose}
@@ -100,7 +100,7 @@ export function Dialog({
         data-slot="dialog-panel"
         {...(hue ? { 'data-hue': hue } : {})}
         className={cn(
-          'bg-card shadow-overlay relative flex w-full flex-col overflow-hidden rounded-xl border',
+          'bg-surface-overlay shadow-overlay relative flex w-full flex-col overflow-hidden rounded-xl border',
           'transition-all duration-150 ease-out',
           entered ? 'scale-100 opacity-100' : 'scale-[0.98] opacity-0',
           DIALOG_SIZES[size],

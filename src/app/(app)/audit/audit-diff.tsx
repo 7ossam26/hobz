@@ -23,10 +23,20 @@ function renderValue(value: unknown): string {
   return String(value)
 }
 
+/**
+ * A diff row's tone is a datum, so it binds a hue rather than naming a colour
+ * (SPEC §9). `removed` keeps `--danger-*`: it is red-the-consequence, which the
+ * palette deliberately holds apart from red-the-datum.
+ */
+const TONE_HUE: Record<string, string> = {
+  added: 'emerald',
+  changed: 'amber',
+}
+
 const TONE: Record<string, string> = {
-  added: 'text-emerald-700 dark:text-emerald-400',
+  added: 'text-hue-text',
   removed: 'text-destructive',
-  changed: 'text-amber-700 dark:text-amber-400',
+  changed: 'text-hue-text',
 }
 
 const LABEL: Record<string, string> = {
@@ -49,7 +59,10 @@ export function AuditDiff({ entry }: { entry: AuditEntryDto }) {
           <dt className="font-mono text-[11px]" dir="ltr">
             {row.field}
           </dt>
-          <span className={`text-[11px] ${TONE[row.kind] ?? ''}`}>
+          <span
+            {...(TONE_HUE[row.kind] ? { 'data-hue': TONE_HUE[row.kind] } : {})}
+            className={`text-[11px] ${TONE[row.kind] ?? ''}`}
+          >
             {LABEL[row.kind] ?? row.kind}
           </span>
           <dd className="flex flex-wrap items-baseline gap-2 text-xs">

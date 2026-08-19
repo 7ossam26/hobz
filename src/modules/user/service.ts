@@ -1,7 +1,7 @@
 import { recordAudit } from '@/lib/audit'
 import { hashPassword, validatePassword, type PasswordPolicy } from '@/lib/auth/password'
 import type { Db } from '@/lib/db'
-import { ConflictError, DomainError, NotFoundError } from '@/lib/errors'
+import { AppError, ConflictError, DomainError, NotFoundError } from '@/lib/errors'
 import { SUPER_ADMIN_ROLE, type Actor } from '@/lib/rbac'
 
 import { openTasksForUser, type OpenTaskLookup } from './open-tasks'
@@ -77,8 +77,13 @@ function money(value: { toFixed(dp: number): string } | null): string | null {
 // Reads
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function listUsers(db: Db, input: ListUsersInput): Promise<UserPageDto> {
-  const where = {
+/**
+ * The `where` both list paths share. Extracted so `listUsers` and
+ * `listUsersWithDetails` cannot drift into filtering different sets — the
+ * second exists only to avoid an N+1, not to answer a different question.
+ */
+function buildUserWhere(input: ListUsersInput) {
+  return {
     deletedAt: null,
     ...(input.isActive === undefined ? {} : { isActive: input.isActive }),
     ...(input.isWorker === undefined ? {} : { isWorker: input.isWorker }),
@@ -99,12 +104,18 @@ export async function listUsers(db: Db, input: ListUsersInput): Promise<UserPage
         }
       : {}),
   }
+}
+
+const USER_ORDER = [{ isActive: 'desc' as const }, { fullName: 'asc' as const }]
+
+export async function listUsers(db: Db, input: ListUsersInput): Promise<UserPageDto> {
+  const where = buildUserWhere(input)
 
   const [rows, total] = await Promise.all([
     db.user.findMany({
       where,
       select: USER_SUMMARY_SELECT,
-      orderBy: [{ isActive: 'desc' }, { fullName: 'asc' }],
+      orderBy: USER_ORDER,
       skip: (input.page - 1) * input.pageSize,
       take: input.pageSize,
     }),
@@ -119,13 +130,54 @@ export async function listUsers(db: Db, input: ListUsersInput): Promise<UserPage
   }
 }
 
-export async function getUser(db: Db, id: string): Promise<UserDetailDto> {
-  const row = await db.user.findFirst({
-    where: { id, deletedAt: null },
-    select: USER_DETAIL_SELECT,
-  })
-  if (!row) throw new NotFoundError('User', id)
+/**
+ * The same page, plus every row's detail — in **one** query instead of one per
+ * row.
+ *
+ * `/users` renders its edit sheet without a client-side fetch (Phase 1's
+ * decision, and still the right one), which it did by calling `getUser` for
+ * each row. `getUser` uses `findFirst`, which Prisma's DataLoader does not
+ * batch, so a hundred-person directory issued three hundred statements —
+ * measured at 49 statements for 15 users before this change. The detail select
+ * is a superset of the summary select, so asking for it once costs nothing the
+ * page was not already paying for.
+ */
+export async function listUsersWithDetails(
+  db: Db,
+  input: ListUsersInput,
+): Promise<UserPageDto & { details: UserDetailDto[] }> {
+  const where = buildUserWhere(input)
 
+  const [rows, total] = await Promise.all([
+    db.user.findMany({
+      where,
+      select: USER_DETAIL_SELECT,
+      orderBy: USER_ORDER,
+      skip: (input.page - 1) * input.pageSize,
+      take: input.pageSize,
+    }),
+    db.user.count({ where }),
+  ])
+
+  return {
+    items: rows.map(toSummary),
+    details: rows.map(toDetail),
+    total,
+    page: input.page,
+    pageSize: input.pageSize,
+  }
+}
+
+type DetailRow = SummaryRow & {
+  monthlySalary: { toFixed(dp: number): string } | null
+  defaultTaskRate: { toFixed(dp: number): string } | null
+  weeklyCapacityHours: number
+  penaltyProfileId: string | null
+  timezone: string
+  createdAt: Date
+}
+
+function toDetail(row: DetailRow): UserDetailDto {
   return {
     ...toSummary(row),
     monthlySalary: money(row.monthlySalary),
@@ -135,6 +187,16 @@ export async function getUser(db: Db, id: string): Promise<UserDetailDto> {
     timezone: row.timezone,
     createdAt: row.createdAt,
   }
+}
+
+export async function getUser(db: Db, id: string): Promise<UserDetailDto> {
+  const row = await db.user.findFirst({
+    where: { id, deletedAt: null },
+    select: USER_DETAIL_SELECT,
+  })
+  if (!row) throw new NotFoundError('User', id)
+
+  return toDetail(row)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -156,6 +218,25 @@ async function assertRolesExist(db: Db, roleIds: readonly string[]): Promise<voi
   if (found.length !== new Set(roleIds).size) {
     throw new NotFoundError('Role', roleIds.join(','))
   }
+}
+
+/**
+ * A penalty-profile override must name a profile that exists.
+ *
+ * `User.penaltyProfileId` became a real foreign key in Phase 8
+ * (`20260819000000_penalty_profiles`), but this write path kept the Phase 0
+ * seam's "free-form id" treatment — so a mistyped value reached Postgres and
+ * came back as a raw P2003 that the UI could only report as "unexpected error".
+ * `assignPenaltyProfile` has always checked; this is the same check, on the
+ * other path that sets the column.
+ */
+async function assertPenaltyProfileExists(db: Db, profileId: string | null): Promise<void> {
+  if (!profileId) return
+  const profile = await db.penaltyProfile.findFirst({
+    where: { id: profileId, deletedAt: null },
+    select: { id: true },
+  })
+  if (!profile) throw new NotFoundError('PenaltyProfile', profileId)
 }
 
 /**
@@ -188,7 +269,18 @@ async function assertMayChangeSuperAdminRole(
   if (had === wants) return
   if (actor.isSuperAdmin) return
 
-  throw new DomainError('users.superAdminRoleRestricted', {
+  /**
+   * `FORBIDDEN`, not `DOMAIN`, and the distinction is load-bearing.
+   *
+   * This is an authorisation decision — "only a SUPER_ADMIN may do this" is a
+   * permission statement, not a business rule — and `lib/action-result`
+   * deliberately lets access errors keep throwing rather than turning them into
+   * a message the UI renders. Softening a privilege-escalation guard into a
+   * tidy field error is exactly the wrong direction, and the RBAC boundary
+   * tests assert the rejection. The specific `messageKey` is kept so the reason
+   * is still on the record.
+   */
+  throw new AppError('FORBIDDEN', 'users.superAdminRoleRestricted', {
     nameEn: SUPER_ADMIN_ROLE,
   })
 }
@@ -219,6 +311,7 @@ export async function createUser(
   }
 
   await assertRolesExist(db, input.roles)
+  await assertPenaltyProfileExists(db, input.penaltyProfileId)
   await assertMayChangeSuperAdminRole(db, args.actor, [], input.roles)
 
   const user = await db.user.create({
@@ -278,6 +371,7 @@ export async function updateUser(
   if (!before) throw new NotFoundError('User', input.id)
 
   await assertRolesExist(db, input.roles)
+  await assertPenaltyProfileExists(db, input.penaltyProfileId)
 
   const beforeRoles = before.roles.map((r) => r.role.id).sort()
   const afterRoles = [...input.roles].sort()

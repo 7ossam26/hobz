@@ -123,6 +123,30 @@
   --surface-raised: oklch(0.993 0.001 286);
   --surface-inset: oklch(0.936 0.005 286);
 
+  /* ── The four surfaces the ramp above never named ────────────────────────
+     Nine distinct UI surfaces used to resolve to two colours: card, sheet,
+     dialog, popover, toast, sidebar and the table container were all
+     `--surface-raised`, and inputs were the page itself. In light that is
+     survivable because a shadow does the separating; in dark it is not, and a
+     token that exists in only one theme is a token components cannot use.
+
+     Light keeps its current rendered values on purpose — `raised` is already
+     L 0.993 and pure white is banned (SPEC §9), so an overlay cannot go higher
+     and does not need to. */
+  --surface-overlay: var(--surface-raised);
+  --surface-field: var(--surface-base);
+
+  /* Hover and selection are a *wash*, not a colour, so they compose over
+     whatever surface they land on. The old `hover:bg-accent` resolved to
+     `--surface-sunken`, which sits *below* a card — in dark that made every
+     hover push the element away from the viewer. Black in light, white in
+     dark: hover always moves toward the reader. */
+  --hover-wash: oklch(0 0 0 / 0.045);
+  --surface-selected: oklch(0 0 0 / 0.07);
+
+  /* The modal backdrop. Was `bg-zinc-950/40` hardcoded in three files. */
+  --scrim: oklch(0.18 0.005 286 / 0.42);
+
   /* Text. `subtle` is AA-large only (3.4:1) and is for timestamps and counts —
      never for anything a decision depends on. */
   --fg: oklch(0.21 0.006 286);
@@ -226,7 +250,9 @@
   --foreground: var(--fg);
   --card: var(--surface-raised);
   --card-foreground: var(--fg);
-  --popover: var(--surface-raised);
+  /* A popover, a sheet, a dialog and a toast float *above* a card — they were
+     all the same colour as one. */
+  --popover: var(--surface-overlay);
   --popover-foreground: var(--fg);
   --primary: var(--accent-solid);
   --primary-foreground: var(--accent-on-solid);
@@ -234,7 +260,10 @@
   --secondary-foreground: var(--fg);
   --muted: var(--surface-sunken);
   --muted-foreground: var(--fg-muted);
-  --accent: var(--surface-sunken);
+  /* `hover:bg-accent` is every hover state in the app. Pointing it at
+     `--surface-sunken` meant hovering a table row or a nav item painted it the
+     colour of a *recess* — in dark, darker than the card it sat on. */
+  --accent: var(--hover-wash);
   --accent-foreground: var(--fg);
   --destructive: var(--danger-solid);
   --destructive-foreground: var(--danger-on-solid);
@@ -290,93 +319,137 @@
 
 .dark {
   /* Surfaces lift as they come forward, exactly as in light — the ramp is
-     inverted, not re-invented. Pure black is banned: `sunken` stops at L 0.145,
-     which keeps large dark areas from looking like a hole in the screen. */
-  --surface-sunken: oklch(0.145 0.004 286);
-  --surface-base: oklch(0.178 0.004 286);
-  --surface-raised: oklch(0.216 0.005 286);
-  --surface-inset: oklch(0.243 0.006 286);
+     inverted, not re-invented. Pure black is banned: `inset` stops at L 0.105,
+     which keeps large dark areas from looking like a hole in the screen.
+
+     ── Why these numbers changed ──────────────────────────────────────────
+     The first cut spanned L 0.145 → 0.216 across three steps, which is 1.04:1
+     and 1.07:1 between neighbours — below the threshold at which an edge is
+     visible at all. Page, card, sheet, input and sidebar were effectively one
+     colour, and the contrast suite could not catch it because its only
+     surface-to-surface assertion was that the three were *ordered*.
+
+     The ramp now spans 0.105 → 0.265. The ceiling is not arbitrary: hue chip
+     text has to clear 4.5:1 on the lightest neutral surface, which puts the top
+     step at about L 0.275. Every value below was solved against that
+     constraint, the same way the palette was solved in Phase 2 — and the suite
+     now asserts a minimum step, so this cannot flatten again unnoticed. */
+  --surface-inset: oklch(0.105 0.004 286);
+  --surface-sunken: oklch(0.14 0.004 286);
+  --surface-base: oklch(0.175 0.004 286);
+  --surface-raised: oklch(0.225 0.005 286);
+  --surface-overlay: oklch(0.265 0.006 286);
+
+  /* Inputs are a well, not the page. `bg-background` made a field the exact
+     colour of the surface behind it, so on a card the only thing saying "you
+     can type here" was a 1.21:1 border. */
+  --surface-field: oklch(0.115 0.004 286);
+
+  /* White, so hover *lifts*. See the light block for why this is a wash. */
+  --hover-wash: oklch(1 0 0 / 0.06);
+  --surface-selected: oklch(1 0 0 / 0.1);
+
+  /* Deeper than light's: on a dark page a 40% scrim barely separates the modal
+     from what it covers. */
+  --scrim: oklch(0 0 0 / 0.66);
 
   --fg: oklch(0.96 0.001 286);
-  --fg-muted: oklch(0.72 0.013 286);
+  /* Was L 0.72 — 7.6:1, nearly as loud as `--fg` itself, which is the other
+     half of "everything looks the same". 5.3:1 on the lightest surface keeps it
+     comfortably above AA while letting primary text lead again. */
+  --fg-muted: oklch(0.678 0.013 286);
   --fg-subtle: oklch(0.6 0.012 286);
 
-  --line: oklch(0.285 0.006 286);
-  --line-strong: oklch(0.37 0.008 286);
+  /* On a dark ground a drop shadow is invisible and the border does the work
+     (see the elevation note below). It was never strengthened to match: 1.21:1
+     against a card. These are the compensation. */
+  --line: oklch(0.35 0.007 286);
+  --line-strong: oklch(0.45 0.009 286);
 
   --accent-solid: oklch(0.7 0.18 288);
   --accent-solid-hover: oklch(0.75 0.16 288);
   --accent-on-solid: oklch(0.16 0.01 286);
-  --accent-soft: oklch(0.29 0.075 288);
-  --accent-on-soft: oklch(0.85 0.09 288);
-  --accent-line: oklch(0.42 0.13 288);
+  --accent-soft: oklch(0.335 0.08 288);
+  --accent-on-soft: oklch(0.88 0.09 288);
+  --accent-line: oklch(0.46 0.13 288);
   --accent-ring: oklch(0.7 0.18 288);
 
-  --data-neutral-surface: oklch(0.268 0.005 286);
-  --data-neutral-text: oklch(0.76 0.011 286);
-  --data-neutral-line: oklch(0.38 0.007 286);
+  --data-neutral-surface: oklch(0.32 0.005 286);
+  --data-neutral-text: oklch(0.698 0.011 286);
+  --data-neutral-line: oklch(0.42 0.007 286);
   --data-neutral-solid: oklch(0.68 0.013 286);
 
-  --data-red-surface: oklch(0.268 0.059 25);
-  --data-red-text: oklch(0.668 0.189 25);
-  --data-red-line: oklch(0.38 0.089 25);
+  --data-red-surface: oklch(0.32 0.059 25);
+  --data-red-text: oklch(0.724 0.189 25);
+  --data-red-line: oklch(0.42 0.089 25);
   --data-red-solid: oklch(0.68 0.208 25);
 
-  --data-orange-surface: oklch(0.268 0.059 55);
-  --data-orange-text: oklch(0.661 0.164 55);
-  --data-orange-line: oklch(0.38 0.089 55);
+  --data-orange-surface: oklch(0.32 0.059 55);
+  --data-orange-text: oklch(0.708 0.164 55);
+  --data-orange-line: oklch(0.42 0.089 55);
   --data-orange-solid: oklch(0.68 0.168 55);
 
-  --data-amber-surface: oklch(0.268 0.056 85);
-  --data-amber-text: oklch(0.653 0.134 85);
-  --data-amber-line: oklch(0.38 0.078 85);
+  --data-amber-surface: oklch(0.32 0.056 85);
+  --data-amber-text: oklch(0.7 0.134 85);
+  --data-amber-line: oklch(0.42 0.078 85);
   --data-amber-solid: oklch(0.68 0.139 85);
 
-  --data-lime-surface: oklch(0.268 0.059 128);
-  --data-lime-text: oklch(0.643 0.168 128);
-  --data-lime-line: oklch(0.38 0.089 128);
+  --data-lime-surface: oklch(0.32 0.059 128);
+  --data-lime-text: oklch(0.69 0.168 128);
+  --data-lime-line: oklch(0.42 0.089 128);
   --data-lime-solid: oklch(0.68 0.178 128);
 
-  --data-emerald-surface: oklch(0.268 0.059 162);
-  --data-emerald-text: oklch(0.64 0.14 162);
-  --data-emerald-line: oklch(0.38 0.084 162);
+  --data-emerald-surface: oklch(0.32 0.059 162);
+  --data-emerald-text: oklch(0.688 0.14 162);
+  --data-emerald-line: oklch(0.42 0.084 162);
   --data-emerald-solid: oklch(0.68 0.149 162);
 
-  --data-teal-surface: oklch(0.268 0.047 195);
-  --data-teal-text: oklch(0.643 0.109 195);
-  --data-teal-line: oklch(0.38 0.065 195);
+  --data-teal-surface: oklch(0.32 0.047 195);
+  --data-teal-text: oklch(0.692 0.109 195);
+  --data-teal-line: oklch(0.42 0.065 195);
   --data-teal-solid: oklch(0.68 0.116 195);
 
-  --data-sky-surface: oklch(0.268 0.056 232);
-  --data-sky-text: oklch(0.647 0.132 232);
-  --data-sky-line: oklch(0.38 0.078 232);
+  --data-sky-surface: oklch(0.32 0.056 232);
+  --data-sky-text: oklch(0.694 0.132 232);
+  --data-sky-line: oklch(0.42 0.078 232);
   --data-sky-solid: oklch(0.68 0.138 232);
 
-  --data-blue-surface: oklch(0.268 0.059 264);
-  --data-blue-text: oklch(0.656 0.182 264);
-  --data-blue-line: oklch(0.38 0.089 264);
+  --data-blue-surface: oklch(0.32 0.059 264);
+  --data-blue-text: oklch(0.712 0.182 264);
+  --data-blue-line: oklch(0.42 0.089 264);
   --data-blue-solid: oklch(0.68 0.168 264);
 
-  --data-fuchsia-surface: oklch(0.268 0.059 322);
-  --data-fuchsia-text: oklch(0.669 0.189 322);
-  --data-fuchsia-line: oklch(0.38 0.089 322);
+  --data-fuchsia-surface: oklch(0.32 0.059 322);
+  --data-fuchsia-text: oklch(0.714 0.189 322);
+  --data-fuchsia-line: oklch(0.42 0.089 322);
   --data-fuchsia-solid: oklch(0.68 0.239 322);
 
-  --data-pink-surface: oklch(0.268 0.059 355);
-  --data-pink-text: oklch(0.67 0.189 355);
-  --data-pink-line: oklch(0.38 0.089 355);
+  --data-pink-surface: oklch(0.32 0.059 355);
+  --data-pink-text: oklch(0.716 0.189 355);
+  --data-pink-line: oklch(0.42 0.089 355);
   --data-pink-solid: oklch(0.68 0.239 355);
 
   --danger-solid: oklch(0.7 0.19 25);
   --danger-on-solid: oklch(0.16 0.01 286);
-  --danger-soft: oklch(0.268 0.059 25);
-  --danger-text: oklch(0.668 0.189 25);
+  --danger-soft: oklch(0.32 0.059 25);
+  --danger-text: oklch(0.724 0.189 25);
 
-  /* On a dark ground a drop shadow is nearly invisible and a border does the
-     work instead — so elevation gets darker, not softer. */
-  --elevation-raised: 0 1px 2px 0 oklch(0 0 0 / 0.32);
+  /* On a dark ground a drop shadow is nearly invisible: a black blur on a
+     near-black surface renders as nothing. The original note said a border does
+     the work instead, and then kept the blur anyway — so `shadow-xs` was
+     decoration that cost a paint and bought nothing.
+
+     Elevation in dark now *leads* with a 1px light rim along the top edge,
+     which is how a raised surface catches light and the one cue that survives
+     on a dark ground. The blur stays underneath for the overlay step only.
+
+     SPEC §9 bans "drop-shadow stacks" and the light block above allows two
+     layers only on `overlay`. A hairline rim is a border substitute, not a
+     stack — flagged deliberately in docs/DECISIONS.md rather than absorbed
+     silently, per CLAUDE.md's working agreement. */
+  --elevation-raised: inset 0 1px 0 0 oklch(1 0 0 / 0.055);
   --elevation-overlay:
-    0 1px 2px 0 oklch(0 0 0 / 0.4), 0 12px 32px -12px oklch(0 0 0 / 0.6);
+    inset 0 1px 0 0 oklch(1 0 0 / 0.075), 0 16px 40px -16px oklch(0 0 0 / 0.7);
 }
 
 /* ── Hue binding ──────────────────────────────────────────────────────────
@@ -483,6 +556,11 @@
   --color-surface-base: var(--surface-base);
   --color-surface-raised: var(--surface-raised);
   --color-surface-inset: var(--surface-inset);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-field: var(--surface-field);
+  --color-hover-wash: var(--hover-wash);
+  --color-surface-selected: var(--surface-selected);
+  --color-scrim: var(--scrim);
   --color-fg: var(--fg);
   --color-fg-muted: var(--fg-muted);
   --color-fg-subtle: var(--fg-subtle);

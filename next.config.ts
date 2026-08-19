@@ -31,6 +31,31 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    /**
+     * The client router cache. Next 15 defaults `dynamic` to 0, and every route
+     * here is dynamic (the root layout reads cookies, every page calls
+     * `auth()`), so without this the back button and every revisit re-render
+     * the whole tree on the server — layout, header and page — for a page the
+     * browser was showing a second ago.
+     *
+     * **Five seconds, not thirty.** Thirty was the first choice, on the grounds
+     * that SPEC §2 already promises only 30s freshness via polling. That
+     * reasoning is wrong in the one place this product cannot afford it: the
+     * poll refreshes the page you are *looking at*, while this cache serves a
+     * page you are *arriving at*. Approving a task and then opening مستحقاتي is
+     * two different routes, and `router.refresh()` — which every mutation path
+     * calls, and which bypasses this cache — only covers the first. A منفّذ
+     * seeing a stale balance is precisely the failure this product exists to
+     * prevent.
+     *
+     * Five seconds still removes the double fetch on an immediate back/forward,
+     * which is the case that actually feels slow, and caps staleness below the
+     * time it takes to read a screen.
+     */
+    staleTimes: {
+      dynamic: 5,
+      static: 180,
+    },
   },
   serverExternalPackages: ['@prisma/client', 'node-cron', 'bcryptjs'],
 

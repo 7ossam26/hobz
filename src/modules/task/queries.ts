@@ -203,15 +203,21 @@ export interface TaskCalendarDto {
   truncated: boolean
 }
 
-/** Tasks due inside `[from, to]` — a calendar grid's one query per range. */
+/**
+ * Tasks due inside `[from, to]` — a calendar grid's one query per range.
+ *
+ * The range is part of the `where`, not a filter applied afterwards. It used to
+ * fetch the whole scoped set up to the 1000-row ceiling and discard everything
+ * outside the visible month in application code, so a month view of a busy
+ * agency read — and serialised — roughly thirty times the rows it drew. It also
+ * made `truncated` mean the wrong thing: the ceiling could be hit by tasks in
+ * *other* months and warn the user their calendar was incomplete when it was
+ * not. Both follow from pushing two comparisons into SQL on an indexed column.
+ */
 export async function getTaskCalendar(
   raw: Record<string, unknown>,
   range: { from: Date; to: Date },
   now: Date = new Date(),
 ): Promise<TaskCalendarDto> {
-  const { items, truncated } = await scopedTaskSet(raw, now)
-  return {
-    items: items.filter((task) => task.dueDate >= range.from && task.dueDate <= range.to),
-    truncated,
-  }
+  return scopedTaskSet({ ...raw, dueFrom: range.from, dueTo: range.to }, now)
 }

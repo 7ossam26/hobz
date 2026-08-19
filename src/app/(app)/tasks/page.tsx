@@ -7,7 +7,6 @@ import { ar } from '@/i18n/ar'
 import { requireActor } from '@/lib/auth/session'
 import { TASK_VIEW_COOKIE, parseTaskView } from '@/lib/preferences'
 import { can } from '@/lib/rbac'
-import { getSetting } from '@/lib/settings'
 import { getProjectOptions } from '@/modules/project/queries'
 import {
   getTaskBoard,
@@ -77,7 +76,6 @@ export default async function TasksPage({
     projectOptions,
     userOptions,
     categories,
-    pollingIntervalSeconds,
   ] = await Promise.all([
     view === 'board' ? getTaskBoard(rawFilters, now) : Promise.resolve(null),
     view === 'list'
@@ -98,7 +96,6 @@ export default async function TasksPage({
     getProjectOptions(),
     getUserOptions(),
     getTaskCategories(),
-    getSetting('notifications.pollingIntervalSeconds'),
   ])
 
   return (
@@ -114,7 +111,6 @@ export default async function TasksPage({
       userOptions={userOptions}
       categories={categories}
       permissions={permissions}
-      pollingIntervalSeconds={pollingIntervalSeconds}
       currentUserId={actor.id}
     />
   )

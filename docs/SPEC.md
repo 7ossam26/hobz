@@ -654,7 +654,13 @@ already has to call.
 
 1. **The query layer** — `assertCan` in `queries.ts`, `requirePermission` on
    every action, against permissions re-read from the database. This is the
-   enforcement.
+   enforcement. Re-read **once per request**, not once per caller:
+   `getSessionState` is wrapped in React's `cache()`, because a single `/tasks`
+   render was resolving the same actor six times for four statements each — 17 of
+   the 25 statements that render issued. The invariant is untouched (every
+   request still re-reads, which is what makes a revoke take effect at noon
+   rather than at next sign-out); what stops is one request asking the same
+   question six times.
 2. **Middleware** — routes on the JWT's copy of the permission set. Runs at the
    edge where Prisma does not, so the copy can be up to one session stale. It
    decides where to send a browser, not what data exists.
@@ -836,22 +842,54 @@ a budget nobody can run is a wish:
   average teaches people to ignore CI.
 
   Measured against the demo dataset (`prisma/seed-demo.ts`), median of three
-  loads per route, budget 1800 ms:
+  loads per route, budget 1800 ms. Re-measured after the Phase 13 QA pass:
 
   | route | LCP | route | LCP |
   |---|---:|---|---:|
-  | `/dashboard` | 488 ms | `/penalties` | 476 ms |
-  | `/tasks` | 576 ms | `/reports` | 160 ms |
-  | `/tasks?view=board` | 552 ms | `/users` | 500 ms |
-  | `/projects` | 188 ms | `/roles` | 176 ms |
-  | `/clients` | 172 ms | `/settings` | 540 ms |
-  | `/calendar` | 208 ms | `/audit` | 592 ms |
-  | `/my-earnings` | 176 ms | `/import` | 180 ms |
-  | `/payouts` | 164 ms | | |
+  | `/dashboard` | 724 ms | `/penalties` | 628 ms |
+  | `/tasks` | 892 ms | `/reports` | 368 ms |
+  | `/tasks?view=board` | 972 ms | `/users` | 724 ms |
+  | `/projects` | 620 ms | `/roles` | 684 ms |
+  | `/clients` | 332 ms | `/settings` | 672 ms |
+  | `/calendar` | 732 ms | `/audit` | 424 ms |
+  | `/my-earnings` | 316 ms | `/import` | 652 ms |
+  | `/payouts` | 616 ms | | |
 
-  The slowest route uses a third of the budget. The measurement is worth
-  repeating after any change to the app shell, because the number that matters
-  is not the margin but whether the margin is still there.
+  The slowest route uses just over half the budget. **Read these as a band, not
+  as per-route figures.** LCP on a developer machine moves by hundreds of
+  milliseconds between runs — the script's own header says so — and a median of
+  three does not resolve a 100 ms difference. What the numbers establish is that
+  every route is comfortably inside budget; they cannot establish that
+  `/users` got slower and `/audit` got faster. Statement counts (below) are the
+  reproducible measurement.
+
+  The measurement is worth repeating after any change to the app shell, because
+  the number that matters is not the margin but whether the margin is still
+  there.
+
+- **`pnpm perf:bundle` only means something against a production build**, and
+  reading it against a running `next dev` is worse than not reading it: dev
+  chunks are unminified and carry the HMR runtime, so it reports `/projects` at
+  2,304 KB against a 180 KB budget and fails every route. Worse, a dev server
+  sharing the `.next` directory rewrites `app-build-manifest.json` *after* a
+  build finishes, so the script silently reads the dev manifest. Stop the dev
+  server before measuring.
+
+**Query counts, which are the number that does reproduce.** Two N+1s survived
+twelve phases because an N+1 is a *correct* query issued N times and passes every
+functional test:
+
+| read path | before | after |
+|---|---:|---:|
+| `/users` page data (15 users) | 49 statements / 209 ms | **4 / 4 ms** |
+| `/projects` list with health (6 projects) | 25 statements | **8** |
+| `/projects` health facet (RED) | 24 statements | **7** |
+
+Both were per-row: `/users` called `getUser` for every row (and `getUser` uses
+`findFirst`, which Prisma's DataLoader does not batch), and `listProjects` called
+the health lookup per row at three statements each. Both counts are now constant
+in the row count, which is what `tests/integration/perf/query-count.test.ts`
+asserts — it doubles the fixture and requires the statement count not to move.
 
 **Link prefetch is opt-out where a list is unbounded.** Next prefetches every
 `<Link>` that enters the viewport, and each prefetch of an entity route is a
@@ -878,6 +916,32 @@ ramp (violet, actions and focus only), and ten **data** hues. The data hues avoi
 the 275–300° band the accent occupies, so a status chip can never be mistaken for
 a button.
 
+**The surface ramp names six steps, and every UI surface picks one.** The
+original four were not enough: `--card` and `--popover` both resolved to
+`--surface-raised`, so a card, a sheet, a dialog, a popover, a toast, the sidebar
+and the table container were one colour; and there was no input token at all, so
+a field was painted the page colour. The ramp, deepest first —
+
+`--surface-inset` · `--surface-sunken` · `--surface-base` (the page) ·
+`--surface-raised` (card, sidebar, table, header) · `--surface-overlay` (sheet,
+dialog, popover, toast, command palette) — plus `--surface-field`, a *role*
+rather than a rung: whatever step it takes, it is darker than the card and the
+overlay it sits on, in both themes.
+
+**Hover and selection are washes, not colours.** `--hover-wash` and
+`--surface-selected` are translucent black in light and translucent white in
+dark, so they compose over whatever surface they land on and always move the
+element *toward* the reader. `hover:bg-accent` previously resolved to
+`--surface-sunken`, which sits below a card — in dark mode every hover pushed the
+element away. `--scrim` is the modal backdrop, which three components had
+hardcoded as `bg-zinc-950/40`.
+
+**In dark, depth is a rim and a border, not a shadow.** A black blur on a
+near-black surface renders as nothing, so `--elevation-raised` leads with a 1px
+inset light rim, and `--line` was raised until a border is genuinely visible
+against every surface. This is a deliberate, narrow reading of §9's ban on
+"drop-shadow stacks": a hairline rim is a border substitute, not decoration.
+
 **Colour is bound to data, not chosen.** A component declares *which datum* it is
 showing — `data-hue="emerald"` — and reads `--hue-surface` / `--hue-text` /
 `--hue-line` / `--hue-solid`. There is no `color` prop anywhere in the component
@@ -888,9 +952,28 @@ decoration.
 
 **Contrast is asserted, not claimed.** `tests/unit/design/palette-contrast.test.ts`
 parses `globals.css` and measures every pairing the components produce: text ≥
-4.5:1 on its chip tint *and* on all three neutral surfaces, solid marks ≥ 3:1,
+4.5:1 on its chip tint *and* on all four neutral surfaces, solid marks ≥ 3:1,
 button and active-nav pairings ≥ 4.5:1, in both themes. Retuning a colour to look
 nicer now costs a failing test rather than a silent regression.
+
+**Hierarchy is asserted too, and that was the gap.** The suite originally
+measured text-on-surface only; its single surface-to-surface assertion was that
+the three steps were *ordered*. A dark ramp spanning L 0.145→0.216 — 1.04:1 and
+1.07:1 between neighbours, invisible on any real display — passed all 58 tests.
+It now also asserts a minimum ratio between adjacent steps, that the whole ramp
+is monotonic in both themes (`--surface-inset` used to be the darkest step in
+light and the *lightest* in dark), that `--line` and `--line-strong` are visible
+against every surface with a stricter floor in dark, and that a chip tint clears
+the highest surface so a status chip cannot vanish inside a sheet. 69 tests.
+
+**A component never writes a colour literal, and that is now checked by
+absence.** Four `Badge` variants, the impersonation banner, the audit diff and
+one screen's success banner had carried hardcoded Tailwind pairs since before the
+hue system existed — invisible to the contrast suite and immune to any palette
+change. Two of them were live AA failures the suite could not see, because the
+components used `text-white` where the *tested* token
+(`--danger-on-solid`, `--accent-on-solid`) was sitting unused: ~2.9:1 and ~2.8:1
+in dark.
 
 **Density is a CSS-variable scale**, set as `data-density` on `<html>`. Row
 height, cell padding, control height, gaps and text size all derive from it, so a

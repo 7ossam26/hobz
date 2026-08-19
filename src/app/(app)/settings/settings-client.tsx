@@ -194,7 +194,7 @@ export function SettingsClient({ groups, canEdit, holidaysSlot }: Props) {
       </div>
 
       {canEdit ? (
-        <div className="bg-background/95 fixed inset-x-0 bottom-0 z-30 border-t backdrop-blur">
+        <div className="bg-surface-overlay fixed inset-x-0 bottom-0 z-30 border-t">
           <div className="flex items-center justify-between gap-3 px-4 py-3 md:px-6">
             <p className="text-muted-foreground text-sm tabular-nums">
               {dirtyKeys.length === 0

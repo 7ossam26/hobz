@@ -8,6 +8,7 @@ import { UserChip } from '@/components/data/user-chip'
 import { FormField } from '@/components/shared/form-field'
 import { useToast } from '@/components/shared/toast'
 import { Button } from '@/components/ui/button'
+import { DateInput } from '@/components/ui/date-input'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -316,9 +317,8 @@ export function TaskDetailsTab({
       <div className="grid grid-cols-2 gap-3">
         <FormField name="detail-due-date" label={ar.tasks.dueDate}>
           {(field) => (
-            <Input
+            <DateInput
               {...field}
-              type="date"
               disabled={disabled}
               value={draft.dueDate.toISOString().slice(0, 10)}
               onChange={(event) => {

@@ -21,8 +21,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ar } from '@/i18n/ar'
+import type { ActionResult } from '@/lib/action-result'
+import { messageForError, messageForFailure } from '@/lib/error-message'
 import { formatMobileForDisplay } from '@/lib/phone'
 import { startImpersonationAction } from '@/modules/impersonation/actions'
+import type { PenaltyProfileDto } from '@/modules/penalty/types'
 import type { RoleSummaryDto } from '@/modules/role/types'
 import {
   activateUserAction,
@@ -31,7 +34,11 @@ import {
   resetUserPasswordAction,
   updateUserAction,
 } from '@/modules/user/actions'
-import { createUserSchema, updateUserSchema } from '@/modules/user/schema'
+import {
+  createUserSchemaFor,
+  resetPasswordSchemaFor,
+  updateUserSchema,
+} from '@/modules/user/schema'
 import type { UserDetailDto, UserSummaryDto } from '@/modules/user/types'
 
 interface Props {
@@ -39,6 +46,10 @@ interface Props {
   roles: RoleSummaryDto[]
   detailsById: Record<string, UserDetailDto>
   currentUserId: string
+  /** `security.minPasswordLength` (SPEC §7), so the form can enforce it too. */
+  minPasswordLength: number
+  /** `null` when the actor lacks `settings.view` — the field is then not offered. */
+  penaltyProfiles: PenaltyProfileDto[] | null
   permissions: {
     create: boolean
     edit: boolean
@@ -82,6 +93,8 @@ export function UsersClient({
   roles,
   detailsById,
   currentUserId,
+  minPasswordLength,
+  penaltyProfiles,
   permissions,
 }: Props) {
   const router = useRouter()
@@ -95,6 +108,21 @@ export function UsersClient({
 
   function fail(text: string) {
     setMessage({ text, tone: 'error' })
+  }
+
+  /**
+   * Report whatever the action actually said.
+   *
+   * A business failure now arrives as data (`lib/action-result`) and is
+   * translated by `lib/error-message`; only a genuine crash — or an access
+   * error, which still throws — reaches `messageForError`. Before this, every
+   * one of these paths rendered `ar.errors.unexpected`, so "the password is too
+   * short" and "the database is down" were the same sentence.
+   */
+  function report(result: ActionResult<unknown>): boolean {
+    if (result.ok) return true
+    fail(messageForFailure(result))
+    return false
   }
 
   function openCreate() {
@@ -151,7 +179,7 @@ export function UsersClient({
     // for the human.
     const parsed = draft.id
       ? updateUserSchema.safeParse(payload)
-      : createUserSchema.safeParse(payload)
+      : createUserSchemaFor(minPasswordLength, draft.username).safeParse(payload)
 
     if (!parsed.success) {
       fail(parsed.error.issues[0]?.message ?? ar.errors.validation)
@@ -160,12 +188,14 @@ export function UsersClient({
 
     startTransition(async () => {
       try {
-        if (draft.id) await updateUserAction(payload)
-        else await createUserAction(payload)
+        const result = draft.id
+          ? await updateUserAction(payload)
+          : await createUserAction(payload)
+        if (!report(result)) return
         setDraft(null)
         router.refresh()
-      } catch {
-        fail(ar.errors.unexpected)
+      } catch (error) {
+        fail(messageForError(error))
       }
     })
   }
@@ -174,13 +204,15 @@ export function UsersClient({
     setMessage(null)
     startTransition(async () => {
       try {
-        if (user.isActive) await deactivateUserAction({ id: user.id })
-        else await activateUserAction({ id: user.id })
+        // The service now names the reason itself (open tasks, most often), so
+        // this no longer has to guess it from whether the account was active.
+        const result = user.isActive
+          ? await deactivateUserAction({ id: user.id })
+          : await activateUserAction({ id: user.id })
+        if (!report(result)) return
         router.refresh()
-      } catch {
-        // The most likely reason by far, and the one the phase brief names:
-        // the account still owns open work.
-        fail(user.isActive ? ar.users.hasOpenTasks : ar.errors.unexpected)
+      } catch (error) {
+        fail(messageForError(error))
       }
     })
   }
@@ -188,15 +220,27 @@ export function UsersClient({
   function submitReset() {
     if (!resetFor) return
     setMessage(null)
+
+    const payload = { id: resetFor.id, newPassword: resetValue }
+    const parsed = resetPasswordSchemaFor(
+      minPasswordLength,
+      resetFor.username,
+    ).safeParse(payload)
+    if (!parsed.success) {
+      fail(parsed.error.issues[0]?.message ?? ar.errors.validation)
+      return
+    }
+
     startTransition(async () => {
       try {
-        await resetUserPasswordAction({ id: resetFor.id, newPassword: resetValue })
+        const result = await resetUserPasswordAction(payload)
+        if (!report(result)) return
         setResetFor(null)
         setResetValue('')
         setMessage({ text: ar.users.passwordReset, tone: 'ok' })
         router.refresh()
-      } catch {
-        fail(ar.errors.unexpected)
+      } catch (error) {
+        fail(messageForError(error))
       }
     })
   }
@@ -235,10 +279,11 @@ export function UsersClient({
       {message ? (
         <p
           role="alert"
+          {...(message.tone === 'ok' ? { 'data-hue': 'emerald' } : {})}
           className={
             message.tone === 'error'
               ? 'bg-destructive/10 text-destructive rounded-md px-3 py-2 text-sm'
-              : 'rounded-md bg-emerald-100 px-3 py-2 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200'
+              : 'bg-hue-surface text-hue-text rounded-md px-3 py-2 text-sm'
           }
         >
           {message.text}
@@ -417,7 +462,15 @@ export function UsersClient({
                     />
                   )}
                 </FormField>
-                <FormField name="password" label={ar.auth.password} required>
+                <FormField
+                  name="password"
+                  label={ar.auth.password}
+                  required
+                  hint={ar.validation.passwordTooShort.replace(
+                    '{min}',
+                    String(minPasswordLength),
+                  )}
+                >
                   {(field) => (
                     <Input
                       {...field}
@@ -426,6 +479,7 @@ export function UsersClient({
                       dir="ltr"
                       className="text-start"
                       autoComplete="new-password"
+                      minLength={minPasswordLength}
                       onChange={(e) => setDraft({ ...draft, password: e.target.value })}
                     />
                   )}
@@ -533,23 +587,37 @@ export function UsersClient({
               )}
             </FormField>
 
-            <FormField
-              name="penaltyProfileId"
-              label={ar.users.penaltyProfile}
-              hint={ar.users.penaltyProfileDefault}
-            >
-              {(field) => (
-                <Input
-                  {...field}
-                  value={draft.penaltyProfileId}
-                  dir="ltr"
-                  className="text-start font-mono"
-                  onChange={(e) =>
-                    setDraft({ ...draft, penaltyProfileId: e.target.value })
-                  }
-                />
-              )}
-            </FormField>
+            {/*
+              A picker, not a text box. The column is a real foreign key as of
+              Phase 8, so a typed id was a P2003 waiting to happen — and the
+              operator had no way to know what a valid one looked like. Omitted
+              entirely without `settings.view`: the Settings default then
+              applies, which is exactly what the hint says.
+            */}
+            {penaltyProfiles ? (
+              <FormField
+                name="penaltyProfileId"
+                label={ar.users.penaltyProfile}
+                hint={ar.users.penaltyProfileDefault}
+              >
+                {(field) => (
+                  <Select
+                    {...field}
+                    value={draft.penaltyProfileId}
+                    onChange={(e) =>
+                      setDraft({ ...draft, penaltyProfileId: e.target.value })
+                    }
+                  >
+                    <option value="">{ar.users.penaltyProfileDefault}</option>
+                    {penaltyProfiles.map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </FormField>
+            ) : null}
 
             <fieldset className="flex flex-col gap-2">
               <legend className="pb-1 text-sm font-medium">{ar.users.roles}</legend>
@@ -589,7 +657,15 @@ export function UsersClient({
           </>
         }
       >
-        <FormField name="newPassword" label={ar.auth.newPassword} required>
+        <FormField
+          name="newPassword"
+          label={ar.auth.newPassword}
+          required
+          hint={ar.validation.passwordTooShort.replace(
+            '{min}',
+            String(minPasswordLength),
+          )}
+        >
           {(field) => (
             <Input
               {...field}
@@ -598,6 +674,7 @@ export function UsersClient({
               dir="ltr"
               className="text-start font-mono"
               autoComplete="off"
+              minLength={minPasswordLength}
               onChange={(e) => setResetValue(e.target.value)}
             />
           )}

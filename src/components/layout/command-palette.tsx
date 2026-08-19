@@ -333,7 +333,7 @@ function CommandPaletteDialog({
         aria-hidden
         onClick={onClose}
         className={cn(
-          'absolute inset-0 bg-zinc-950/50 transition-opacity duration-150',
+          'absolute inset-0 bg-scrim transition-opacity duration-150',
           entered ? 'opacity-100' : 'opacity-0',
         )}
       />

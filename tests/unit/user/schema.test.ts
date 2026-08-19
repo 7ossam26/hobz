@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
+import { ar } from '@/i18n/ar'
 import {
   createUserSchema,
+  createUserSchemaFor,
   listUsersSchema,
+  resetPasswordSchemaFor,
   updateUserSchema,
 } from '@/modules/user/schema'
 
@@ -192,5 +195,80 @@ describe('modules/user — مخطّط القائمة', () => {
     expect(listUsersSchema.safeParse({ pageSize: 101 }).success).toBe(false)
     expect(listUsersSchema.safeParse({ pageSize: 100 }).success).toBe(true)
     expect(listUsersSchema.safeParse({ page: 0 }).success).toBe(false)
+  })
+})
+
+describe('modules/user — قاعدة كلمة المرور تصل إلى النموذج', () => {
+  /**
+   * The reported bug: the server enforced `security.minPasswordLength` and the
+   * shared schema asked for `min(1)`, so the browser's own parse always passed
+   * and the rejection came back as a generic "unexpected error". The form now
+   * builds its schema with the live policy; the server still checks, and that
+   * is the check that counts.
+   */
+
+  it('يرفض كلمة مرور أقصر من الحد ويذكر الرقم في الرسالة', () => {
+    const parsed = createUserSchemaFor(10).safeParse({ ...valid, password: 'short-12' })
+
+    expect(parsed.success).toBe(false)
+    const message = parsed.error?.issues[0]?.message ?? ''
+    expect(message).toBe(ar.validation.passwordTooShort.replace('{min}', '10'))
+    expect(message).toContain('10')
+  })
+
+  it('يقبل كلمة مرور بطول الحد بالضبط — الحد شامل', () => {
+    expect(
+      createUserSchemaFor(10).safeParse({ ...valid, password: '0123456789' }).success,
+    ).toBe(true)
+  })
+
+  it('يتبع الحد من الإعدادات، لا رقمًا ثابتًا', () => {
+    // CLAUDE.md invariant 4: the number comes from Settings, so the schema has
+    // to move with it in both directions.
+    const password = 'twelve-chars'
+    expect(createUserSchemaFor(8).safeParse({ ...valid, password }).success).toBe(true)
+    expect(createUserSchemaFor(32).safeParse({ ...valid, password }).success).toBe(false)
+  })
+
+  it('يرفض كلمة مرور تحتوي اسم المستخدم', () => {
+    const parsed = createUserSchemaFor(10, 'ahmed.ibrahim').safeParse({
+      ...valid,
+      password: 'ahmed.ibrahim-and-more',
+    })
+
+    expect(parsed.success).toBe(false)
+    expect(parsed.error?.issues[0]?.message).toBe(
+      ar.validation.passwordContainsUsername,
+    )
+  })
+
+  it('لا يشكو من احتواء اسم المستخدم حين لا يُمرَّر', () => {
+    expect(
+      createUserSchemaFor(10).safeParse({ ...valid, password: 'ahmed.ibrahim-x' })
+        .success,
+    ).toBe(true)
+  })
+
+  it('الحقل الفارغ يظل "مطلوب"، لا "أقصر من الحد"', () => {
+    // Two different failures deserve two different sentences.
+    const parsed = createUserSchemaFor(10).safeParse({ ...valid, password: '' })
+
+    expect(parsed.success).toBe(false)
+    expect(parsed.error?.issues[0]?.message).toBe(ar.validation.required)
+  })
+
+  it('إعادة التعيين الإدارية تخضع للقاعدة نفسها', () => {
+    const schema = resetPasswordSchemaFor(10, 'ahmed.ibrahim')
+
+    expect(schema.safeParse({ id: 'u1', newPassword: 'short' }).success).toBe(false)
+    expect(schema.safeParse({ id: 'u1', newPassword: 'long-enough-one' }).success).toBe(
+      true,
+    )
+  })
+
+  it('المخطّط المشترك يظل كما هو للفعل الخادمي', () => {
+    // The action still parses `createUserSchema`; the length check there belongs
+    // to `validatePassword`, which reads Settings on the server where it can.
+    expect(createUserSchema.safeParse({ ...valid, password: 'x' }).success).toBe(true)
   })
 })

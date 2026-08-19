@@ -261,12 +261,20 @@ function Gallery({ tableState }: { tableState: TableState }) {
   return (
     <>
       <Section title={sections.surfaces}>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {/*
+          The whole ramp, deepest first, plus the three washes. Rendered in
+          ramp order so a step that stops being visible against its neighbour is
+          obvious here before it is obvious on a real screen — which is what
+          happened to the dark theme when nine surfaces shared two colours.
+        */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
           {[
+            { className: 'bg-surface-inset', label: labels.surfaceInset },
+            { className: 'bg-surface-field', label: labels.surfaceField },
             { className: 'bg-surface-sunken', label: labels.surfaceSunken },
             { className: 'bg-surface-base', label: labels.surfaceBase },
             { className: 'bg-surface-raised', label: labels.surfaceRaised },
-            { className: 'bg-surface-inset', label: labels.surfaceInset },
+            { className: 'bg-surface-overlay', label: labels.surfaceOverlay },
           ].map((surface) => (
             <div
               key={surface.label}
@@ -275,6 +283,52 @@ function Gallery({ tableState }: { tableState: TableState }) {
               {surface.label}
             </div>
           ))}
+        </div>
+
+        {/* The washes compose over a surface, so they are only meaningful shown
+            on one — here, a card, which is where a hovered row actually sits. */}
+        <div className="bg-card grid grid-cols-1 gap-2 rounded-lg border p-3 sm:grid-cols-3">
+          <div className="bg-hover-wash rounded-md border p-3 text-xs">
+            {labels.surfaceHover}
+          </div>
+          <div className="bg-surface-selected rounded-md border p-3 text-xs">
+            {labels.surfaceSelected}
+          </div>
+          {/* The scrim is dark in both themes, so the label sits under it
+              rather than on it — a `text-white` here would be exactly the
+              hardcoded colour this pass removed from the real components. */}
+          <div className="flex flex-col gap-1">
+            <div className="bg-scrim h-8 rounded-md border" />
+            <span className="text-fg-subtle text-xs">{labels.surfaceScrim}</span>
+          </div>
+        </div>
+
+        {/* The four surfaces the gallery never showed, and therefore the four
+            that drifted: a sidebar, a sticky header, an input and a popover
+            panel — each against the surface it really sits on. */}
+        <div className="bg-surface-base flex overflow-hidden rounded-lg border">
+          <div className="bg-card flex w-32 shrink-0 flex-col gap-1 border-e p-2">
+            <div className="bg-accent-soft text-accent-on-soft rounded-md px-2 py-1 text-xs">
+              {ar.nav.dashboard}
+            </div>
+            <div className="text-fg-muted hover:bg-accent rounded-md px-2 py-1 text-xs">
+              {ar.nav.tasks}
+            </div>
+            <div className="text-fg-muted hover:bg-accent rounded-md px-2 py-1 text-xs">
+              {ar.nav.projects}
+            </div>
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="bg-surface-raised border-b px-3 py-2 text-xs">
+              {ar.nav.dashboard}
+            </div>
+            <div className="flex flex-col gap-2 p-3">
+              <Input placeholder={ar.common.search} />
+              <div className="bg-surface-overlay shadow-overlay rounded-md border p-2 text-xs">
+                {labels.surfaceOverlay}
+              </div>
+            </div>
+          </div>
         </div>
       </Section>
 

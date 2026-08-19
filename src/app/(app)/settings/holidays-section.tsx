@@ -10,6 +10,7 @@ import { useToast } from '@/components/shared/toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { DateInput } from '@/components/ui/date-input'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -89,11 +90,9 @@ export function HolidaysSection({
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="holiday-date">{ar.holidays.date}</Label>
-            <Input
+            <DateInput
               id="holiday-date"
-              type="date"
-              dir="ltr"
-              className="w-44 tabular-nums"
+              className="w-44"
               value={date}
               disabled={pending}
               onChange={(event) => setDate(event.target.value)}

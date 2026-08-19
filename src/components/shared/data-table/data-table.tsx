@@ -191,7 +191,7 @@ export function DataTable<Row>({
                       }
                     : {})}
                   className={cn(
-                    'density-row hover:bg-accent/60 border-b transition-colors last:border-b-0',
+                    'density-row hover:bg-accent border-b transition-colors last:border-b-0',
                     interactive &&
                       'focus-visible:bg-accent cursor-pointer focus-visible:outline-none',
                   )}

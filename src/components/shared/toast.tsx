@@ -176,7 +176,7 @@ function ToastItem({
       role={toast.tone === 'error' ? 'alert' : 'status'}
       aria-live={toast.tone === 'error' ? 'assertive' : 'polite'}
       className={cn(
-        'bg-card shadow-overlay pointer-events-auto flex items-start gap-3 rounded-lg border px-4 py-3',
+        'bg-surface-overlay shadow-overlay pointer-events-auto flex items-start gap-3 rounded-lg border px-4 py-3',
       )}
     >
       <Icon className="text-hue-solid mt-0.5 size-4 shrink-0" aria-hidden />

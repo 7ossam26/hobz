@@ -75,6 +75,44 @@ const moneySchema = z
 const rolesSchema = z.array(z.string().min(1)).default([])
 
 /**
+ * The password rule, parameterised by the Settings minimum.
+ *
+ * The minimum lives in `security.minPasswordLength` (SPEC §7), so it cannot be
+ * a literal in this file — but leaving it out of the schema entirely is what
+ * made the create-user form unusable: the shared schema asked for `min(1)`, the
+ * client parse therefore always passed, and `validatePassword` rejected the
+ * password server-side with a typed error nobody rendered. The form now builds
+ * the schema with the policy it was handed; the server still checks
+ * independently, and that is the check that counts.
+ *
+ * `username` is optional so the same rule can guard the admin-reset sheet,
+ * where the account is known but the schema does not carry its handle.
+ */
+export function passwordSchemaFor(
+  minLength: number,
+  username?: string,
+): z.ZodType<string> {
+  return z
+    .string()
+    .min(1, ar.validation.required)
+    .superRefine((value, ctx) => {
+      if (value.length > 0 && value.length < minLength) {
+        ctx.addIssue({
+          code: 'custom',
+          message: ar.validation.passwordTooShort.replace('{min}', String(minLength)),
+        })
+      }
+      const handle = username?.trim().toLowerCase()
+      if (handle && handle.length >= 3 && value.toLowerCase().includes(handle)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: ar.validation.passwordContainsUsername,
+        })
+      }
+    })
+}
+
+/**
  * `payType` decides which money field is mandatory. Expressed as a refinement
  * rather than three separate schemas so the form and the action cannot disagree
  * about which combination is legal.
@@ -137,6 +175,21 @@ const userCoreShape = {
   roles: rolesSchema,
 }
 
+/**
+ * The form's schema, built with the live password policy. The action keeps
+ * parsing `createUserSchema` below — the length check there belongs to
+ * `validatePassword`, which reads Settings on the server where it can.
+ */
+export function createUserSchemaFor(minPasswordLength: number, username?: string) {
+  return z
+    .object({
+      username: usernameSchema,
+      password: passwordSchemaFor(minPasswordLength, username),
+      ...userCoreShape,
+    })
+    .superRefine(requirePayFields)
+}
+
 export const createUserSchema = z
   .object({
     username: usernameSchema,
@@ -164,6 +217,14 @@ export const resetPasswordSchema = z.object({
   id: z.string().min(1),
   newPassword: z.string().min(1, ar.validation.required),
 })
+
+/** The admin-reset sheet's schema, with the same policy the server enforces. */
+export function resetPasswordSchemaFor(minPasswordLength: number, username?: string) {
+  return z.object({
+    id: z.string().min(1),
+    newPassword: passwordSchemaFor(minPasswordLength, username),
+  })
+}
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
 

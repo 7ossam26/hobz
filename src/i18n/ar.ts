@@ -2303,6 +2303,11 @@ export const ar = {
       surfaceBase: 'سطح الصفحة',
       surfaceRaised: 'سطح بارز',
       surfaceInset: 'سطح داخلي',
+      surfaceOverlay: 'سطح طافٍ',
+      surfaceField: 'خلفية الحقل',
+      surfaceHover: 'تمرير المؤشر',
+      surfaceSelected: 'صف مُحدَّد',
+      surfaceScrim: 'حجاب النوافذ',
     },
     /**
      * Sample content for the gallery. Real Arabic, real names, real lengths —

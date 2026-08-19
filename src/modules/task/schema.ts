@@ -213,6 +213,16 @@ export const listTasksSchema = z.object({
    * Settings value and "this week" stopped being guaranteed true.
    */
   dueSoon: z.boolean().optional(),
+  /**
+   * A due-date window, inclusive at both ends. The calendar grid's real filter:
+   * it used to fetch the whole 1000-row ceiling and drop everything outside the
+   * visible month in application code, which made the payload roughly thirty
+   * times what the screen showed. A `BETWEEN` on an indexed column expresses it
+   * exactly, so nothing about *which* tasks appear changes — only how many rows
+   * cross the wire.
+   */
+  dueFrom: z.date().optional(),
+  dueTo: z.date().optional(),
   sort: z.string().optional(),
   dir: z.enum(['asc', 'desc']).optional(),
   page: z.number().int().min(1).default(1),

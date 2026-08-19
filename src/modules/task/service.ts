@@ -392,6 +392,16 @@ export async function listTasks(db: Db, args: ListTasksArgs): Promise<TaskPageDt
       status: { notIn: [...DELIVERED_STATUSES] },
     })
   }
+  // The calendar's visible window. Unlike the two facets above this says
+  // nothing about delivery — a calendar shows what is due, delivered or not.
+  if (filters.dueFrom || filters.dueTo) {
+    conditions.push({
+      dueDate: {
+        ...(filters.dueFrom ? { gte: filters.dueFrom } : {}),
+        ...(filters.dueTo ? { lte: filters.dueTo } : {}),
+      },
+    })
+  }
 
   const where: WhereFragment = { AND: conditions }
   const orderBy = taskOrderBy(filters.sort, filters.dir)

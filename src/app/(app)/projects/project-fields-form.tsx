@@ -1,6 +1,7 @@
 'use client'
 
 import { FormField } from '@/components/shared/form-field'
+import { DateInput } from '@/components/ui/date-input'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { ar } from '@/i18n/ar'
@@ -181,11 +182,9 @@ export function ProjectFieldsForm({
       <div className="grid grid-cols-2 gap-4">
         <FormField name="startDate" label={ar.projects.startDate} required>
           {(field) => (
-            <Input
+            <DateInput
               {...field}
-              type="date"
               value={draft.startDate}
-              className="tabular-nums"
               onChange={(e) => set('startDate', e.target.value)}
             />
           )}
@@ -193,11 +192,9 @@ export function ProjectFieldsForm({
 
         <FormField name="dueDate" label={ar.projects.dueDate} required>
           {(field) => (
-            <Input
+            <DateInput
               {...field}
-              type="date"
               value={draft.dueDate}
-              className="tabular-nums"
               onChange={(e) => set('dueDate', e.target.value)}
             />
           )}

@@ -119,7 +119,7 @@ export function Sheet({
         aria-hidden
         data-slot="sheet-overlay"
         className={cn(
-          'absolute inset-0 bg-zinc-950/40 transition-opacity duration-200',
+          'absolute inset-0 bg-scrim transition-opacity duration-200',
           entered ? 'opacity-100' : 'opacity-0',
         )}
         onClick={closeOnOverlayClick ? requestClose : undefined}
@@ -133,7 +133,7 @@ export function Sheet({
         aria-describedby={description ? descriptionId : undefined}
         data-slot="sheet-panel"
         className={cn(
-          'bg-card shadow-overlay absolute end-0 top-0 bottom-0 flex h-full w-full flex-col border-s',
+          'bg-surface-overlay shadow-overlay absolute end-0 top-0 bottom-0 flex h-full w-full flex-col border-s',
           'transition-transform duration-200 ease-out',
           entered ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full',
           SHEET_SIZES[size],
@@ -181,7 +181,7 @@ export function Sheet({
         )}
 
         {footer ? (
-          <footer className="bg-card flex items-center justify-end gap-2 border-t px-5 py-4">
+          <footer className="bg-surface-sunken flex items-center justify-end gap-2 border-t px-5 py-4">
             {footer}
           </footer>
         ) : null}

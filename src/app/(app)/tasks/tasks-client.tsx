@@ -6,7 +6,6 @@ import * as React from 'react'
 
 import type { TableState } from '@/components/shared/data-table/types'
 import { useToast } from '@/components/shared/toast'
-import { useAutoRefresh } from '@/components/shared/use-auto-refresh'
 import { Button } from '@/components/ui/button'
 import { ar } from '@/i18n/ar'
 import { preferenceCookie, TASK_VIEW_COOKIE, type TaskView } from '@/lib/preferences'
@@ -48,7 +47,6 @@ interface Props {
   userOptions: UserOptionDto[]
   categories: readonly TaxonomyEntry[]
   permissions: TaskPermissions
-  pollingIntervalSeconds: number
   currentUserId: string
 }
 
@@ -80,7 +78,6 @@ export function TasksClient({
   userOptions,
   categories,
   permissions,
-  pollingIntervalSeconds,
   currentUserId,
 }: Props) {
   const router = useRouter()
@@ -97,10 +94,18 @@ export function TasksClient({
     requireAssignee: boolean
   }>({ requireAssignee: false })
 
-  // Tab visibility pauses the whole thing; open sheets/dialogs do not need to,
-  // because they hold their own local state and a background `router.refresh()`
-  // only touches the server-driven list beneath them.
-  useAutoRefresh(pollingIntervalSeconds, true)
+  // No timer here on purpose.
+  //
+  // `router.refresh()` re-renders from the *root* — Next marks the root segment
+  // `refetch`, so the layout, the header and this page all re-run — and the
+  // notification bell in `AppHeader` is already running one on every page in
+  // the shell, at this same interval. A second timer here refreshed nothing the
+  // first did not, and doubled the idle server cost of the busiest route:
+  // ~50 statements per 30s per open tab instead of ~25.
+  //
+  // The visibility pause and the interval both still come from the bell
+  // (`use-auto-refresh.ts` stops the timer while the tab is hidden), so this
+  // list stays as fresh as it was.
 
   // `?new=1` — the command palette's quick-create deep link.
   React.useEffect(() => {

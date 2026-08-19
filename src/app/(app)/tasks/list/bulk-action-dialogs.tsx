@@ -6,7 +6,7 @@ import { Dialog } from '@/components/shared/dialog'
 import { FormField } from '@/components/shared/form-field'
 import { useToast } from '@/components/shared/toast'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Select } from '@/components/ui/select'
 import { ar } from '@/i18n/ar'
 import { PRIORITY_HUE, type Priority } from '@/lib/palette'
@@ -249,10 +249,9 @@ export function BulkDueDateDialog({
     >
       <FormField name="bulk-due-date" label={ar.tasks.dueDate} required>
         {(field) => (
-          <Input
+          <DateInput
             {...field}
             data-autofocus
-            type="date"
             value={dueDate}
             onChange={(event) => setDueDate(event.target.value)}
           />
