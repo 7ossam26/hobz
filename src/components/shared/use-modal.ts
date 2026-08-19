@@ -53,6 +53,17 @@ export function useModalBehaviour({
     if (!closeDisabled) onClose()
   }, [closeDisabled, onClose])
 
+  // A caller that owns its own draft state (most `EntitySheet` forms) tends to
+  // pass an inline `onClose={() => ...}`, which is a new function every
+  // keystroke. Reading `requestClose` through a ref — instead of listing it as
+  // a dependency below — keeps the focus/scroll-lock effect from re-running on
+  // every re-render that merely hands it a fresh closure. Without this, typing
+  // in the second field re-fires the effect and yanks focus back to the first.
+  const requestCloseRef = React.useRef(requestClose)
+  React.useEffect(() => {
+    requestCloseRef.current = requestClose
+  }, [requestClose])
+
   React.useEffect(() => {
     if (!open) return
 
@@ -62,7 +73,7 @@ export function useModalBehaviour({
       if (event.key === 'Escape') {
         // Stop the event before an outer surface also treats it as "close me".
         event.stopPropagation()
-        requestClose()
+        requestCloseRef.current()
         return
       }
       if (event.key !== 'Tab') return
@@ -110,7 +121,7 @@ export function useModalBehaviour({
       body.style.paddingInlineEnd = previousPadding
       returnFocusRef.current?.focus?.()
     }
-  }, [open, requestClose, panelRef])
+  }, [open, panelRef])
 
   const [entered, setEntered] = React.useState(false)
   React.useEffect(() => {

@@ -163,6 +163,45 @@ describe('EntitySheet', () => {
     expect(screen.getByRole('dialog').querySelector('[data-hue="emerald"]')).toBeTruthy()
   })
 
+  it('لا يعيد التركيز إلى الحقل الأول عند الكتابة في حقل ثانٍ', () => {
+    // Regression: a caller that owns its draft state locally (most real forms)
+    // tends to pass an inline `onClose={() => ...}` — a new function every
+    // keystroke. That used to re-fire the focus-management effect in
+    // `use-modal.ts` on every re-render and yank focus back to the first
+    // field, which only became visible once you typed past field #1.
+    function FormHarness() {
+      const [open, setOpen] = React.useState(true)
+      const [draft, setDraft] = React.useState({ a: '', b: '' })
+
+      return (
+        <EntitySheet
+          open={open}
+          onClose={() => setOpen(false)}
+          title={ar.designSystem.samples.sheetTitle}
+        >
+          <input
+            data-testid="field-a"
+            value={draft.a}
+            onChange={(event) => setDraft({ ...draft, a: event.target.value })}
+          />
+          <input
+            data-testid="field-b"
+            value={draft.b}
+            onChange={(event) => setDraft({ ...draft, b: event.target.value })}
+          />
+        </EntitySheet>
+      )
+    }
+
+    render(<FormHarness />)
+
+    const fieldB = screen.getByTestId('field-b')
+    fieldB.focus()
+    fireEvent.change(fieldB, { target: { value: 'x' } })
+
+    expect(document.activeElement).toBe(fieldB)
+  })
+
   it('يعرض التبويبات ويبدّل المحتوى دون انتقال', () => {
     // Tabs, not sub-routes. The moment a task's comments become a URL, the
     // sheet-first model has leaked.

@@ -95,6 +95,12 @@ export function CommandPaletteProvider({
 
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      // Real browser events always have a string `key`, but a synthetic or
+      // malformed `KeyboardEvent` (test harnesses, some autofill/extension
+      // content scripts) can dispatch one without it — guard before
+      // `.toLowerCase()` so a stray keystroke anywhere in the document can't
+      // throw inside this listener.
+      if (typeof event.key !== 'string') return
       if (event.key.toLowerCase() !== 'k' || !(event.ctrlKey || event.metaKey)) return
       event.preventDefault()
       setOpen((value) => !value)
