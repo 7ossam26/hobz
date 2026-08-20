@@ -1,4 +1,4 @@
-# docs/RUNBOOK.md — Operating Agency OS
+# docs/RUNBOOK.md — Operating Virallap
 
 Five procedures somebody will need at a keyboard, written for the person doing
 them rather than the person who wrote the code.
@@ -186,7 +186,7 @@ await db.\$disconnect()
 ## 5. Restore a backup
 
 Nightly dumps are written to `BACKUP_DIR` by the `backup.nightly` job at 02:00
-Cairo, gzipped, named `agency-os-YYYY-MM-DDTHHMM.sql.gz`, and pruned after
+Cairo, gzipped, named `virallap-YYYY-MM-DDTHHMM.sql.gz`, and pruned after
 `BACKUP_RETENTION_DAYS` (default 14).
 
 There is **no download button**, by design. A dump is every salary, every
@@ -206,7 +206,7 @@ Always. A restore straight over production turns one bad night into two.
 
 ```bash
 createdb agency_restore_check
-gunzip -c "$BACKUP_DIR/agency-os-2026-08-18T0200.sql.gz" \
+gunzip -c "$BACKUP_DIR/virallap-2026-08-18T0200.sql.gz" \
   | psql -d agency_restore_check
 
 # Sanity-check the three numbers that matter before trusting it

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 
 import { computeElapsed, minutesBetween } from '@/modules/task/elapsed'
 
@@ -102,7 +102,7 @@ describe('modules/task/elapsed — التوصيل مع lib/calendar', () => {
     expect(result.working).toBe(120)
   })
 
-  it('يستعلم بتقويم الوكالة وحده حين لا يوجد منفّذ', async () => {
+  it('يستعلم بتقويم المؤسسة وحده حين لا يوجد منفّذ', async () => {
     const calendar = stubCalendar({ workingMinutesBetween: async () => 60 })
 
     await computeElapsed(calendar, {

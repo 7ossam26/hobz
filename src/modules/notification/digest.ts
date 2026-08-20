@@ -1,4 +1,4 @@
-import { cairoDateKey } from '@/lib/calendar'
+﻿import { cairoDateKey } from '@/lib/calendar'
 import type { Db } from '@/lib/db'
 import {
   computeProjectHealth,
@@ -54,7 +54,7 @@ async function overdueTaskCount(db: Db): Promise<number> {
 /**
  * Not GREEN, override included — the same computation `/projects` renders per
  * row (`modules/project/service.ts.toSummaryDto`), counted rather than listed.
- * O(projects) round trips, which is the project list's own shape; an agency
+ * O(projects) round trips, which is the project list's own shape; an organization
  * capped at ~100 people (SPEC §2) does not accumulate enough live projects for
  * that to matter on a once-daily job.
  */

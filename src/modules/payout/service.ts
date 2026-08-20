@@ -247,7 +247,7 @@ export async function closeCycle(
    * Both guards exempt a cycle *this very call* had to open. It has no elapsed
    * time and no meaningful `periodEnd` to be measured against, and refusing
    * would mean a first-ever close could never happen on a quiet system — the
-   * salaried agency whose only movement each month is the accrual this close is
+   * salaried organization whose only movement each month is the accrual this close is
    * about to write.
    */
   if (!justCreated && args.now.getTime() <= cycle.periodStart.getTime()) {
@@ -522,7 +522,7 @@ interface DraftArgs {
 const CREDIT_MAGNITUDE: readonly LedgerType[] = ['EARNING', 'SALARY']
 
 async function draftPayouts(db: Db, args: DraftArgs): Promise<number> {
-  // Two grouped queries for the whole agency, not two per person.
+  // Two grouped queries for the whole organization, not two per person.
   const [balanceRows, movementRows] = await Promise.all([
     db.ledgerEntry.groupBy({
       by: ['userId'],
@@ -885,7 +885,7 @@ export async function markPayoutPaid(
    *
    * Two finance users paying the same payout at the same moment both read
    * `paidAmount = 0`, both pass every check above, and — with a plain update —
-   * both would write a `PAYOUT` entry. The agency pays twice and the ledger
+   * both would write a `PAYOUT` entry. the organization pays twice and the ledger
    * says so afterwards. Making the update conditional on the value that was
    * read turns the second one into a no-op that raises, and because the entry
    * is appended only after the claim succeeds, the losing caller writes nothing

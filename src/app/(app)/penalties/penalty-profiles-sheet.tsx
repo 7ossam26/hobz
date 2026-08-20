@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Pencil, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -182,7 +182,7 @@ export function PenaltyProfilesSheet({
         onConfirm={() => remove()}
         title={ar.penaltyProfiles.delete}
         // The consequence, stated: every منفّذ on this formula returns to the
-        // agency default, which changes what they are docked next month.
+        // organization default, which changes what they are docked next month.
         description={ar.penaltyProfiles.deleteConfirm}
         confirmLabel={ar.common.delete}
         busy={pending}

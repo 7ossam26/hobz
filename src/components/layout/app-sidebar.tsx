@@ -20,6 +20,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import * as React from 'react'
 
@@ -85,12 +86,13 @@ export function AppSidebar({ items }: { items: NavItem[] }) {
       )}
     >
       <div className="flex h-(--shell-header-h) shrink-0 items-center gap-2 border-b px-3">
-        <span
-          aria-hidden
-          className="bg-accent-solid text-accent-on-solid flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-bold"
-        >
-          {ar.app.shortName.charAt(0)}
-        </span>
+        <Image
+          src="/logo.png"
+          alt={ar.app.shortName}
+          width={28}
+          height={28}
+          className="shrink-0 rounded-md"
+        />
         <span
           className={cn(
             'truncate text-sm font-semibold tracking-tight',

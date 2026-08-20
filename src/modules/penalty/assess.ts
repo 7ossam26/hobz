@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client'
+﻿import type { Prisma } from '@prisma/client'
 
 import type { Calendar } from '@/lib/calendar'
 import type { Db } from '@/lib/db'
@@ -201,7 +201,7 @@ async function assess(row: PenaltyTaskRow, args: AssessArgs): Promise<PenaltyAss
   const profile = resolvePenaltyProfile(
     // A soft-deleted profile is not applied. Somebody removed that formula from
     // the UI, and quietly keeping it in force would be a deduction computed by
-    // a rule nobody can find any more — the agency default is the honest
+    // a rule nobody can find any more — the organization default is the honest
     // fallback, and `deletePenaltyProfile` detaches its members anyway.
     row.assignee?.penaltyProfile && row.assignee.penaltyProfile.deletedAt === null
       ? row.assignee.penaltyProfile

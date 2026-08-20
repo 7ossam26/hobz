@@ -1,4 +1,4 @@
-import {
+﻿import {
   isPositive,
   toMoney,
   toStorageString,
@@ -19,8 +19,8 @@ import { preferredBasis, type PenaltyBasis, type PenaltyMode } from './mode'
  *
  * ── The problem this file exists to solve ─────────────────────────────────
  *
- * SPEC §5.4 gives each mode its own basis, and SPEC §7 gives the agency **one**
- * default mode. Those two sentences collide the moment an agency employs both
+ * SPEC §5.4 gives each mode its own basis, and SPEC §7 gives the organization **one**
+ * default mode. Those two sentences collide the moment an organization employs both
  * salaried and per-task منفّذين, which is exactly what `PayType.HYBRID` exists
  * for. With the shipped default of `PCT_TASK_VALUE_PER_DAY`, every salaried
  * منفّذ's deduction would be a percentage of a `taskValue` their work does not

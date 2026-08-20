@@ -42,7 +42,7 @@ import { testDb } from '../../setup/reset'
  * about everything that lock does *not* cover, because the engine is not the
  * only writer on the path it takes:
  *
- *  - `ensureOpenCycle` runs on the first money write of the agency's life, and
+ *  - `ensureOpenCycle` runs on the first money write of the organization's life, and
  *    two transactions arriving there together is not an exotic case — it is the
  *    first night the engine ever runs.
  *  - `reversePenaltyOrBonus` takes **no** lock at all. A manager reversing a
@@ -82,7 +82,7 @@ const NIGHT = cairo('2026-03-05T03:00')
 const TASK_VALUE = '1000.00'
 const RATE = SETTINGS_CATALOG['penalty.defaultValue'].default
 
-/** The agency's default formula worked by hand: قيمة المهمة × النسبة × أيام. */
+/** the organization's default formula worked by hand: قيمة المهمة × النسبة × أيام. */
 const owed = (lateWorkingDays: number): string =>
   toStorageString(mul(pct(TASK_VALUE, RATE), lateWorkingDays))
 

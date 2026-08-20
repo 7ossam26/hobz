@@ -1,4 +1,4 @@
-# Agency OS — Phased Build Plan & Claude Code Prompts
+# Virallap — Phased Build Plan & Claude Code Prompts
 
 13 phases. Each is a separate Claude Code session. **Never run two phases in one
 session** — that's how context gets thin and quality drops.
@@ -40,7 +40,7 @@ session** — that's how context gets thin and quality drops.
 ## PHASE 0 — Foundation & Architecture · Opus 5
 
 ```
-You are starting a greenfield project called Agency OS.
+You are starting a greenfield project called Virallap.
 
 Before writing code, create these three files at the repo root and in docs/,
 using the content I am providing separately in this session:

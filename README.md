@@ -1,6 +1,6 @@
-# Agency OS
+# Virallap
 
-Internal operations system for a digital agency (~100 people). Projects, tasks,
+Internal operations system for an organization (~100 people). Projects, tasks,
 workers, deadlines, deductions, bonuses and payouts.
 
 **Arabic only, full RTL.** Code, database and identifiers are English.

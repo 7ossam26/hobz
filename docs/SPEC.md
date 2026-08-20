@@ -1,4 +1,4 @@
-# Agency OS — Master Specification (v1)
+# Virallap — Master Specification (v1)
 
 > Single source of truth. Every phase prompt refers back to this file.
 > Path in repo: `docs/SPEC.md`

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 
 import { createCalendar, startOfCairoDay, type Calendar } from '@/lib/calendar'
 import { toMoney } from '@/lib/money'
@@ -35,7 +35,7 @@ import { cairo } from '../../helpers/time'
  * the arithmetic never hides inside a percentage. That price is a test *input*
  * (a mode's value), which is why it is a literal; every Settings-owned number
  * — the weekend, the workday bounds, `workingDaysPerMonth`, the penalty
- * defaults — is read from `SETTINGS_CATALOG` instead, so an agency that moves
+ * defaults — is read from `SETTINGS_CATALOG` instead, so an organization that moves
  * off Friday/Saturday breaks these cases loudly rather than leaving them
  * quietly proving something about a calendar nobody uses.
  *
@@ -69,7 +69,7 @@ const PER_DAY = '100.00'
 /** The task's own value. Only the `_ONCE` percentage case reads it. */
 const TASK_VALUE = '1000.00'
 
-/** Agency Settings, never retyped — docs/TESTING.md §5. */
+/** Organization Settings, never retyped — docs/TESTING.md §5. */
 const SETTINGS: PenaltySettings = {
   defaultMode: SETTINGS_CATALOG['penalty.defaultMode'].default,
   defaultValue: SETTINGS_CATALOG['penalty.defaultValue'].default,
@@ -110,7 +110,7 @@ interface Delivery {
   submittedAt: Date
   /** Hours, on the project. Zero unless the case is about grace. */
   graceHours?: number
-  /** `null` means nobody is accountable — the agency calendar applies. */
+  /** `null` means nobody is accountable — the organization calendar applies. */
   assigneeId?: string | null
   mode?: PenaltyMode
   value?: string
@@ -165,7 +165,7 @@ function taskRow(delivery: Delivery): PenaltyTaskRow {
       // load-bearing rather than arbitrary: `resolveGraceHours` reads project →
       // profile → global, and the profile hangs off the assignee. Putting the
       // fixture's grace on the profile made the unassigned row below fall back
-      // to the agency's 24 hours while every other row used 0 — two variables
+      // to the organization's 24 hours while every other row used 0 — two variables
       // moving at once in a case that is supposed to isolate the calendar. The
       // project override is the one link that survives having nobody assigned.
       gracePeriodHours: delivery.graceHours ?? 0,
@@ -236,7 +236,7 @@ async function distinctAmounts(
 
 describe('موعد التسليم يقع في عطلة نهاية الأسبوع', () => {
   it('موعد يوم الجمعة لا يكلّف شيئًا حتى يبدأ يوم الأحد', async () => {
-    // A Friday deadline is the ordinary case at an agency whose week ends on
+    // A Friday deadline is the ordinary case at an organization whose week ends on
     // Thursday, and it is where a naive `submittedAt − dueDate` would charge
     // two days for a delivery the منفّذ could not legitimately have made
     // earlier. Due Fri 6 March 17:00, weekend Fri 6 + Sat 7.
@@ -332,7 +332,7 @@ describe('موعد التسليم يقع في عطلة رسمية', () => {
   it('انتهاء المهلة داخل العيد لا يغيّر الخصم مهما طالت', async () => {
     // SPEC §5.3: grace is a *duration*, not working days — the working-day
     // filter applies to what comes after it. So a grace period spent entirely
-    // inside عيد الأضحى buys the منفّذ nothing, and the agency loses nothing
+    // inside عيد الأضحى buys the منفّذ nothing, and the organization loses nothing
     // by granting it: every one of these expires somewhere in the four-day
     // stretch Wed 27 → Sat 30, and the first chargeable day is Sun 31 either
     // way. Due Tue 26 May 17:00, delivered Mon 1 June 09:00 — Sun 31 ✓ and
@@ -386,7 +386,7 @@ describe('نافذة تأخير تمتد فوق عطلة متعددة الأيا
 
 describe('إجازة المنفّذ المعتمدة داخل نافذة التأخير', () => {
   it('أيام الإجازة المعتمدة لا تكلّف شيئًا وتخص صاحبها وحده', async () => {
-    // Leave narrows one person's calendar; it does not close the agency. Two
+    // Leave narrows one person's calendar; it does not close the organization. Two
     // منفّذين with identical deadlines and identical deliveries owe different
     // amounts, and that difference is exactly the approved leave.
     const calendar = calendarWith({
@@ -739,13 +739,13 @@ describe('الإيقاف المؤقت فوق العطلات والإجازات',
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// No assignee — the agency calendar, and nobody's leave
+// No assignee — the organization calendar, and nobody's leave
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('مهمة بلا منفّذ', () => {
-  it('تُقاس بتقويم الوكالة ولا تسري عليها إجازة أحد', async () => {
+  it('تُقاس بتقويم المؤسسة ولا تسري عليها إجازة أحد', async () => {
     // `computeLateness` passes `assigneeId ?? undefined`, and `undefined` means
-    // "agency calendar only" — no leave query at all. The count therefore has
+    // "organization calendar only" — no leave query at all. The count therefore has
     // to be the unnarrowed one even though a leave row exists for someone else
     // in the same window, and the deduction is skipped for a reason that names
     // the missing person rather than being silently zero.
@@ -763,7 +763,7 @@ describe('مهمة بلا منفّذ', () => {
 
     const unassigned = await assess(calendar, { ...delivery, assigneeId: null })
 
-    // Mon 2 ✓ · Tue 3 ✓ · Wed 4 ✓ · Thu 5 ✓ — the agency worked all four.
+    // Mon 2 ✓ · Tue 3 ✓ · Wed 4 ✓ · Thu 5 ✓ — the organization worked all four.
     expect(unassigned.lateness.lateWorkingDays).toBe(4)
     expect(unassigned.userId).toBeNull()
     expect(unassigned.skipReason).toBe('no-assignee')

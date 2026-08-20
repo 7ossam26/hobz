@@ -27,7 +27,7 @@ const IN_AUGUST = cairo('2026-08-10T09:00')
  *
  * The money screens have the sharpest version of that requirement in the
  * product — a scope that is one key too wide does not show a منفّذ a button
- * they cannot press, it shows them the whole agency's pay.
+ * they cannot press, it shows them the whole organization's pay.
  */
 describe('modules/ledger — نطاق القراءة', () => {
   it('صاحب ledger.view.all يرى الجميع', () => {
@@ -102,7 +102,7 @@ describe('modules/ledger — مستحقاتي تخصّ صاحبها وحده', (
   it('لا تعرض حركات غيره ولو كان يملك ledger.view.all', async () => {
     // The finance scope widens to everyone, and it must not reach this page: a
     // manager who also holds that key would open their own مستحقاتي and find
-    // the whole agency's pay on it.
+    // the whole organization's pay on it.
     const { me } = await scenario(['ledger.view.all', 'ledger.view.own'])
 
     const page = await getMyLedgerPage({})

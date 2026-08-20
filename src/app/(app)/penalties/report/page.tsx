@@ -21,7 +21,7 @@ import { getDeductionsReport } from '@/modules/penalty/queries'
 export const metadata: Metadata = { title: ar.reports.deductions }
 
 /**
- * SPEC R4 — "Deductions are reported as agency income in reports only."
+ * SPEC R4 — "Deductions are reported as organization income in reports only."
  *
  * ── What this page deliberately does not have ─────────────────────────────
  *

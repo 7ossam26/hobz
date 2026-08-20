@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+﻿import { afterEach, describe, expect, it } from 'vitest'
 
 import { clearJobs, registerJob, runJob, withAdvisoryLock } from '@/lib/scheduler'
 import { SETTINGS_CATALOG } from '@/lib/settings'
@@ -260,7 +260,7 @@ describe('calendar.recomputeSchedule — ما لا يمسّه', () => {
     }
   })
 
-  it('مهمة بلا منفّذ تُحسب بتقويم الوكالة ولا تفشل', async () => {
+  it('مهمة بلا منفّذ تُحسب بتقويم المؤسسة ولا تفشل', async () => {
     const owner = await createUser(db)
     const project = await createProject(db, { ownerId: owner.id })
     const task = await createTask(db, {

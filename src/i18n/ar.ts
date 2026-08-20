@@ -14,8 +14,8 @@
 
 export const ar = {
   app: {
-    name: 'نظام الوكالة',
-    shortName: 'الوكالة',
+    name: 'Virallap',
+    shortName: 'Virallap',
     description: 'نظام تشغيل داخلي لإدارة المشاريع والمهام والمستحقات',
     tagline: 'الخصومات والمستحقات حساب، لا اجتهاد',
   },
@@ -1077,7 +1077,7 @@ export const ar = {
     defaultSheetName: 'ورقة',
     deductions: 'الخصومات كإيراد',
     /**
-     * SPEC §1: "Deductions are reported as agency income in reports only. **No
+     * SPEC §1: "Deductions are reported as organization income in reports only. **No
      * profit/margin math anywhere.**" The wording says what the number *is*,
      * and deliberately gives the reader nothing to divide it by.
      */
@@ -1106,11 +1106,11 @@ export const ar = {
       projectSummaryHint: 'المهام ونسبة الإنجاز والمتأخر والحالة الصحية لكل مشروع.',
       workerPerformance: 'أداء المنفّذين',
       workerPerformanceHint: 'مؤشر الأداء ومكوّناته لكل منفّذ نشط.',
-      agencySummary: 'ملخص الوكالة الشهري',
-      agencySummaryHint:
+      virallapSummary: 'الملخص الشهري',
+      virallapSummaryHint:
         'المهام المكتملة، إجمالي المدفوع، الخصومات كإيراد، ونسبة الالتزام بالمواعيد.',
       deductions: 'الخصومات كإيراد',
-      deductionsHint: 'إجمالي الخصومات المحتجزة، مُحتسبة إيرادًا للوكالة.',
+      deductionsHint: 'إجمالي الخصومات المحتجزة، مُحتسبة إيرادًا لـ Virallap.',
     },
 
     payoutStatement: {
@@ -1170,9 +1170,9 @@ export const ar = {
       empty: 'لا يوجد منفّذون نشطون',
     },
 
-    agencySummary: {
-      title: 'ملخص الوكالة الشهري',
-      sheetName: 'ملخص الوكالة',
+    virallapSummary: {
+      title: 'الملخص الشهري',
+      sheetName: 'الملخص الشهري',
       month: 'الشهر',
       completedTasks: 'المهام المكتملة',
       totalPaid: 'إجمالي المدفوع',
@@ -1488,7 +1488,7 @@ export const ar = {
     valueCurrency: 'المبلغ بالجنيه',
     valuePercent: 'النسبة المئوية',
     graceHours: 'مهلة السماح (ساعة)',
-    graceHoursHint: 'اتركه فارغًا لاستخدام مهلة الوكالة. تجاوز المشروع يظل الأعلى.',
+    graceHoursHint: 'اتركه فارغًا لاستخدام مهلة Virallap. تجاوز المشروع يظل الأعلى.',
     assignedUsers: 'المنفّذون المسندون',
     usersCount: '{count} منفّذ',
     delete: 'حذف الصيغة',

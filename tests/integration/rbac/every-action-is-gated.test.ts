@@ -83,7 +83,7 @@ const INTENTIONALLY_UNGATED: Record<string, string> = {
   'extension/actions.ts#requestExtensionAction':
     'a منفّذ asks for more time on their own task; ownership is checked in the service',
   'holiday/actions.ts#listHolidaysAction':
-    'which days the agency is closed is not confidential (SPEC §6 has no calendar.view key)',
+    'which days the organization is closed is not confidential (SPEC §6 has no calendar.view key)',
   'impersonation/actions.ts#stopImpersonationAction':
     'leaving impersonation must never depend on the impersonated user’s permissions',
   'leave/actions.ts#requestLeaveAction':

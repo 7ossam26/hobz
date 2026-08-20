@@ -339,7 +339,7 @@ describe('ledger — التصحيح يكون بقيد عكسي', () => {
   })
 
   it('يرفض العكس بعد صرف مستحقات الدورة', async () => {
-    // docs/TESTING.md §4 axis 7. Money that has left the agency cannot be
+    // docs/TESTING.md §4 axis 7. Money that has left the organization cannot be
     // un-charged by rewriting the period it came from; the instrument for that
     // is an ADJUSTMENT in the open cycle, which shows up as its own movement.
     const { manager, worker } = await scenario()

@@ -87,7 +87,7 @@ const PENALTY_PCT = SETTINGS_CATALOG['penalty.defaultValue'].default
 
 /**
  * `taskValue × penalty.defaultValue% × working days`, computed rather than
- * typed. Lowering the agency's rate in Settings must move every expectation in
+ * typed. Lowering the organization's rate in Settings must move every expectation in
  * this file with it, or the suite would keep asserting a figure the product no
  * longer charges.
  */
@@ -474,7 +474,7 @@ describe('ما صُرف لا يُعكس، وما لم يُصرف بعد لا ي�
   it('عكس بعد صرف جزئي من مستحق مدفوع يفشل ولا يكتب شيئًا', async () => {
     // The guard reads the payout's **status**, not the arithmetic of
     // `paidAmount` vs `net`, and that is the correct reading: once a payout is
-    // PAID, cash has left the agency against that period, and `paidAmount` is a
+    // PAID, cash has left the organization against that period, and `paidAmount` is a
     // running total a REVERSAL cannot reconcile itself with. The instrument for
     // a paid period is an ADJUSTMENT in the open cycle, which the Arabic
     // message names for the manager.

@@ -1,4 +1,4 @@
-'use server'
+﻿'use server'
 
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
@@ -27,7 +27,7 @@ import type { HolidayDto, HolidayImportResult } from './types'
  * Thin server actions: session → permission → zod → service → revalidate.
  *
  * Writes are gated on `calendar.manage` (SPEC §6). **Reads are not**: which
- * days the agency is closed is not confidential, every worker needs it to read
+ * days the organization is closed is not confidential, every worker needs it to read
  * their own deadlines, and SPEC §6 has no `calendar.view` key to gate it with.
  * Inventing one would be inventing a permission.
  */

@@ -10,7 +10,7 @@ import { PrismaClient } from '@prisma/client'
  */
 
 declare global {
-  var __agencyPrisma: PrismaClient | undefined
+  var __virallapPrisma: PrismaClient | undefined
 }
 
 function createPrismaClient(): PrismaClient {
@@ -19,12 +19,12 @@ function createPrismaClient(): PrismaClient {
   })
 }
 
-export const prisma: PrismaClient = globalThis.__agencyPrisma ?? createPrismaClient()
+export const prisma: PrismaClient = globalThis.__virallapPrisma ?? createPrismaClient()
 
 // Next.js dev server hot-reloads modules; without this every reload would open
 // a fresh connection pool until Postgres refuses new connections.
 if (process.env.NODE_ENV !== 'production') {
-  globalThis.__agencyPrisma = prisma
+  globalThis.__virallapPrisma = prisma
 }
 
 /**

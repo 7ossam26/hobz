@@ -1539,7 +1539,7 @@ export interface TransitionTaskArgs extends TaskMutationArgs {
  * edges by key (`task.edit` to start/submit, `task.approve` to approve,
  * `task.cancel` to cancel) and says nothing about ownership, and a manager
  * submitting on behalf of a worker who is out sick is an ordinary day at an
- * agency of this size. What stops a منفّذ touching someone else's task is
+ * organization of this size. What stops a منفّذ touching someone else's task is
  * `scopeTasks`: they cannot read it, so they cannot name its id.
  *
  * If a later phase wants "only the assignee may submit", that is a policy

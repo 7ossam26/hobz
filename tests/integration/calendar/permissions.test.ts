@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+﻿import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DomainError, ForbiddenError, UnauthenticatedError } from '@/lib/errors'
 import { SETTINGS_CATALOG } from '@/lib/settings'
@@ -40,7 +40,7 @@ const { decideExtensionAction, requestExtensionAction } =
  *
  * Two of these actions are `requireAuth` rather than `requirePermission`, and
  * that is deliberate (SPEC §6 has no key for "ask for time off" or "read the
- * agency's holidays"). What they enforce instead — whose leave, whose task —
+ * organization's holidays"). What they enforce instead — whose leave, whose task —
  * is asserted here too, because that check is the whole of their security.
  */
 
@@ -83,7 +83,7 @@ describe('العطلات — calendar.manage', () => {
     await expect(listHolidaysAction({})).rejects.toBeInstanceOf(UnauthenticatedError)
   })
 
-  it('يسمح بالقراءة لأي مستخدم مسجَّل — أيام إغلاق الوكالة ليست سرًّا', async () => {
+  it('يسمح بالقراءة لأي مستخدم مسجَّل — أيام إغلاق المؤسسة ليست سرًّا', async () => {
     setSessionActor(await actorWith([]))
     await expect(listHolidaysAction({})).resolves.toEqual([])
   })

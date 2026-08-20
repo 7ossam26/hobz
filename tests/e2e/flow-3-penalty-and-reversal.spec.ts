@@ -98,7 +98,7 @@ test('تدفّق ٣: خصم تلقائي على تأخير، ثم عكسه بس�
   })
 
   // Nothing has been deducted yet. The register is the manager's view of every
-  // خصم in the agency, and it is empty until the job runs.
+  // خصم in the organization, and it is empty until the job runs.
   await page.goto('/penalties')
   await expect(page.getByRole('row', { name: new RegExp(TASK_TITLE) })).toHaveCount(0)
 

@@ -17,7 +17,7 @@ import type { ImportEntity } from './schema'
  * (CLAUDE.md invariant 4 is about *business* numbers — grace periods, penalty
  * rates, cycle days. A parser safety bound is the same kind of thing
  * `lib/auth/username.ts`'s `USERNAME_MAX_LENGTH` already is: a technical
- * guard nobody tunes per agency, not a number the product's arithmetic
+ * guard nobody tunes per organization, not a number the product's arithmetic
  * depends on).
  */
 

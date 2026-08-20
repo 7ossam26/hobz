@@ -1,4 +1,4 @@
-import { toStorageString, type MoneyInput } from '@/lib/money'
+﻿import { toStorageString, type MoneyInput } from '@/lib/money'
 import { resolveGraceHours as fallback } from '@/modules/lateness/service'
 
 import { isPenaltyMode, type PenaltyMode } from './mode'
@@ -37,7 +37,7 @@ export interface PenaltyProfileValues {
 }
 
 export interface ResolvedPenaltyProfile {
-  /** Null when the agency default applied — which the breakdown says out loud. */
+  /** Null when the organization default applied — which the breakdown says out loud. */
   profileId: string | null
   profileName: string | null
   mode: PenaltyMode
@@ -55,7 +55,7 @@ const asMoneyInput = (value: PenaltyProfileValues['value']): MoneyInput =>
 /**
  * A profile is taken **whole or not at all**.
  *
- * Falling back per-field — this profile's mode with the agency's value — would
+ * Falling back per-field — this profile's mode with the organization's value — would
  * silently invent a formula nobody configured: a profile meaning "150 EGP once"
  * combined with a default meaning "5 percent per day" produces "150% of the
  * task value, per day". The mode is what gives `value` its unit, so the two
@@ -126,7 +126,7 @@ export function resolveGraceHours(chain: GraceChain): number {
  *
  * `??` matters more here than anywhere: this is a boolean, and `||` would make
  * a project that deliberately switched revision penalties **off** silently
- * inherit the agency's **on**.
+ * inherit the organization's **on**.
  */
 export function resolvePenalizeRevisionLateness(
   projectOverride: boolean | null | undefined,

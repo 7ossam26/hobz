@@ -435,7 +435,7 @@ describe('modules/payout — صرفان متزامنان لمستحق واحد',
     // The invariant that survives any future change to the payment rules: the
     // PAYOUT entries for a (منفّذ, دورة) always sum to exactly −paidAmount. If
     // they diverge, the ledger and the payout row disagree about how much left
-    // the agency, and only one of them is the permanent record.
+    // the organization, and only one of them is the permanent record.
     const { actor, worker, payout, cycleId } = await draftedPayout('800.00')
     await approvePayout(db, { payoutId: payout.id, actor, now: PAY_AT })
 

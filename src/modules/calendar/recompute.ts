@@ -1,4 +1,4 @@
-import { recordAudit } from '@/lib/audit'
+﻿import { recordAudit } from '@/lib/audit'
 import {
   cairoDateKey,
   addCairoDays,
@@ -62,7 +62,7 @@ export const SCHEDULE_RECOMPUTE_CRON = '0 3 * * *'
 
 /**
  * Rows per query. Small enough that one bad batch is cheap to retry, large
- * enough that an agency-sized backlog is a handful of round trips.
+ * enough that an organization-sized backlog is a handful of round trips.
  */
 const BATCH_SIZE = 200
 

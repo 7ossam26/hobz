@@ -46,7 +46,7 @@ const OTHER_WORKER = 'worker-2'
 
 /**
  * The calendar under test is the *shipped* one: weekend days and workday
- * bounds come from the catalog rather than being retyped here. If the agency
+ * bounds come from the catalog rather than being retyped here. If the organization
  * ever moves off Friday/Saturday, these cases must fail loudly rather than go
  * on quietly proving something about a calendar nobody uses.
  */
@@ -241,7 +241,7 @@ describe('فترة توقف متصلة — SPEC §5.2 T2', () => {
 
     expect(forWorker).toEqual([false, false, false, false])
     // Four days off for one person and two for everybody else, from the same
-    // rows: leave narrows the calendar, it does not close the agency.
+    // rows: leave narrows the calendar, it does not close the organization.
     expect(forOther).toEqual([false, false, true, true])
   })
 
@@ -258,7 +258,7 @@ describe('فترة توقف متصلة — SPEC §5.2 T2', () => {
 
   it('التسليم في أي ساعة من فترة التوقف يعطي نفس التأخير المحسوب للمهمة', async () => {
     // T2 restated where it decides money: through `computeLateness`, over a
-    // stretch that is half agency calendar and half this منفّذ's own leave.
+    // stretch that is half organization calendar and half this منفّذ's own leave.
     const calendar = leaveCalendar()
     const dueDate = cairo('2026-03-03T17:00')
     const beforeStretch = await lateDays(calendar, {

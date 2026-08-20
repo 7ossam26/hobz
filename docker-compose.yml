@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Agency OS — local stack.
+# Virallap — local stack.
 #
 # One Postgres container hosting TWO databases:
 #   agency       — development

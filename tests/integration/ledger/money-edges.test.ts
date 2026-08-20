@@ -582,7 +582,7 @@ describe('modules/payout — الخصم يساوي الاستحقاق أو يز�
   it('تجاوز الخصم بقرش واحد يُصفّر المستحق ويُرحّل 0.01- إلى الدورة التالية', async () => {
     // One piastre is the smallest debt the system can carry, and the one most
     // likely to be rounded away by a "tidy" carry-forward. Losing it here would
-    // mean the agency writes off every sub-piastre debt silently — and the
+    // mean the organization writes off every sub-piastre debt silently — and the
     // opposite mistake, keeping it as a payout, would pay a negative.
     const { actor, worker } = await actorAndWorker()
     await createLedgerEntry(db, {

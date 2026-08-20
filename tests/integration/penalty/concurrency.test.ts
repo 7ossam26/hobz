@@ -115,7 +115,7 @@ describe('إعادة حسابان متزامنان على نفس المهمة', 
       ),
     ])
 
-    // A lock per task, not per engine: an agency-wide sweep must not serialise
+    // A lock per task, not per engine: an organization-wide sweep must not serialise
     // behind one manager looking at one task.
     expect(first.outcome).toBe('applied')
     expect(second.outcome).toBe('applied')

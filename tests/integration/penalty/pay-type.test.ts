@@ -20,7 +20,7 @@ import { testDb } from '../../setup/reset'
  *
  * `tests/unit/penalty/basis.test.ts` proves the resolution rule in isolation
  * and explains why it exists. This file proves it survives the round trip
- * through Prisma's `Decimal` columns and the agency's *actual* default mode —
+ * through Prisma's `Decimal` columns and the organization's *actual* default mode —
  * which is the version that decides real deductions.
  *
  * ── The worked numbers ────────────────────────────────────────────────────

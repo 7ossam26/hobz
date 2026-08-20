@@ -184,7 +184,7 @@ describe('modules/payout — لا مطالبتان بنفس المال', () => {
     // The most ordinary way two payouts end up claiming one balance: August is
     // drafted and approved, finance is away, September closes. The money is
     // still in the balance, so a close that only read the balance would draft
-    // it again — and both screens would then say the agency owes 2000 when it
+    // it again — and both screens would then say the organization owes 2000 when it
     // owes 1000.
     const { actor, worker } = await actorAndWorker()
     await createLedgerEntry(db, {

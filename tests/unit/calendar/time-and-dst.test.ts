@@ -78,7 +78,7 @@ const WORKDAY_START = SETTINGS_CATALOG['calendar.workdayStart'].default
 const WORKDAY_END = SETTINGS_CATALOG['calendar.workdayEnd'].default
 const DEFAULT_GRACE_HOURS = SETTINGS_CATALOG['penalty.defaultGraceHours'].default
 
-/** The agency calendar exactly as Settings configures it. */
+/** the organization calendar exactly as Settings configures it. */
 const agencyCalendar = () =>
   createCalendar(
     inMemoryCalendarSource({

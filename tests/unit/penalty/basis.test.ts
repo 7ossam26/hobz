@@ -14,7 +14,7 @@ import { calculatePenalty } from '@/modules/penalty/calculate'
  * ── Why this needs resolving at all ───────────────────────────────────────
  *
  * SPEC §5.4's modes each name their own basis, and Settings holds **one**
- * default mode for the whole agency. So the moment an agency of mixed
+ * default mode for the whole agency. So the moment an organization of mixed
  * engagements picks `PCT_TASK_VALUE_PER_DAY` as its default — which is the
  * shipped default — every salaried منفّذ's deduction would come out of a
  * `taskValue` their work does not carry, and land on zero. A zero deduction

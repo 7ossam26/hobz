@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -30,7 +30,7 @@ import type { HolidayDto } from '@/modules/holiday/types'
  *
  * They are not a `Setting` row — they are their own table with their own
  * permission (`calendar.manage`, SPEC §6) and their own audit trail, because
- * adding one changes what every deadline in the agency is measured against.
+ * adding one changes what every deadline in the organization is measured against.
  * They live on this screen anyway because SPEC §7 lists "holidays" among the
  * things one page must configure, and an operator does not care which storage
  * shape a rule happens to have.

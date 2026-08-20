@@ -44,7 +44,7 @@ export interface BackupSettings {
   pgDumpPath: string
 }
 
-export const DEFAULT_BACKUP_DIR = '/var/backups/agency-os'
+export const DEFAULT_BACKUP_DIR = '/var/backups/virallap'
 export const DEFAULT_RETENTION_DAYS = 14
 
 /**
@@ -74,14 +74,14 @@ export function backupSettingsFromEnv(
   }
 }
 
-/** `agency-os-2026-08-18T0300.sql.gz` — sortable, and unambiguous in a listing. */
+/** `virallap-2026-08-18T0300.sql.gz` — sortable, and unambiguous in a listing. */
 export function backupFileName(at: Date): string {
   const iso = at.toISOString()
-  return `agency-os-${iso.slice(0, 10)}T${iso.slice(11, 13)}${iso.slice(14, 16)}.sql.gz`
+  return `virallap-${iso.slice(0, 10)}T${iso.slice(11, 13)}${iso.slice(14, 16)}.sql.gz`
 }
 
 /** Only files this module wrote are ever considered for deletion. */
-const BACKUP_FILE = /^agency-os-\d{4}-\d{2}-\d{2}T\d{4}\.sql\.gz$/
+const BACKUP_FILE = /^virallap-\d{4}-\d{2}-\d{2}T\d{4}\.sql\.gz$/
 
 export function isBackupFile(name: string): boolean {
   return BACKUP_FILE.test(basename(name))
@@ -210,9 +210,9 @@ export async function pruneBackups(
   return removed
 }
 
-/** `agency-os-2026-08-18T0300.sql.gz` → the instant in its name. */
+/** `virallap-2026-08-18T0300.sql.gz` → the instant in its name. */
 export function backupTimestamp(name: string): Date | null {
-  const match = /^agency-os-(\d{4}-\d{2}-\d{2})T(\d{2})(\d{2})\.sql\.gz$/.exec(
+  const match = /^virallap-(\d{4}-\d{2}-\d{2})T(\d{2})(\d{2})\.sql\.gz$/.exec(
     basename(name),
   )
   if (!match) return null

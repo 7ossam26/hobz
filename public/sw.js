@@ -29,7 +29,7 @@
  * stops an old deploy's chunks accumulating forever.
  */
 
-const CACHE_VERSION = 'agency-os-v1'
+const CACHE_VERSION = 'virallap-v1'
 const OFFLINE_URL = '/offline'
 
 /** Pre-cached at install: the fallback page and the two faces above the fold. */

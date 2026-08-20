@@ -1,4 +1,4 @@
-/**
+﻿/**
  * modules/penalty/mode — SPEC §5.4's five formulas, as a closed set.
  *
  * SPEC R2 settled the shape: "a `PenaltyProfile` (mode + value + grace) …
@@ -42,7 +42,7 @@ const BASIS: Readonly<Record<PenaltyMode, PenaltyBasis>> = {
 
 /**
  * The basis the mode *asks* for. What it actually gets may differ — see
- * `basis.ts`, which is where an agency-wide default mode meets a منفّذ whose
+ * `basis.ts`, which is where an organization-wide default mode meets a منفّذ whose
  * pay type does not carry that figure.
  */
 export function preferredBasis(mode: PenaltyMode): PenaltyBasis {

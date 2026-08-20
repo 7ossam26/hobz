@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 
 import { SETTINGS_CATALOG } from '@/lib/settings/catalog'
 import {
@@ -29,7 +29,7 @@ const GLOBAL_PENALIZE_REVISIONS =
   SETTINGS_CATALOG['penalty.penalizeRevisionLateness'].default
 
 describe('resolvePenaltyProfile — الافتراضي العام ثم تجاوز المنفّذ', () => {
-  it('بلا بروفايل: إعدادات الوكالة، ويُقال إنها الافتراضي', () => {
+  it('بلا بروفايل: إعدادات المؤسسة، ويُقال إنها الافتراضي', () => {
     const resolved = resolvePenaltyProfile(null, DEFAULTS)
 
     expect(resolved.mode).toBe(DEFAULTS.mode)
@@ -57,7 +57,7 @@ describe('resolvePenaltyProfile — الافتراضي العام ثم تجاو�
   })
 
   /**
-   * A profile is a *bundle*. Taking its mode but the agency's value would
+   * A profile is a *bundle*. Taking its mode but the organization's value would
    * produce a formula nobody configured — "150% of the task value per day",
    * from a profile that said 150 EGP and a default that said percent.
    */
@@ -74,7 +74,7 @@ describe('resolvePenaltyProfile — الافتراضي العام ثم تجاو�
   /**
    * Unreachable through Prisma — the column is an enum — but this function is
    * also the seam an `.xlsx` import or a hand-repaired row reaches. Falling back
-   * to the agency default would apply a formula nobody chose to somebody's pay,
+   * to the organization default would apply a formula nobody chose to somebody's pay,
    * quietly and forever; throwing makes the bad row somebody's problem today.
    */
   it('وضع غير معروف يرمي خطأً بدل أن يسقط للافتراضي', () => {
@@ -126,7 +126,7 @@ describe('resolvePenaltyProfile — الافتراضي العام ثم تجاو�
 })
 
 describe('resolveGraceHours — المشروع ثم البروفايل ثم العام', () => {
-  it('لا تجاوز في أي موضع: مهلة الوكالة', () => {
+  it('لا تجاوز في أي موضع: مهلة المؤسسة', () => {
     expect(
       resolveGraceHours({
         projectOverride: null,
@@ -161,7 +161,7 @@ describe('resolveGraceHours — المشروع ثم البروفايل ثم ال
   it('صفر قرار وليس غيابًا — في المشروع', () => {
     // `??` and never `||`: a project configured with zero grace has decided
     // that this client accepts no slippage, and `||` would silently restore the
-    // agency's 24 hours.
+    // organization's 24 hours.
     expect(
       resolveGraceHours({ projectOverride: 0, profileOverride: 8, globalDefault: 24 }),
     ).toBe(0)

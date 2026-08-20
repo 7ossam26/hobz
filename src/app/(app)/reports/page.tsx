@@ -26,8 +26,8 @@ const REPORT_LINKS = [
   },
   {
     href: '/reports/agency-summary',
-    title: ar.reports.hub.agencySummary,
-    hint: ar.reports.hub.agencySummaryHint,
+    title: ar.reports.hub.virallapSummary,
+    hint: ar.reports.hub.virallapSummaryHint,
   },
   {
     href: '/penalties/report',

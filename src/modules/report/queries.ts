@@ -11,7 +11,7 @@ import { UNDELIVERED_TASK_STATUSES } from '@/modules/project/health'
 import { getProjects } from '@/modules/project/queries'
 
 import type {
-  MonthlyAgencySummaryDto,
+  MonthlyVirallapSummaryDto,
   PayoutStatementReportDto,
   ProjectSummaryReportDto,
   WorkerPerformanceReportDto,
@@ -23,9 +23,9 @@ import type {
  * Every function starts the same way every action in this product does
  * (CLAUDE.md invariant 3): session, then `report.view`. There is no wider
  * scoping applied on top of it, matching `modules/penalty/register.ts`'s
- * `deductionsReport` precedent — `report.view` is a whole-agency reporting
+ * `deductionsReport` precedent — `report.view` is a whole-organization reporting
  * privilege, not a narrower view of whatever the reader happens to own or be
- * assigned to. A worker never holds it; a manager who does sees the agency,
+ * assigned to. A worker never holds it; a manager who does sees the organization,
  * not just their own projects.
  */
 
@@ -217,7 +217,7 @@ export async function getWorkerPerformanceReport(): Promise<WorkerPerformanceRep
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// 4. Monthly agency summary
+// 4. Monthly Virallap summary
 // ─────────────────────────────────────────────────────────────────────────
 
 /**
@@ -226,13 +226,13 @@ export async function getWorkerPerformanceReport(): Promise<WorkerPerformanceRep
  * `getDeductionsReport` for the one figure it already owns (SPEC R4) rather
  * than re-summing the ledger a second way.
  */
-export async function getMonthlyAgencySummary(
+export async function getMonthlyVirallapSummary(
   monthKey?: string,
   now: Date = new Date(),
-): Promise<MonthlyAgencySummaryDto> {
+): Promise<MonthlyVirallapSummaryDto> {
   await assertCanViewReports()
 
-  return timed('report.monthlyAgencySummary', async () => {
+  return timed('report.monthlyVirallapSummary', async () => {
     const { from, to } = cairoMonthBounds(monthKey, now)
 
     const [completed, paidSum, deductions] = await Promise.all([

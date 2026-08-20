@@ -27,7 +27,7 @@ import {
 describe('modules/backup — تسمية الملفات', () => {
   it('يبني اسمًا قابلًا للفرز زمنيًا', () => {
     expect(backupFileName(new Date('2026-08-18T02:00:00.000Z'))).toBe(
-      'agency-os-2026-08-18T0200.sql.gz',
+      'virallap-2026-08-18T0200.sql.gz',
     )
   })
 
@@ -48,11 +48,11 @@ describe('modules/backup — تسمية الملفات', () => {
   })
 
   it('يتعرّف على ملفات النسخ الاحتياطي وحدها', () => {
-    expect(isBackupFile('agency-os-2026-08-18T0200.sql.gz')).toBe(true)
+    expect(isBackupFile('virallap-2026-08-18T0200.sql.gz')).toBe(true)
     // The half-written file an interrupted run leaves behind.
-    expect(isBackupFile('agency-os-2026-08-18T0200.sql.gz.partial')).toBe(false)
+    expect(isBackupFile('virallap-2026-08-18T0200.sql.gz.partial')).toBe(false)
     expect(isBackupFile('dump.sql')).toBe(false)
-    expect(isBackupFile('agency-os.sql.gz')).toBe(false)
+    expect(isBackupFile('virallap.sql.gz')).toBe(false)
     expect(backupTimestamp('dump.sql')).toBeNull()
   })
 })
@@ -90,7 +90,7 @@ describe('modules/backup — التقليم بعد 14 ليلة', () => {
     new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
 
   beforeEach(async () => {
-    directory = await mkdtemp(join(tmpdir(), 'agency-backup-'))
+    directory = await mkdtemp(join(tmpdir(), 'virallap-backup-'))
   })
 
   afterEach(async () => {

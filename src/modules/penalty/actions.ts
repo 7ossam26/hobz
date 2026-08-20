@@ -184,7 +184,7 @@ export const recomputeTaskPenaltyAction = requirePermission(
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Penalty profiles (SPEC R2) — agency configuration, so `settings.edit`
+// Penalty profiles (SPEC R2) — organization configuration, so `settings.edit`
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const createPenaltyProfileAction = requirePermission(
@@ -244,7 +244,7 @@ export const deletePenaltyProfileAction = requirePermission(
 /**
  * Assigning a formula to a person is an edit to that person, so it is
  * `user.edit` and not `settings.edit`. A team lead who may change who does what
- * should not need the key that changes what the agency's rules *are*.
+ * should not need the key that changes what the organization's rules *are*.
  */
 export const assignPenaltyProfileAction = requirePermission(
   'user.edit',

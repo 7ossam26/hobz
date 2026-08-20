@@ -10,9 +10,9 @@ import { SUPER_ADMIN_ROLE, type Permission } from '@/lib/rbac'
  * managers get the daily digest and, per the phase brief, task escalation at
  * ADMIN level. This module reads "manager" as *whoever holds
  * `project.view.all`* — the one permission that means "sees the whole
- * agency's work", which is exactly the audience a digest of overdue tasks,
+ * organization's work", which is exactly the audience a digest of overdue tasks,
  * approvals and at-risk projects is for. Override in `docs/SPEC.md` §8 if the
- * agency wants a narrower or role-based definition instead.
+ * organization wants a narrower or role-based definition instead.
  */
 
 /** Active, non-deleted users holding `permission` — directly, or via SUPER_ADMIN. */

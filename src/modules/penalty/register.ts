@@ -123,7 +123,7 @@ export async function listMoneyRegister(
     totalPenalties: toStorageString(penalties),
     totalBonuses: toStorageString(abs(totals.get('BONUS') ?? zero())),
     totalReversed: toStorageString(reversed),
-    // What the agency actually retained. Stated separately from the gross rather
+    // What the organization actually retained. Stated separately from the gross rather
     // than instead of it: a manager auditing a month needs to see both the
     // deductions that were applied and the ones that were undone.
     netPenalties: toStorageString(sub(penalties, reversed)),
@@ -284,7 +284,7 @@ interface PanelRow {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SPEC R4 — deductions as agency income (phase brief item 10)
+// SPEC R4 — deductions as organization income (phase brief item 10)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface DeductionsReportRow {
@@ -294,7 +294,7 @@ export interface DeductionsReportRow {
   penalties: string
   /** Deductions later reversed, as a positive magnitude. */
   reversed: string
-  /** `penalties − reversed`: what the agency actually retained. */
+  /** `penalties − reversed`: what the organization actually retained. */
   net: string
   count: number
 }
@@ -310,7 +310,7 @@ export interface DeductionsReportDto {
 }
 
 /**
- * SPEC §1: "Deductions are reported as agency income in reports only. **No
+ * SPEC §1: "Deductions are reported as organization income in reports only. **No
  * profit/margin math anywhere.**"
  *
  * That second sentence is a constraint on this function specifically, and it is

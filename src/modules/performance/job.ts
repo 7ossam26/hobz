@@ -1,4 +1,4 @@
-import type { Db } from '@/lib/db'
+﻿import type { Db } from '@/lib/db'
 import { registerJob, type JobDefinition } from '@/lib/scheduler'
 
 import { computeAllActiveWorkerScores, loadPerformanceWeights } from './compute'
@@ -63,7 +63,7 @@ export async function runPerformanceRecompute(
       })
       result.scored += 1
     } catch (error) {
-      // One unscoreable worker must not stop the rest of the agency from
+      // One unscoreable worker must not stop the rest of the organization from
       // getting a fresh number tonight.
       result.failed += 1
       console.error(`[${PERFORMANCE_RECOMPUTE_JOB_NAME}] user ${userId} failed`, error)

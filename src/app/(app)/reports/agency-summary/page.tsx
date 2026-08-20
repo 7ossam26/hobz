@@ -8,9 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ar } from '@/i18n/ar'
 import { cairoParts } from '@/lib/calendar/cairo'
 import { formatDate } from '@/lib/datetime'
-import { getMonthlyAgencySummary } from '@/modules/report/queries'
+import { getMonthlyVirallapSummary } from '@/modules/report/queries'
 
-export const metadata: Metadata = { title: ar.reports.agencySummary.title }
+export const metadata: Metadata = { title: ar.reports.virallapSummary.title }
 
 function shiftMonthKey(monthKey: string, delta: number): string {
   const [yearPart, monthPart] = monthKey.split('-')
@@ -22,7 +22,7 @@ function shiftMonthKey(monthKey: string, delta: number): string {
   return `${shiftedYear}-${String(shiftedMonth + 1).padStart(2, '0')}`
 }
 
-export default async function AgencySummaryReportPage({
+export default async function VirallapSummaryReportPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -34,8 +34,8 @@ export default async function AgencySummaryReportPage({
   const monthParam = params.month
   const monthKey = typeof monthParam === 'string' ? monthParam : currentMonthKey
 
-  const report = await getMonthlyAgencySummary(monthKey, now)
-  const a = ar.reports.agencySummary
+  const report = await getMonthlyVirallapSummary(monthKey, now)
+  const a = ar.reports.virallapSummary
 
   return (
     <div className="flex flex-col gap-6">

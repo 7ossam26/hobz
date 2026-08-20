@@ -1,4 +1,4 @@
-import { requireActor } from '@/lib/auth/session'
+﻿import { requireActor } from '@/lib/auth/session'
 import { prisma } from '@/lib/db'
 import { ForbiddenError } from '@/lib/errors'
 import { can, type Actor } from '@/lib/rbac'
@@ -56,7 +56,7 @@ export async function getLedgerPage(raw: unknown): Promise<LedgerPageDto> {
  *
  * `getLedgerPage` widens to everyone for a `ledger.view.all` holder, which is
  * right for a finance screen and wrong for this one: a manager who also holds
- * that key would open their own مستحقاتي page and find the whole agency's money
+ * that key would open their own مستحقاتي page and find the whole organization's money
  * on it. The page has no user parameter for the same reason — there is nothing
  * to tamper with.
  */

@@ -1,4 +1,4 @@
-import type { LedgerPersonDto } from '@/modules/ledger/types'
+﻿import type { LedgerPersonDto } from '@/modules/ledger/types'
 
 /** Money crosses out of the module as canonical 2dp strings, never numbers. */
 
@@ -11,7 +11,7 @@ export interface PayoutDto {
   cycleId: string
   user: LedgerPersonDto | null
 
-  /** Signed: negative when the منفّذ owed the agency at the cycle's start. */
+  /** Signed: negative when the منفّذ owed the organization at the cycle's start. */
   carriedForward: string
   gross: string
   penalties: string

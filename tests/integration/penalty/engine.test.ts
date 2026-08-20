@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 
 import { balanceFor } from '@/modules/ledger/service'
 
@@ -32,7 +32,7 @@ import { testDb } from '../../setup/reset'
  * A working day counts when its own Cairo start falls in the half-open window
  * (SPEC §5.3), so Tuesday, Wednesday and Thursday count: **3 working days**.
  *
- * The agency default is `PCT_TASK_VALUE_PER_DAY` at 5%, and the task is worth
+ * the organization default is `PCT_TASK_VALUE_PER_DAY` at 5%, and the task is worth
  * 1000.00, so:
  *
  *   1000.00 × 5% × 3 = **150.00**
@@ -180,7 +180,7 @@ describe('recomputeTaskPenalty — بروفايل المنفّذ يتقدّم ع
     expect(outcome.breakdown?.mode).toBe('FIXED_PER_DAY')
   })
 
-  it('مهلة البروفايل تتقدّم على مهلة الوكالة', async () => {
+  it('مهلة البروفايل تتقدّم على مهلة المؤسسة', async () => {
     // Zero grace: lateness starts at the deadline itself, so Monday counts too.
     const profile = await createPenaltyProfile(db, {
       mode: 'FIXED_PER_DAY',

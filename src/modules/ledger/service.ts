@@ -1,4 +1,4 @@
-import { recordAudit, type AuditActorRef } from '@/lib/audit'
+﻿import { recordAudit, type AuditActorRef } from '@/lib/audit'
 import type { Db } from '@/lib/db'
 import { ConflictError, DomainError, NotFoundError } from '@/lib/errors'
 import {
@@ -279,7 +279,7 @@ export interface ReverseEntryArgs {
  *    `reversesEntryId`, so two concurrent callers cannot both succeed.
  *  - **Reversing a reversal.** That is a re-application, not a correction, and
  *    it would make the audit trail read backwards. Write a fresh entry.
- *  - **Reversing anything already paid out.** Money that has left the agency
+ *  - **Reversing anything already paid out.** Money that has left the organization
  *    cannot be un-charged by rewriting the period it came from
  *    (docs/TESTING.md §4 axis 7). The instrument for that is an `ADJUSTMENT` in
  *    the open cycle, which shows up as its own movement on the next statement.
@@ -314,7 +314,7 @@ export async function reverseEntry(
    * ("the `PAYOUT` entries for a (منفّذ, cycle) always sum to exactly
    * `−paidAmount`") and leaving no record that agrees with any other.
    *
-   * Cash that left the agency and came back is a new movement, not the undoing
+   * Cash that left the organization and came back is a new movement, not the undoing
    * of an old one: record it as an `ADJUSTMENT`.
    */
   if (original.type === 'PAYOUT') {

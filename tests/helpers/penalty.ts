@@ -39,7 +39,7 @@ export interface RecomputeOptions {
   events?: MoneyEventBus
 }
 
-/** One recomputation with the agency defaults, on the real calendar. */
+/** One recomputation with the organization defaults, on the real calendar. */
 export function recompute(
   db: PrismaClient,
   taskId: string,

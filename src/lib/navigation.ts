@@ -162,7 +162,7 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<{
   { prefix: '/penalties', permissions: ['penalty.view'] },
   // Longest prefix wins, so SPEC R4's report needs `report.view` even though it
   // lives under the register. The two are different questions: "what was
-  // deducted from this person" and "what did the agency retain this month".
+  // deducted from this person" and "what did the organization retain this month".
   { prefix: '/penalties/report', permissions: ['report.view'] },
   { prefix: '/reports', permissions: ['report.view'] },
   { prefix: '/users', permissions: ['user.view'] },

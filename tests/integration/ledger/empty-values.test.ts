@@ -100,7 +100,7 @@ describe('modules/ledger — منفّذ جديد لا حركة له', () => {
     // the UI asked for would paginate wrong before anybody clicked anything.
     expect(page.pageSize).toBe(listLedgerSchema.parse({}).pageSize)
     // '0.00' and never null — a header that had to tell "nothing yet" apart
-    // from "zero" would end up printing an empty box for half the agency.
+    // from "zero" would end up printing an empty box for half the organization.
     expect(page.balance).toBe('0.00')
   })
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 
 import {
   addHours,
@@ -43,7 +43,7 @@ import { cairo } from '../../helpers/time'
  * emptiness here is paired with the thing it must *not* suppress:
  *
  *  - an empty holiday table still leaves Sunday–Thursday as working days;
- *  - a منفّذ with no leave row is measured exactly like the agency calendar,
+ *  - a منفّذ with no leave row is measured exactly like the organization calendar,
  *    and the emptiness is *queried*, not assumed;
  *  - a zero-length workday zeroes elapsed *minutes* and leaves late *days*
  *    untouched, because they are different measurements of different things.
@@ -91,15 +91,15 @@ function task(overrides: Partial<LatenessTaskInput> = {}): LatenessTaskInput {
   }
 }
 
-/** The agency on day one: the holiday table and the leave table are both empty. */
-const brandNewAgency = () => inMemoryCalendarSource({ weekendDays: WEEKEND })
+/** the organization on day one: the holiday table and the leave table are both empty. */
+const brandNewOrg = () => inMemoryCalendarSource({ weekendDays: WEEKEND })
 
 describe('وكالة جديدة — لا عطلات مسجَّلة ولا إجازات', () => {
   it('جدول عطلات فارغ لا يُلغي التأخير — أيام الأسبوع تظل أيام عمل', async () => {
     // The inverse that matters. Nothing is configured yet, and the honest
     // answer is *not* zero: Sunday 17:00 → the next Sunday 09:00 crosses seven
     // day boundaries, two of which are the weekend.
-    const source = brandNewAgency()
+    const source = brandNewOrg()
 
     const result = await computeLateness(createCalendar(source), {
       task: task({ submittedAt: NEXT_SUNDAY }),
@@ -112,8 +112,8 @@ describe('وكالة جديدة — لا عطلات مسجَّلة ولا إجا
     expect(source.holidayCalls).toBe(1)
   })
 
-  it('منفّذ جديد بلا سجل إجازات يُقاس بنفس تقويم الوكالة', async () => {
-    const calendar = createCalendar(brandNewAgency())
+  it('منفّذ جديد بلا سجل إجازات يُقاس بنفس تقويم المؤسسة', async () => {
+    const calendar = createCalendar(brandNewOrg())
     const submitted = { submittedAt: NEXT_SUNDAY }
 
     const forNewcomer = await computeLateness(calendar, {
@@ -136,7 +136,7 @@ describe('وكالة جديدة — لا عطلات مسجَّلة ولا إجا
     // leave could apply, so the query must not be issued at all; "a منفّذ with
     // no rows" means the query is issued and comes back empty. Collapsing the
     // two would either invent a user or trust an assumption.
-    const source = brandNewAgency()
+    const source = brandNewOrg()
     const calendar = createCalendar(source)
 
     await computeLateness(calendar, {
@@ -157,8 +157,8 @@ describe('وكالة جديدة — لا عطلات مسجَّلة ولا إجا
   it('نطاق بلا امتداد يجيب بصفر دون أن يسأل المصدر أصلًا', async () => {
     // A span containing no day boundary cannot contain a working day either, so
     // there is nothing to look up. The nightly job runs this case for every
-    // on-time task in the agency; a query per task would be a query for nothing.
-    const source = brandNewAgency()
+    // on-time task in the organization; a query per task would be a query for nothing.
+    const source = brandNewOrg()
     const at = cairo('2026-03-02T09:00')
 
     await expect(createCalendar(source).workingDaysBetween(at, at, WORKER)).resolves.toBe(
@@ -244,7 +244,7 @@ describe('يوم عمل بطول صفر', () => {
     // Minutes and days are two different measurements: SPEC §5.2 counts the
     // first, SPEC §5.3 turns the second into money. A workday window that has
     // been misconfigured to nothing must not quietly cancel every deduction in
-    // the agency along with it.
+    // the organization along with it.
     const result = await computeLateness(createCalendar(zeroLengthDay()), {
       task: task({ submittedAt: NEXT_SUNDAY }),
       graceHours: 0,
@@ -303,7 +303,7 @@ describe('مهمة بأعمدة فارغة', () => {
     // would hand the منفّذ a deduction that stops growing for free.
     const now = cairo('2026-03-03T12:00')
 
-    const result = await computeLateness(createCalendar(brandNewAgency()), {
+    const result = await computeLateness(createCalendar(brandNewOrg()), {
       task: task({ status: 'SUBMITTED', submittedAt: null }),
       graceHours: 0,
       now,
@@ -318,7 +318,7 @@ describe('مهمة بأعمدة فارغة', () => {
     // Every task is born with `dueDate === originalDueDate`, and the two arrive
     // from Prisma as two distinct `Date` objects. Comparing references rather
     // than instants would flag the whole agency as extended.
-    const result = await computeLateness(createCalendar(brandNewAgency()), {
+    const result = await computeLateness(createCalendar(brandNewOrg()), {
       task: task({
         dueDate: cairo('2026-03-01T17:00'),
         originalDueDate: cairo('2026-03-01T17:00'),
@@ -335,7 +335,7 @@ describe('مهمة بأعمدة فارغة', () => {
     // Cancelled is not "zero days late as it happens" — it is "there is nothing
     // to measure". Reaching the calendar at all would mean the zero depended on
     // what the calendar said.
-    const source = brandNewAgency()
+    const source = brandNewOrg()
 
     const result = await computeLateness(createCalendar(source), {
       task: task({ status: 'CANCELLED', submittedAt: null }),
@@ -352,7 +352,7 @@ describe('مهمة بأعمدة فارغة', () => {
     // SPEC §8 wants the breakdown shown to the منفّذ — due date, grace, days.
     // A zero with the surrounding facts blanked out is unexplainable, which is
     // the one thing CLAUDE.md says a money figure may never be.
-    const result = await computeLateness(createCalendar(brandNewAgency()), {
+    const result = await computeLateness(createCalendar(brandNewOrg()), {
       task: task({ status: 'CANCELLED', submittedAt: null }),
       graceHours: DEFAULT_GRACE,
       now: FAR_FUTURE,
@@ -368,7 +368,7 @@ describe('مهمة بأعمدة فارغة', () => {
   it('صف مهمة بأعمدة اختيارية فارغة يُترجم دون اختراع قيم', () => {
     // Straight off a freshly created row: no assignee, no submission, and a
     // project that has never set a grace override. Only the last of the three
-    // has a fallback, and it is the agency default — not zero, and not a guess.
+    // has a fallback, and it is the organization default — not zero, and not a guess.
     const now = cairo('2026-03-02T09:00')
     const row: LatenessRow = {
       id: 'task-1',
@@ -429,7 +429,7 @@ describe('حدود تصعيد صفرية', () => {
   it('حدّان بصفر يومًا — الصفر لا يصعّد وأول يوم تأخير يقفز إلى الإدارة', () => {
     // Both thresholds at zero is a valid Settings state ("escalate the moment
     // anything slips"), and it is the one that exposes the `> 0` guard: without
-    // it every on-time task in the agency would satisfy `0 >= 0` and page the
+    // it every on-time task in the organization would satisfy `0 >= 0` and page the
     // admin nightly.
     const immediate: EscalationThresholds = { pmAfterDays: 0, adminAfterDays: 0 }
 
@@ -439,7 +439,7 @@ describe('حدود تصعيد صفرية', () => {
 
   it('مهمة لم تتأخر قط تبقى بلا تصعيد مهما تكرّر الحساب', () => {
     // The nightly job re-runs this for every open task, every night, for the
-    // life of the agency. `NONE → NONE` has to be a fixed point or the first
+    // life of the organization. `NONE → NONE` has to be a fixed point or the first
     // healthy task would eventually acquire a flag from nothing.
     let level = nextEscalationLevel('NONE', 'NONE')
     for (let run = 0; run < 10; run += 1) level = nextEscalationLevel(level, 'NONE')

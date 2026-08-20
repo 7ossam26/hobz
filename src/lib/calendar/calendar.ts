@@ -1,4 +1,4 @@
-import { DomainError } from '@/lib/errors'
+﻿import { DomainError } from '@/lib/errors'
 
 import {
   addCairoDays,
@@ -24,7 +24,7 @@ import type { WorkCalendar } from './work-calendar'
  *  - Ranges are **half-open `[from, to)`**: a task due and submitted at the
  *    same instant is 0 days late, not 1.
  *  - `userId` narrows the calendar by that user's APPROVED leave. Omitting it
- *    means "agency calendar only".
+ *    means "Organization calendar only".
  *
  * ── What "a working day between two instants" means ───────────────────────
  *
@@ -129,7 +129,7 @@ function createExclusions(source: CalendarSource, userId?: string): DayExclusion
       }
 
       holidays = await source.holidays(from, to)
-      // A missing `userId` means "agency calendar only" — no user, no query.
+      // A missing `userId` means "Organization calendar only" — no user, no query.
       leave = userId === undefined ? EMPTY : await source.leaveDays(userId, from, to)
 
       loadedFrom = from

@@ -1,4 +1,4 @@
-import type { TaskStatus } from '@/modules/task/state-machine'
+﻿import type { TaskStatus } from '@/modules/task/state-machine'
 
 /**
  * modules/lateness/blocked.ts — when the worker's clock was suspended.
@@ -10,7 +10,7 @@ import type { TaskStatus } from '@/modules/task/state-machine'
  * ── Why intervals, and not `status === 'BLOCKED'` ─────────────────────────
  *
  * The naive reading — "skip the task while it is currently blocked" — is wrong
- * in both directions, and both are ordinary days at an agency:
+ * in both directions, and both are ordinary days at an organization:
  *
  *  - A task blocked for a week and then **resumed** is no longer BLOCKED, so
  *    the naive rule charges the منفّذ for the week they could not work. The

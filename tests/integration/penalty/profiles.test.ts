@@ -44,7 +44,7 @@ const { getPenaltyProfiles } = await import('@/modules/penalty/queries')
  *
  * ── Why a profile is a table and not three columns on `User` ──────────────
  *
- * Because it is **shared**. An agency assigns "خصم المصممين" to eleven
+ * Because it is **shared**. an organization assigns "خصم المصممين" to eleven
  * designers and edits it once; three columns per user would mean eleven edits
  * and, the first time somebody misses one, two designers on different terms
  * with nobody able to say which was intended.
@@ -314,7 +314,7 @@ describe('الصلاحيات — الصيغ إعدادات وكالة', () => {
   /**
    * Assigning a formula to a person is an edit to that *person*, so it is
    * `user.edit`. A team lead who may change who does what should not need the
-   * key that changes what the agency's rules are — and vice versa.
+   * key that changes what the organization's rules are — and vice versa.
    */
   it('الإسناد يحتاج user.edit لا settings.edit', async () => {
     const editor = await manager(['settings.edit'])

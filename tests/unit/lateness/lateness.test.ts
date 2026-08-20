@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 
 import { createCalendar, type Calendar } from '@/lib/calendar'
 import { SETTINGS_CATALOG } from '@/lib/settings'
@@ -77,7 +77,7 @@ describe('resolveGraceHours', () => {
 
   it('تجاوز المشروع بصفر ساعة يتقدّم أيضًا — الصفر قرار لا غياب', () => {
     // `?? ` not `||`: a project that deliberately allows no grace at all must
-    // not silently inherit the agency default.
+    // not silently inherit the organization default.
     expect(resolveGraceHours(0, DEFAULT_GRACE)).toBe(0)
   })
 })
@@ -286,7 +286,7 @@ describe('الإجازة المعتمدة لا تولّد تأخيرًا', () =>
     await expect(late(calendar, submitted)).resolves.toBe(4)
   })
 
-  it('مهمة بلا منفّذ تُقاس بتقويم الوكالة وحده', async () => {
+  it('مهمة بلا منفّذ تُقاس بتقويم المؤسسة وحده', async () => {
     const calendar = calendarWith({
       leave: [{ userId: WORKER, start: '2026-03-02', end: '2026-03-04' }],
     })

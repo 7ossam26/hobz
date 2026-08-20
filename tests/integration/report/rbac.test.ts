@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+﻿import { describe, expect, it, vi } from 'vitest'
 
 import { ForbiddenError, UnauthenticatedError } from '@/lib/errors'
 
@@ -20,7 +20,7 @@ import { testDb } from '../../setup/reset'
 vi.mock('@/lib/auth/session', () => import('../../helpers/session-mock'))
 
 const {
-  getMonthlyAgencySummary,
+  getMonthlyVirallapSummary,
   getPayoutStatementReport,
   getProjectSummaryReport,
   getWorkerPerformanceReport,
@@ -64,12 +64,12 @@ describe('modules/report — report.view مطلوب لكل التقارير', ()
     clearSessionActor()
   })
 
-  it('يرفض ملخص الوكالة الشهري بلا صلاحية', async () => {
+  it('يرفض ملخص المؤسسة الشهري بلا صلاحية', async () => {
     await seedPermissionCatalog(db)
     const nobody = await createUserWithPermissions(db, [])
     setSessionActor(await actorFor(db, nobody.id))
 
-    await expect(getMonthlyAgencySummary(undefined, NOW)).rejects.toBeInstanceOf(
+    await expect(getMonthlyVirallapSummary(undefined, NOW)).rejects.toBeInstanceOf(
       ForbiddenError,
     )
     clearSessionActor()
@@ -84,7 +84,7 @@ describe('modules/report — report.view مطلوب لكل التقارير', ()
     await expect(getWorkerPerformanceReport()).rejects.toBeInstanceOf(
       UnauthenticatedError,
     )
-    await expect(getMonthlyAgencySummary(undefined, NOW)).rejects.toBeInstanceOf(
+    await expect(getMonthlyVirallapSummary(undefined, NOW)).rejects.toBeInstanceOf(
       UnauthenticatedError,
     )
   })
@@ -255,7 +255,7 @@ describe('modules/report — أداء المنفّذين', () => {
   })
 })
 
-describe('modules/report — ملخص الوكالة الشهري', () => {
+describe('modules/report — ملخص المؤسسة الشهري', () => {
   it('يحسب المهام المكتملة ونسبة الالتزام والمدفوع والخصومات لشهر بعينه', async () => {
     await seedPermissionCatalog(db)
     const reporter = await createUserWithPermissions(db, ['report.view'])
@@ -293,7 +293,7 @@ describe('modules/report — ملخص الوكالة الشهري', () => {
     })
 
     setSessionActor(await actorFor(db, reporter.id))
-    const report = await getMonthlyAgencySummary('2026-03', NOW)
+    const report = await getMonthlyVirallapSummary('2026-03', NOW)
 
     expect(report.completedTasks).toBe(2)
     expect(report.onTimeRate).toBe(50)
@@ -307,7 +307,7 @@ describe('modules/report — ملخص الوكالة الشهري', () => {
     const reporter = await createUserWithPermissions(db, ['report.view'])
     setSessionActor(await actorFor(db, reporter.id))
 
-    const report = await getMonthlyAgencySummary('2020-01', NOW)
+    const report = await getMonthlyVirallapSummary('2020-01', NOW)
 
     expect(report.completedTasks).toBe(0)
     expect(report.onTimeRate).toBe(0)

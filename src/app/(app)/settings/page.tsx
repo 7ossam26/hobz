@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 
 import { ar } from '@/i18n/ar'
 import { requireActor } from '@/lib/auth/session'
@@ -31,7 +31,7 @@ export default async function SettingsPage() {
   const [groups, holidays] = await Promise.all([
     getSettingsByGroup(),
     // Reads are ungated by design (`modules/holiday/actions.ts`): which days
-    // the agency is closed is not confidential. `calendar.manage` gates writes.
+    // the organization is closed is not confidential. `calendar.manage` gates writes.
     listHolidays(prisma),
   ])
 

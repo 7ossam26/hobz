@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 
 import { createCalendar, startOfCairoDay } from '@/lib/calendar'
 
@@ -205,7 +205,7 @@ describe('workingDaysBetween — الإجازات المعتمدة', () => {
     ).resolves.toBe(4)
   })
 
-  it('يستخدم تقويم الوكالة وحده عند عدم تمرير منفّذ', async () => {
+  it('يستخدم تقويم المؤسسة وحده عند عدم تمرير منفّذ', async () => {
     await expect(
       createCalendar(source()).workingDaysBetween(
         cairo(`${SUNDAY}T09:00`),

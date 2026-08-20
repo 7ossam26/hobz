@@ -1,4 +1,4 @@
-// Agency OS schema.
+// Virallap schema.
 //
 // Phase 0 laid the identity/access/audit/settings core (SPEC §4 "Identity &
 // access" + §7). Phase 3 added the first slice of "Work" (SPEC §4): Client,

@@ -183,7 +183,7 @@ describe('تسجيل الوظيفة في المجدول', () => {
 
   it('تأخذ قفلًا مختلفًا عن وظيفة إعادة حساب الجدول', () => {
     // Both run at 03:00. Sharing a key would make one wait for the other, so a
-    // slow whole-table scan would delay every deduction in the agency.
+    // slow whole-table scan would delay every deduction in the organization.
     expect(advisoryLockKey(PENALTY_RECOMPUTE_JOB_NAME)).not.toBe(
       advisoryLockKey(SCHEDULE_RECOMPUTE_JOB_NAME),
     )

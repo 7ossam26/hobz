@@ -1,4 +1,4 @@
-import type { Calendar } from '@/lib/calendar'
+﻿import type { Calendar } from '@/lib/calendar'
 
 /**
  * modules/task/elapsed.ts — SPEC §5.2.
@@ -34,7 +34,7 @@ export function minutesBetween(from: Date, to: Date): number {
 export interface ElapsedInput {
   assignedAt: Date | null
   submittedAt: Date | null
-  /** Narrows the calendar by this user's approved leave. Null = agency calendar. */
+  /** Narrows the calendar by this user's approved leave. Null = Organization calendar. */
   assigneeId: string | null
 }
 

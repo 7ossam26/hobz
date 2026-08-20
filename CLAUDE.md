@@ -1,7 +1,7 @@
-# CLAUDE.md — Agency OS
+# CLAUDE.md — Virallap
 
-You are working on **Agency OS**: an internal, Arabic-only, RTL operations system
-for a digital agency of up to ~100 people. It manages projects, tasks, workers,
+You are working on **Virallap**: an internal, Arabic-only, RTL operations system
+for an organization of up to ~100 people. It manages projects, tasks, workers,
 deadlines, deductions, bonuses, and payouts.
 
 **Read `docs/SPEC.md` before writing any code.** It is the contract. If a request

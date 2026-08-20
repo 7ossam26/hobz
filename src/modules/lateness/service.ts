@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client'
+﻿import type { Prisma } from '@prisma/client'
 
 import type { Calendar } from '@/lib/calendar'
 import { addHours } from '@/lib/calendar/cairo'
@@ -133,7 +133,7 @@ export interface LatenessResult {
  * SPEC §5.3: "Grace: project override → global default."
  *
  * `??`, never `||`. A project configured with **zero** grace has made a
- * decision, and `||` would silently overwrite it with the agency default —
+ * decision, and `||` would silently overwrite it with the organization default —
  * turning "this client accepts no slippage" into "24 hours are fine".
  */
 export function resolveGraceHours(

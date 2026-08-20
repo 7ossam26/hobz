@@ -1,4 +1,4 @@
-import {
+﻿import {
   addCairoDays,
   cairoDateKey,
   createCalendar,
@@ -182,7 +182,7 @@ export async function runPenaltyRecompute(
 export const penaltyRecomputeJob: JobDefinition = {
   name: PENALTY_RECOMPUTE_JOB_NAME,
   schedule: PENALTY_RECOMPUTE_CRON,
-  // A ledger write per late task, over an agency-sized backlog.
+  // A ledger write per late task, over an organization-sized backlog.
   timeoutMs: 10 * 60_000,
   handler: async (ctx) => {
     const outcome = await runPenaltyRecompute(ctx.db, {

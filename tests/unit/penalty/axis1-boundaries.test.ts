@@ -68,7 +68,7 @@ const msBefore = (at: Date): Date => new Date(at.getTime() - 1)
 const msAfter = (at: Date): Date => new Date(at.getTime() + 1)
 
 /**
- * The agency defaults, read from the catalog rather than retyped.
+ * the organization defaults, read from the catalog rather than retyped.
  *
  * Deliberately *not* imported from `tests/helpers/penalty.ts`, which builds the
  * identical object: that helper is DB-facing (it wires `recomputeTaskPenalty`
@@ -84,7 +84,7 @@ const SETTINGS: PenaltySettings = {
   workingDaysPerMonth: SETTINGS_CATALOG['calendar.workingDaysPerMonth'].default,
 }
 
-/** The real `lib/calendar`, on the agency weekend Settings ships with. */
+/** The real `lib/calendar`, on the organization weekend Settings ships with. */
 const calendar: Calendar = createCalendar(
   inMemoryCalendarSource({
     weekendDays: SETTINGS_CATALOG['calendar.weekendDays'].default,
@@ -221,7 +221,7 @@ describe('assessPenaltyForRow — حدّ اليوم الأول من التأخي
 describe('assessPenaltyForRow — حدود مهلة السماح', () => {
   it('مهلة صفر قرار لا غياب: تُحترم ولا تُستبدل بافتراضي الإعدادات', async () => {
     // `??`, never `||`. A project that promised a client no slippage at all
-    // must not silently inherit the agency's default grace — and the two
+    // must not silently inherit the organization's default grace — and the two
     // answers below are a whole day's money apart on the same submission.
     const noGrace = await assess({
       gracePeriodHours: 0,

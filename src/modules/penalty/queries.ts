@@ -40,7 +40,7 @@ import type {
  *    own money — a منفّذ opening their own task sheet must be able to read the
  *    breakdown of a deduction they cannot contest (SPEC §5.4).
  *  - **Penalty profiles** are `settings.view` / `settings.edit`. A profile is
- *    agency configuration — SPEC §7 lists "Penalty defaults" under Settings —
+ *    organization configuration — SPEC §7 lists "Penalty defaults" under Settings —
  *    and inventing a `penaltyProfile.manage` key would be inventing a
  *    permission, which SPEC §6 records as the thing not to do.
  */

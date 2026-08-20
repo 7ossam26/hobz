@@ -1,4 +1,4 @@
-import type { PenaltyBasis, PenaltyMode } from './mode'
+﻿import type { PenaltyBasis, PenaltyMode } from './mode'
 
 /**
  * DTOs crossing out of the module. Money is always a canonical 2dp **string**,
@@ -45,7 +45,7 @@ export interface PenaltyBreakdownDto {
   /** The magnitude, 2dp, never negative. */
   amount: string
 
-  /** Null when the agency default applied (SPEC §5.4 / SPEC R2). */
+  /** Null when the organization default applied (SPEC §5.4 / SPEC R2). */
   profileId: string | null
   profileName: string | null
 
@@ -124,7 +124,7 @@ export interface MoneyRegisterPageDto {
   totalBonuses: string
   /** Penalties already reversed, so the net figure below can be explained. */
   totalReversed: string
-  /** `totalPenalties − totalReversedPenalties`: what the agency actually retained. */
+  /** `totalPenalties − totalReversedPenalties`: what the organization actually retained. */
   netPenalties: string
 }
 

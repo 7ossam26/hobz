@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 
 import { ar } from '@/i18n/ar'
 import { getPasswordPolicy } from '@/lib/auth/policy'
@@ -39,7 +39,7 @@ export default async function UsersPage() {
   // the server reject it anonymously.
   const { minLength: minPasswordLength } = await getPasswordPolicy()
 
-  // Same shape as `/penalties`: the agency's deduction rules are not every
+  // Same shape as `/penalties`: the organization's deduction rules are not every
   // manager's to read. Without `settings.view` the field is simply not offered,
   // and the Settings default applies — which is what the field's hint says.
   const penaltyProfiles: PenaltyProfileDto[] | null = can(actor, 'settings.view')

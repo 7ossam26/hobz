@@ -1,4 +1,4 @@
-import { recordAudit } from '@/lib/audit'
+﻿import { recordAudit } from '@/lib/audit'
 import {
   dateColumnValue,
   expandHolidayRows,
@@ -18,7 +18,7 @@ import type {
 import type { HolidayDto, HolidayImportIssue, HolidayImportResult } from './types'
 
 /**
- * modules/holiday/service.ts — the agency's days off (SPEC §4 Calendar).
+ * modules/holiday/service.ts — the organization's days off (SPEC §4 Calendar).
  *
  * Pure functions, dependency-injected Prisma client, no `next/*` import
  * (CLAUDE.md architecture rules). Every mutation writes an `AuditLog` row:

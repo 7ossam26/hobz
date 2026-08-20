@@ -1,4 +1,4 @@
-import type { NotificationType, Prisma } from '@prisma/client'
+﻿import type { NotificationType, Prisma } from '@prisma/client'
 
 import type { Db } from '@/lib/db'
 import { DomainError, NotFoundError } from '@/lib/errors'
@@ -74,7 +74,7 @@ const NOTIFICATION_SELECT = {
 
 /**
  * A missing row means "enabled" — the same reasoning `lib/settings` uses for
- * the agency-wide catalog (a fresh user needs no seed rows to have every
+ * the organization-wide catalog (a fresh user needs no seed rows to have every
  * non-mandatory type on). Mandatory types short-circuit to `true` without a
  * query: no override can ever have been written for them (`setPreference`
  * refuses the write), so asking the database would be answering a question

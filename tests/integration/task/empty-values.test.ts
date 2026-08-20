@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 
 import { DomainError } from '@/lib/errors'
 import { scopeTasks } from '@/lib/rbac'
@@ -41,7 +41,7 @@ const db = testDb()
  *
  * The theme is that "nothing yet" must read as a real, calm answer everywhere —
  * an empty list, a zero, a `null` — and never as a crash or, worse, as a
- * plausible wrong number. A brand-new agency's first hour in the product is
+ * plausible wrong number. A brand-new organization's first hour in the product is
  * entirely made of these cases.
  */
 
@@ -130,7 +130,7 @@ describe('قيم فارغة — مهمة بلا منفّذ', () => {
     ).toBe(0)
   })
 
-  it('يستعلم بتقويم الوكالة وحده لمهمة بلا منفّذ', async () => {
+  it('يستعلم بتقويم المؤسسة وحده لمهمة بلا منفّذ', async () => {
     const { project, actor } = await fixture()
     const task = await createTaskRow(db, {
       projectId: project.id,

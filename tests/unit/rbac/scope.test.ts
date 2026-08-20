@@ -21,7 +21,7 @@ import { actingAs, nobody, omnipotentMember, superAdmin } from '../../helpers/au
  * the returned Prisma fragment, because the shape is the contract Phase 3 and
  * Phase 4 will spread into their `where` clauses — and a fragment that quietly
  * became `{}` is the failure mode that matters: it would not throw, it would
- * not look wrong in a diff, and it would return every project in the agency to
+ * not look wrong in a diff, and it would return every project in the organization to
  * a freelancer.
  */
 

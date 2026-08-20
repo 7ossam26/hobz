@@ -50,7 +50,7 @@ export default async function PenaltiesPage({
 
   // SPEC R2's named formulas, loaded here so the sheet is not a second round
   // trip after first paint. Null for a caller without `settings.view` — the
-  // agency's rules are not every manager's to read, and `getPenaltyProfiles`
+  // organization's rules are not every manager's to read, and `getPenaltyProfiles`
   // enforces that server-side regardless of what this page renders.
   const profiles = can(actor, 'settings.view') ? await getPenaltyProfiles() : null
 
@@ -108,7 +108,7 @@ export default async function PenaltiesPage({
           </CardHeader>
           <CardContent className="flex flex-col gap-1">
             <MoneyText value={register.netPenalties} withCurrency className="text-2xl" />
-            {/* SPEC R4: deductions are agency income. No margin, no ratio. */}
+            {/* SPEC R4: deductions are organization income. No margin, no ratio. */}
             <p className="text-muted-foreground text-xs">
               {ar.reports.deductionsAsIncome}
             </p>

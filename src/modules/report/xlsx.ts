@@ -4,7 +4,7 @@ import { buildWorkbook, INTEGER_FORMAT, MONEY_FORMAT, PERCENT_FORMAT } from '@/l
 import type { DeductionsReportDto } from '@/modules/penalty/register'
 
 import type {
-  MonthlyAgencySummaryDto,
+  MonthlyVirallapSummaryDto,
   PayoutStatementReportDto,
   ProjectSummaryReportDto,
   WorkerPerformanceReportDto,
@@ -138,10 +138,10 @@ export function buildWorkerPerformanceWorkbook(
  * the count, the two percentages and the two money figures each keep their
  * own Excel number format instead of falling back to plain digits.
  */
-export function buildMonthlyAgencySummaryWorkbook(
-  report: MonthlyAgencySummaryDto,
+export function buildMonthlyVirallapSummaryWorkbook(
+  report: MonthlyVirallapSummaryDto,
 ): Buffer {
-  const a = ar.reports.agencySummary
+  const a = ar.reports.virallapSummary
   const rows = [
     [
       `${formatDate(report.from)} — ${formatDate(report.to)}`,

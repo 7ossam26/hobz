@@ -3,7 +3,7 @@ import { backupSettingsFromEnv, runBackup } from '../src/modules/backup/service'
 /**
  * scripts/backup.ts — take a dump now, from a shell.
  *
- *   BACKUP_DIR=/var/backups/agency-os pnpm db:backup
+ *   BACKUP_DIR=/var/backups/virallap pnpm db:backup
  *
  * The same code the nightly job runs (`modules/backup/job.ts`), reachable
  * without waiting for 02:00 — which is what an operator wants immediately

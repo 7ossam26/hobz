@@ -169,7 +169,7 @@ test('تدفّق ٤: تمديد معتمد قبل الموعد فلا يُحتس
 
   // ── Nothing reached the منفّذ's own statement either ─────────────────────
   // Scoped to *this* worker deliberately: earlier flows leave real deductions
-  // in the same database, so an agency-wide "no penalties anywhere" assertion
+  // in the same database, so an organization-wide "no penalties anywhere" assertion
   // would be asserting that the other flows had not run.
   await signIn(page, WORKER.username, WORKER.newPassword)
   await expect(page).toHaveURL(/\/dashboard/)

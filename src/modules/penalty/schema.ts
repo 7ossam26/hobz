@@ -76,7 +76,7 @@ export const penaltyProfileSchema = z.object({
   name: z.string().trim().min(2).max(60),
   mode: z.enum(PENALTY_MODES),
   value: profileValue,
-  /** Null means "use the agency's grace" — see `profile.ts`'s resolution chain. */
+  /** Null means "use the organization's grace" — see `profile.ts`'s resolution chain. */
   graceHours: z.coerce.number().int().min(0).max(8760).nullable().default(null),
 })
 export type PenaltyProfileInputSchema = z.infer<typeof penaltyProfileSchema>
@@ -110,7 +110,7 @@ export const listMoneyRegisterSchema = z.object({
 })
 export type ListMoneyRegisterInput = z.infer<typeof listMoneyRegisterSchema>
 
-/** SPEC R4: total deductions per period, reported as agency income. */
+/** SPEC R4: total deductions per period, reported as organization income. */
 export const deductionsReportSchema = z.object({
   from: z.coerce.date(),
   to: z.coerce.date(),

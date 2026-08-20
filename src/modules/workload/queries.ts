@@ -1,4 +1,4 @@
-import { requireActor } from '@/lib/auth/session'
+﻿import { requireActor } from '@/lib/auth/session'
 import { prisma } from '@/lib/db'
 import type { Db } from '@/lib/db'
 import { assertCan } from '@/lib/rbac'
@@ -58,7 +58,7 @@ export interface WorkerWorkloadDto extends UtilisationResult {
  * Every active worker's utilisation — the manager dashboard's heatmap, and the
  * over-capacity warning's data source on the assignment screen.
  *
- * Not paginated: SPEC §2 caps an agency at ~100 users, and a heatmap that only
+ * Not paginated: SPEC §2 caps an organization at ~100 users, and a heatmap that only
  * shows page one of the workforce would misrepresent who is actually free.
  */
 export async function getWorkloadSnapshot(): Promise<WorkerWorkloadDto[]> {

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * modules/lateness/escalation.ts — the Settings-driven escalation ladder.
  *
  * The phase brief: "N days overdue → notify PM; M days → notify admin + force
@@ -35,7 +35,7 @@ export interface EscalationThresholds {
  * `lateWorkingDays > 0` is required on top of the threshold comparison.
  *
  * Without it a threshold of 0 — a legitimate Settings value meaning "escalate
- * as soon as it slips" — would escalate every task in the agency, because
+ * as soon as it slips" — would escalate every task in the organization, because
  * every on-time task also satisfies `0 >= 0`. A task that is not late has
  * nothing to escalate.
  */

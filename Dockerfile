@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # ─────────────────────────────────────────────────────────────────────────────
-# Agency OS — production image (Dokploy-ready)
+# Virallap — production image (Dokploy-ready)
 #
 # Multi-stage, standalone output. The final image carries the Next.js server,
 # the traced node_modules, the generated Prisma client, and the migration SQL —

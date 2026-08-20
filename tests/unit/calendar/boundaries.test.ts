@@ -86,7 +86,7 @@ describe('parseTimeOfDay — أطراف الصيغة', () => {
   it('يرفض ما يشبه الصيغة دون أن يكونها', () => {
     // The pattern is anchored, so nothing may hide before or after the four
     // digits. A silently-accepted `09:00:00` would parse as 09:00 and quietly
-    // shorten or lengthen every workday in the agency.
+    // shorten or lengthen every workday in the organization.
     for (const value of ['', ' 09:00', '09:00 ', '09:00:00', '0900', '-1:00']) {
       expect(() => parseTimeOfDay(value)).toThrow(DomainError)
     }
@@ -373,7 +373,7 @@ describe('workingMinutesBetween — أول دقيقة وآخر دقيقة', () =
   it('ما دون الدقيقة الكاملة يُحتسب صفرًا', async () => {
     // Floored, not rounded: 59.999 seconds of work is not a minute, and
     // rounding up would let a fraction of a second inflate elapsed working
-    // time on every task in the agency.
+    // time on every task in the organization.
     const start = cairo(`${SUNDAY}T09:00`)
     await expect(
       plain().workingMinutesBetween(start, plusMs(start, 59_999)),
@@ -520,7 +520,7 @@ describe('escalationLevelFor — حدود متطابقة وصفرية', () => {
   it('حدّان بصفر يقفزان إلى الإدارة عند أول يوم تأخير لا قبله', () => {
     // Both thresholds at their minimum: the `lateWorkingDays > 0` guard is the
     // only thing standing between "escalate as soon as it slips" and
-    // escalating every on-time task in the agency to the admin.
+    // escalating every on-time task in the organization to the admin.
     const immediate: EscalationThresholds = { pmAfterDays: 0, adminAfterDays: 0 }
 
     expect(escalationLevelFor(0, immediate)).toBe('NONE')

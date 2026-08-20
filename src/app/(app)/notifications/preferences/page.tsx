@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: ar.notifications.preferences.title }
  *
  * Unlisted in `lib/navigation.ts`'s `NAV_ITEMS`/`ROUTE_PERMISSIONS`, matching
  * `/change-password`: any signed-in user may reach it, because it is their
- * own preference, not agency configuration (that lives in Settings, gated by
+ * own preference, not organization configuration (that lives in Settings, gated by
  * `settings.edit`, and is a different page entirely — SPEC §8's WhatsApp
  * templates and escalation thresholds, not this).
  */

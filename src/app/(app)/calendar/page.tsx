@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+﻿import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -191,7 +191,7 @@ export default async function GlobalCalendarPage({
                         // prefetches every link in the viewport. Without this
                         // the calendar fires one full detail-page render per
                         // event on arrival — the page never reaches network
-                        // idle, and the cost grows with the agency's workload.
+                        // idle, and the cost grows with the organization's workload.
                         prefetch={false}
                         data-hue={eventHue(event)}
                         className="bg-hue-surface text-hue-text flex items-center gap-1 truncate rounded px-1.5 py-0.5 text-[0.6875rem]"

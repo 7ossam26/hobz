@@ -17,7 +17,7 @@ import type { SavedView, TableState } from './types'
  * silently rather than thrown at the user.
  */
 
-const KEY_PREFIX = 'agency.views.'
+const KEY_PREFIX = 'virallap.views.'
 
 /** Enough to be useful, few enough that the picker stays a list and not a menu. */
 export const MAX_SAVED_VIEWS = 12

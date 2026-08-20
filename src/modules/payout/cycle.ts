@@ -14,7 +14,7 @@ import { cycleEndAfter } from './period'
  */
 
 /**
- * One name for the whole table, because the fact being protected is agency-wide:
+ * One name for the whole table, because the fact being protected is organization-wide:
  * there is at most one OPEN cycle, ever (`payout_cycles_single_open`).
  */
 const OPEN_CYCLE_LOCK = 'payout.ensureOpenCycle'
@@ -111,7 +111,7 @@ export async function ensureOpenCycle(
    * A blocking lock, not `try`: the loser must not give up, it must wait and
    * then use the winner's cycle. The wait is one INSERT long. The key is the
    * *fact* being established — there is at most one open cycle in the whole
-   * agency — so one name for the whole table is right.
+   * organization — so one name for the whole table is right.
    */
   await advisoryXactLock(db, OPEN_CYCLE_LOCK)
 

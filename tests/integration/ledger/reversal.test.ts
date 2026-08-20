@@ -35,7 +35,7 @@ const CYCLE_DAY = SETTINGS_CATALOG['payout.cycleDay'].default
  *  - it cancels the original **exactly**, for every type money moves through,
  *  - it lands in the **open** cycle, so a statement somebody already read never
  *    changes underneath them,
- *  - and it is refused once the money has actually left the agency.
+ *  - and it is refused once the money has actually left the organization.
  *
  * Every instant is an explicit Cairo wall-clock reading (docs/TESTING.md §5).
  * That is not decoration here: `appendEntry` stamps an entry with whichever
@@ -520,7 +520,7 @@ describe('modules/ledger — ما صُرف فعلًا لا يُعكس', () => {
   })
 
   it('يسمح بالعكس حين يكون المصروف مستحق منفّذ آخر في نفس الدورة', async () => {
-    // The guard is per منفّذ, not per cycle. In an agency of a hundred people
+    // The guard is per منفّذ, not per cycle. In an organization of a hundred people
     // the first payment of the month would otherwise freeze every other
     // worker's corrections until the last one was paid.
     const { manager, worker } = await scenario()

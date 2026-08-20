@@ -47,13 +47,13 @@ export interface WorkerPerformanceReportDto {
   rows: WorkerPerformanceReportRow[]
 }
 
-export interface MonthlyAgencySummaryDto {
+export interface MonthlyVirallapSummaryDto {
   from: Date
   to: Date
   completedTasks: number
   /** 0–100, 1dp. */
   onTimeRate: number
   totalPaid: string
-  /** SPEC §1/R4: deductions reported as agency income, nowhere else. */
+  /** SPEC §1/R4: deductions reported as organization income, nowhere else. */
   totalDeductions: string
 }

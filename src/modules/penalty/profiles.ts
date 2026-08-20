@@ -1,4 +1,4 @@
-import { recordAudit, type AuditActorRef } from '@/lib/audit'
+﻿import { recordAudit, type AuditActorRef } from '@/lib/audit'
 import type { Db } from '@/lib/db'
 import { ConflictError, NotFoundError } from '@/lib/errors'
 import { toStorageString } from '@/lib/money'
@@ -13,7 +13,7 @@ import type { PenaltyProfileDto } from './types'
  *   > **R2 — per-user formula.** Implemented as a `PenaltyProfile`
  *   > (mode + value + grace), defaulted globally and overridable per user.
  *
- * A profile is **shared**: an agency assigns "خصم المصممين" to eleven people
+ * A profile is **shared**: an organization assigns "خصم المصممين" to eleven people
  * and edits it once. That is the whole reason it is a table rather than three
  * more columns on `User`.
  *
@@ -244,7 +244,7 @@ export async function deletePenaltyProfile(
 
 export interface AssignPenaltyProfileArgs {
   userId: string
-  /** Null returns the منفّذ to the agency default. */
+  /** Null returns the منفّذ to the organization default. */
   profileId: string | null
   actor: AuditActorRef
   ip?: string

@@ -61,7 +61,7 @@ import { testDb } from '../../setup/reset'
  *   + 24h grace   Mon 2026-03-02 17:00   ← lateness starts counting here
  *   measured at   Thu 2026-03-05 12:00   → Tue, Wed, Thu = 3 working days
  *
- * At the agency default (`PCT_TASK_VALUE_PER_DAY`, 5%) on a task worth 1000.00
+ * At the organization default (`PCT_TASK_VALUE_PER_DAY`, 5%) on a task worth 1000.00
  * that is 150.00, and at Sun 2026-03-08 it is four days and 200.00.
  */
 
@@ -90,8 +90,8 @@ const SECOND_DELIVERY = cairo('2026-03-19T10:00')
 /**
  * The scenario's amount, derived rather than typed in (docs/TESTING.md §5: read
  * business numbers from Settings in the test too). The task value is a test
- * *input* and stays a literal; the rate is the agency's `penalty.defaultValue`
- * and is not, so raising the agency percentage moves these expectations with it
+ * *input* and stays a literal; the rate is the organization's `penalty.defaultValue`
+ * and is not, so raising the organization percentage moves these expectations with it
  * instead of silently breaking the suite's meaning. Shaped for the shipped
  * default mode, `PCT_TASK_VALUE_PER_DAY`.
  */
@@ -159,7 +159,7 @@ function writtenSince(rows: readonly PenaltyRow[], boundary: Date): PenaltyRow[]
 }
 
 /**
- * Every ledger row in the agency, ordered. "Identical ledger" is the literal
+ * Every ledger row in the organization, ordered. "Identical ledger" is the literal
  * claim axis 5 makes, so the comparison is the whole table and not a count.
  */
 async function ledgerSnapshot() {
@@ -451,7 +451,7 @@ describe('إشعار واحد لكل خصم واحد', () => {
 describe('تغيير الإعدادات ثم التراجع عنه', () => {
   /**
    * Idempotency is over the *amount*, not over the run. An operator who raises
-   * the agency percentage and changes their mind an hour later must leave three
+   * the organization percentage and changes their mind an hour later must leave three
    * entries on the statement — one per real figure — and not six, and not one
    * per nightly sweep in between.
    */
@@ -489,7 +489,7 @@ describe('تغيير الإعدادات ثم التراجع عنه', () => {
   })
 
   it('صيغة مختلفة بالمبلغ نفسه لا تكتب شيئًا', async () => {
-    // A fixed daily charge that reproduces the agency percentage exactly:
+    // A fixed daily charge that reproduces the organization percentage exactly:
     // 1000.00 × 5% per day is the same 150.00 over three days.
     const equivalentPerDay = Number(
       toStorageString(pct(toMoney(TASK_VALUE), PENALTY_DEFAULTS.defaultValue)),
@@ -514,7 +514,7 @@ describe('الوظيفة الليلية على وكالة مختلطة', () => {
   const LATE_TASKS = 3
 
   /** Three late, two on time, one with nobody to charge, one with no basis. */
-  async function mixedAgency() {
+  async function mixedOrg() {
     const owner = await createUser(db)
     const project = await createProject(db, { ownerId: owner.id })
     const late: string[] = []
@@ -571,7 +571,7 @@ describe('الوظيفة الليلية على وكالة مختلطة', () => {
   }
 
   it('الليلة الأولى: عدّادات دقيقة بين متأخر وملتزم ومتخطّى', async () => {
-    const { late } = await mixedAgency()
+    const { late } = await mixedOrg()
 
     const first = await runPenaltyRecompute(db, { now: NIGHT })
 
@@ -594,7 +594,7 @@ describe('الوظيفة الليلية على وكالة مختلطة', () => {
   })
 
   it('عشر ليالٍ متطابقة: السجل نفسه والعدّادات نفسها', async () => {
-    const { late } = await mixedAgency()
+    const { late } = await mixedOrg()
     await runPenaltyRecompute(db, { now: NIGHT })
     const afterFirst = await ledgerSnapshot()
 
@@ -626,7 +626,7 @@ describe('الوظيفة الليلية على وكالة مختلطة', () => {
   })
 
   it('عشر ليالٍ لا تُصدر إلا إشعارًا واحدًا لكل منفّذ متأخر', async () => {
-    await mixedAgency()
+    await mixedOrg()
     const events = recordingEvents()
 
     for (let i = 0; i < 10; i += 1) {
