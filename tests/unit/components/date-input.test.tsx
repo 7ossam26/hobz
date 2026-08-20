@@ -3,7 +3,12 @@ import * as React from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { Sheet } from '@/components/shared/sheet'
-import { DateInput } from '@/components/ui/date-input'
+import {
+  DateInput,
+  DateTimeInput,
+  formatDateInputDisplay,
+  formatDateTimeInputDisplay,
+} from '@/components/ui/date-input'
 import { fireEvent, render, screen } from '@tests/helpers/render'
 
 /**
@@ -27,7 +32,7 @@ function withShowPicker(): ReturnType<typeof vi.fn> {
 }
 
 describe('DateInput', () => {
-  it('هو حقل تاريخ أصلي — لم يُستبدل بمنتقٍ مخصّص', () => {
+  it('يحتفظ بحقل التاريخ الأصلي كصاحب القيمة والمنتقي', () => {
     render(<DateInput aria-label="تاريخ" />)
     expect(screen.getByLabelText('تاريخ')).toHaveAttribute('type', 'date')
   })
@@ -42,9 +47,10 @@ describe('DateInput', () => {
   it('لا يسمح للحقل بالانكماش تحت عرضه الأدنى', () => {
     // `Input` carries `min-w-0`, which let a two-column sheet squeeze the field
     // until the indicator was clipped out of the box entirely.
-    const input = render(<DateInput aria-label="تاريخ" />).container.querySelector('input')
-    expect(input?.className).toContain('min-w-[9.5rem]')
-    expect(input?.className).not.toContain('min-w-0')
+    const wrapper = render(<DateInput aria-label="تاريخ" />).container.querySelector(
+      '[data-slot="picker-input"]',
+    )
+    expect(wrapper?.className).toContain('min-w-[9.5rem]')
   })
 
   it('النقر في أي موضع يفتح المنتقي', () => {
@@ -121,6 +127,44 @@ describe('DateInput', () => {
     fireEvent.change(input, { target: { value: '2026-09-01' } })
     expect(onChange).toHaveBeenCalledTimes(1)
   })
+
+  it('يعرض dd/mm/yyyy مع إبقاء قيمة ISO في الحقل', () => {
+    render(<DateInput aria-label="تاريخ" value="2026-08-19" readOnly />)
+
+    expect(screen.getByText('19/08/2026')).toBeInTheDocument()
+    expect(screen.getByLabelText('تاريخ')).toHaveValue('2026-08-19')
+  })
+
+  it('يعرض placeholder ثابتًا حين تكون القيمة فارغة', () => {
+    render(<DateInput aria-label="تاريخ" value="" readOnly />)
+    expect(screen.getByText('dd/mm/yyyy')).toBeInTheDocument()
+  })
+
+  it('يحدّث العرض في الحقل غير المضبوط مثل مرشحات التدقيق', () => {
+    render(<DateInput aria-label="تاريخ" defaultValue="2026-08-19" />)
+
+    fireEvent.change(screen.getByLabelText('تاريخ'), {
+      target: { value: '2026-09-01' },
+    })
+    expect(screen.getByText('01/09/2026')).toBeInTheDocument()
+  })
+})
+
+describe('DateTimeInput', () => {
+  it('يعرض التاريخ والوقت بصيغة ثابتة ويحفظ قيمة datetime-local', () => {
+    render(<DateTimeInput aria-label="موعد" value="2026-08-19T15:30" readOnly />)
+
+    expect(screen.getByText('19/08/2026, 15:30')).toBeInTheDocument()
+    expect(screen.getByLabelText('موعد')).toHaveAttribute('type', 'datetime-local')
+    expect(screen.getByLabelText('موعد')).toHaveValue('2026-08-19T15:30')
+  })
+})
+
+describe('تنسيق حقول التاريخ', () => {
+  it('لا يخمّن قيمة غير صالحة', () => {
+    expect(formatDateInputDisplay('2026-8-1')).toBe('')
+    expect(formatDateTimeInputDisplay('not-a-date')).toBe('')
+  })
 })
 
 describe('حقول التاريخ في المنتج', () => {
@@ -131,7 +175,8 @@ describe('حقول التاريخ في المنتج', () => {
     const { readFileSync, readdirSync, statSync } = await import('node:fs')
     const { join } = await import('node:path')
 
-    const toPosix = (value: string): string => value.split(String.fromCharCode(92)).join('/')
+    const toPosix = (value: string): string =>
+      value.split(String.fromCharCode(92)).join('/')
     const offenders: string[] = []
     const walk = (dir: string): void => {
       for (const entry of readdirSync(dir)) {
@@ -143,6 +188,32 @@ describe('حقول التاريخ في المنتج', () => {
         if (!full.endsWith('.tsx')) continue
         if (toPosix(full).endsWith('components/ui/date-input.tsx')) continue
         if (/type="date"/.test(readFileSync(full, 'utf8'))) {
+          offenders.push(toPosix(full))
+        }
+      }
+    }
+    walk(join(process.cwd(), 'src'))
+
+    expect(offenders).toEqual([])
+  })
+
+  it('لا يوجد <input type="datetime-local"> خام خارج DateTimeInput', async () => {
+    const { readFileSync, readdirSync, statSync } = await import('node:fs')
+    const { join } = await import('node:path')
+
+    const toPosix = (value: string): string =>
+      value.split(String.fromCharCode(92)).join('/')
+    const offenders: string[] = []
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir)) {
+        const full = join(dir, entry)
+        if (statSync(full).isDirectory()) {
+          walk(full)
+          continue
+        }
+        if (!full.endsWith('.tsx')) continue
+        if (toPosix(full).endsWith('components/ui/date-input.tsx')) continue
+        if (/type="datetime-local"/.test(readFileSync(full, 'utf8'))) {
           offenders.push(toPosix(full))
         }
       }

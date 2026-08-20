@@ -87,7 +87,7 @@ export async function authenticate(
   }
 
   const user = await db.user.findUnique({
-    where: { username },
+    where: { usernameCanonical: username },
     select: {
       id: true,
       username: true,

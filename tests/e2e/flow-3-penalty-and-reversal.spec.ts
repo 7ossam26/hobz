@@ -42,8 +42,8 @@ test.describe.configure({ mode: 'serial' })
 
 const ROLE = {
   nameAr: 'منفّذ التجربة الثالثة',
-  nameEn: 'FLOW3_WORKER',
-  permissions: ['task.view.assigned', 'task.edit', 'ledger.view.own'],
+  nameEn: 'flow3_worker',
+  permissions: ['task.view.assigned', 'task.work.assigned', 'ledger.view.own'],
 } as const
 
 const WORKER = {

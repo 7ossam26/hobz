@@ -1,4 +1,5 @@
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
+import { resolve } from 'node:path'
 
 import { assertTestDatabase } from './db-guard'
 
@@ -12,10 +13,14 @@ import { assertTestDatabase } from './db-guard'
 export async function setup(): Promise<void> {
   const dbName = assertTestDatabase()
 
-  execSync('pnpm prisma migrate deploy', {
-    stdio: 'inherit',
-    env: { ...process.env, NODE_ENV: 'test' },
-  })
+  execFileSync(
+    process.execPath,
+    [resolve('node_modules/prisma/build/index.js'), 'migrate', 'deploy'],
+    {
+      stdio: 'inherit',
+      env: { ...process.env, NODE_ENV: 'test' },
+    },
+  )
 
   console.info(`[tests] migrations applied to "${dbName}"`)
 }

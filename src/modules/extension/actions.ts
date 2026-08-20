@@ -98,7 +98,7 @@ export const decideExtensionAction = requirePermission(
     }
 
     revalidatePath('/tasks')
-    revalidatePath(`/tasks/${request.taskId}`)
+    revalidatePath('/tasks')
     return request
   },
 )

@@ -1,7 +1,12 @@
 import { z } from 'zod'
 
 import { ar } from '@/i18n/ar'
-import { isPermission, type Permission } from '@/lib/rbac'
+import {
+  isPermission,
+  isSafeDefaultRolePermission,
+  SUPER_ADMIN_ROLE,
+  type Permission,
+} from '@/lib/rbac'
 
 /**
  * One Zod schema per input, shared between the server action and the form
@@ -28,8 +33,13 @@ const permissionKeySchema = z.custom<Permission>(
 const roleNameEnSchema = z
   .string()
   .trim()
-  .toUpperCase()
-  .regex(/^[A-Z][A-Z0-9_]{1,39}$/, ar.validation.roleNameEnFormat)
+  .transform((value) =>
+    value.toUpperCase() === SUPER_ADMIN_ROLE ? SUPER_ADMIN_ROLE : value.toLowerCase(),
+  )
+  .refine(
+    (value) => value === SUPER_ADMIN_ROLE || /^[a-z][a-z0-9_]{1,39}$/.test(value),
+    ar.validation.roleNameEnFormat,
+  )
 
 const roleNameArSchema = z
   .string()
@@ -50,24 +60,42 @@ const descriptionSchema = z
   .transform((v) => (v === '' ? undefined : v))
   .optional()
 
-export const createRoleSchema = z.object({
+const roleConfigurationShape = {
   nameAr: roleNameArSchema,
-  nameEn: roleNameEnSchema,
   description: descriptionSchema,
   permissions: z.array(permissionKeySchema).default([]),
-})
+  isDefault: z.boolean().default(false),
+}
+
+function safeDefaultRole(
+  value: { isDefault: boolean; permissions: Permission[] },
+  ctx: z.RefinementCtx,
+): void {
+  if (!value.isDefault) return
+  if (value.permissions.some((permission) => !isSafeDefaultRolePermission(permission))) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['permissions'],
+      message: ar.roles.defaultRoleUnsafe,
+    })
+  }
+}
+
+export const createRoleSchema = z
+  .object({ nameEn: roleNameEnSchema, ...roleConfigurationShape })
+  .superRefine(safeDefaultRole)
 
 export type CreateRoleInput = z.infer<typeof createRoleSchema>
 
-export const updateRoleSchema = z.object({
-  id: z.string().min(1),
-  nameAr: roleNameArSchema,
-  description: descriptionSchema,
-  permissions: z.array(permissionKeySchema).default([]),
-  // `nameEn` is deliberately absent. It is the identifier that audit history
-  // and the SUPER_ADMIN check are written against; renaming it would silently
-  // orphan both. Delete and recreate if it is genuinely wrong.
-})
+export const updateRoleSchema = z
+  .object({
+    id: z.string().min(1),
+    ...roleConfigurationShape,
+    // `nameEn` is deliberately absent. It is the identifier that audit history
+    // and the SUPER_ADMIN check are written against; renaming it would silently
+    // orphan both. Delete and recreate if it is genuinely wrong.
+  })
+  .superRefine(safeDefaultRole)
 
 export type UpdateRoleInput = z.infer<typeof updateRoleSchema>
 

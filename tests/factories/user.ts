@@ -26,6 +26,7 @@ export type PayType = 'SALARY' | 'PER_TASK' | 'HYBRID'
 export interface BuiltUser {
   id: string
   username: string
+  usernameCanonical: string
   passwordHash: string
   fullName: string
   phone: string | null
@@ -49,6 +50,7 @@ export function buildUser(overrides: Partial<BuiltUser> = {}): BuiltUser {
   return {
     id: `user_${n}`,
     username: `user${n}`,
+    usernameCanonical: `user${n}`,
     // Never a real hash: unit tests must not pay bcrypt's cost-12 price.
     passwordHash: `hashed:password${n}`,
     fullName: name,

@@ -29,6 +29,7 @@ export const PERMISSIONS = [
 
   'task.view.all',
   'task.view.assigned',
+  'task.work.assigned',
   'task.create',
   'task.edit',
   'task.assign',
@@ -89,6 +90,23 @@ export function permissionDomain(permission: Permission): string {
  * short-circuits on it rather than expanding it into a stored permission list.
  */
 export const SUPER_ADMIN_ROLE = 'SUPER_ADMIN'
+
+/** The ceiling for a role automatically assigned to a newly created account. */
+export const DEFAULT_ROLE_PERMISSIONS = [
+  'project.view.assigned',
+  'task.view.assigned',
+  'task.work.assigned',
+  'task.comment',
+  'ledger.view.own',
+] as const satisfies readonly Permission[]
+
+const DEFAULT_ROLE_PERMISSION_SET: ReadonlySet<Permission> = new Set(
+  DEFAULT_ROLE_PERMISSIONS,
+)
+
+export function isSafeDefaultRolePermission(permission: Permission): boolean {
+  return DEFAULT_ROLE_PERMISSION_SET.has(permission)
+}
 
 /** Catalog rows in the shape the seed upserts. */
 export function permissionSeedRows(): Array<{

@@ -3341,6 +3341,9 @@
   "permissions.task.view.assigned": {
     "status": "reviewed"
   },
+  "permissions.task.work.assigned": {
+    "status": "reviewed"
+  },
   "permissions.user.create": {
     "status": "reviewed"
   },
@@ -3885,6 +3888,15 @@
     "status": "reviewed"
   },
   "roles.description": {
+    "status": "reviewed"
+  },
+  "roles.defaultRole": {
+    "status": "reviewed"
+  },
+  "roles.defaultRoleHint": {
+    "status": "reviewed"
+  },
+  "roles.defaultRoleUnsafe": {
     "status": "reviewed"
   },
   "roles.edit": {

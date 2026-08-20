@@ -86,11 +86,12 @@ docs/{SPEC.md,PHASES.md,TESTING.md}
 ### Identity & access
 
 ```
-User        id, username(unique), passwordHash, fullName, phone(+20…),
+User        id, username(unique display spelling), usernameCanonical(unique),
+            passwordHash, fullName, phone(+20…),
             isWorker, isActive, mustChangePassword, timezone,
             payType(SALARY|PER_TASK|HYBRID), monthlySalary?, defaultTaskRate?,
             weeklyCapacityHours, penaltyProfileId?, createdAt, deletedAt
-Role        id, nameAr, nameEn, isSystem, description
+Role        id, nameAr, nameEn, isSystem, isDefault, description
 Permission  key (e.g. 'task.assign')   ← seeded from code catalog, not user-editable
 RolePermission  roleId, permissionKey
 UserRole        userId, roleId          ← many-to-many
@@ -105,6 +106,18 @@ LoginThrottle   key, failures, firstFailureAt, lastFailureAt, lockedUntil?
 - **`username` is immutable.** It is the login handle, the throttle key and the
   name in every audit row. Renaming it would lock the person out and orphan
   their history. Correcting one means creating a new account.
+- **Username identity is case-insensitive while its display spelling is
+  preserved.** `usernameCanonical = lower(trim(username))` is the unique login,
+  import-resolution, mention-resolution and throttle key. `Ahmed` and `ahmed`
+  can never be two accounts, but the UI keeps the spelling entered at creation.
+- **Ordinary role identifiers are `lower_snake_case`; `SUPER_ADMIN` is the one
+  uppercase reserved identifier.** The identifier remains immutable after
+  creation. Existing ordinary identifiers are normalized by migration.
+- **Exactly one live role may be the new-user default.** Manual and imported
+  user creation apply it only when no roles were explicitly supplied. A default
+  role is restricted to `project.view.assigned`, `task.view.assigned`,
+  `task.work.assigned`, `task.comment`, and `ledger.view.own`; changing the
+  configured default does not backfill or rewrite existing memberships.
 - **`mustChangePassword` is set `true` on admin-create and admin-reset**, and
   cleared only by the user changing their own password. It is what stops an
   admin from holding a working credential for someone else's account past the
@@ -606,7 +619,7 @@ user.view user.create user.edit user.deactivate user.resetPassword user.imperson
 role.view role.manage
 client.view client.manage
 project.view.all project.view.assigned project.create project.edit project.delete
-task.view.all task.view.assigned task.create task.edit task.assign task.approve
+task.view.all task.view.assigned task.work.assigned task.create task.edit task.assign task.approve
 task.extend task.cancel task.comment
 calendar.manage leave.view leave.manage
 ledger.view.all ledger.view.own
@@ -623,6 +636,11 @@ audit.view
 **Scoping rule:** `*.view.all` sees everything; `*.view.assigned` is limited to
 projects where the user is owner/member, or tasks where they are assignee/watcher.
 Enforcement lives in `lib/rbac` and is applied in **queries**, not in the UI.
+`task.work.assigned` is narrower than `task.edit`: it permits start, submit,
+block and resume only when the caller is the task's assignee. `task.comment`
+also requires the target task to fall inside the caller's normal read scope.
+`report.export` is checked separately by every download route in addition to
+the report's ordinary `report.view` read gate.
 
 **Three Phase-6 reads that no key in this catalog covers, and how they are gated:**
 
@@ -754,6 +772,12 @@ WhatsApp button → `https://wa.me/<phone>?text=<url-encoded Arabic template>`.
 Templates configurable in Settings. No API, no integration.
 
 **How this is read (settled in Phase 9, `modules/notification/`)**
+
+- **Task notifications deep-link to the task list's sheet state** as
+  `/tasks?task=<id>`. There is deliberately no `/tasks/[id]` page: the list
+  resolves the id through the same RBAC-scoped `EntitySheet` action as a row
+  click. Missing, deleted or out-of-scope tasks fail closed and leave the list
+  visible. The global calendar uses the same canonical helper.
 
 - **"Managers" means whoever holds `project.view.all`** — flagged for
   override. Neither this section nor the permission catalog (§6) names a

@@ -19,16 +19,23 @@ export const USERNAME_MAX_LENGTH = 32
  * where a bidi-reordered Arabic identifier is unreadable and ambiguous. The
  * person's Arabic name lives in `fullName`, which is what the UI actually shows.
  */
-const USERNAME_RE = /^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/
+const USERNAME_RE = /^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/i
 
-/** Lowercase and trim. Idempotent — normalising twice is normalising once. */
-export function normalizeUsername(raw: string): string {
-  return raw.trim().toLowerCase()
+/** Trim only: this is the immutable spelling shown throughout the product. */
+export function normalizeUsernameDisplay(raw: string): string {
+  return raw.trim()
 }
+
+/** Lowercase canonical identity used for lookup, uniqueness and throttling. */
+export function normalizeUsername(raw: string): string {
+  return normalizeUsernameDisplay(raw).toLowerCase()
+}
+
+export const canonicalizeUsername = normalizeUsername
 
 /** Returns i18n keys, not prose. `lib/` never renders Arabic. */
 export function validateUsername(raw: string): string[] {
-  const username = normalizeUsername(raw)
+  const username = normalizeUsernameDisplay(raw)
   const problems: string[] = []
 
   if (username.length < USERNAME_MIN_LENGTH || username.length > USERNAME_MAX_LENGTH) {

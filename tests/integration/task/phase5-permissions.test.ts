@@ -17,11 +17,13 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('next/headers', () => ({ headers: async () => new Headers() }))
 
 const {
+  addTaskCommentAction,
   bulkAssignTaskAction,
   bulkChangeTaskDueDateAction,
   bulkChangeTaskPriorityAction,
   getTaskOptionsForProjectAction,
   getTaskSheetDataAction,
+  startTaskAction,
 } = await import('@/modules/task/actions')
 
 /**
@@ -46,6 +48,43 @@ const db = testDb()
 
 beforeEach(() => {
   clearSessionActor()
+})
+
+describe('task.work.assigned وtask.comment — نطاق المهمة', () => {
+  it('يسمح بالعمل والتعليق على مهمة المنفّذ ويرفض معرّف مهمة غيره', async () => {
+    await seedPermissionCatalog(db)
+    const owner = await createUserWithPermissions(db, ['task.view.all'])
+    const worker = await createUserWithPermissions(db, [
+      'task.view.assigned',
+      'task.work.assigned',
+      'task.comment',
+    ])
+    const other = await createUserWithPermissions(db, [])
+    const project = await createProject(db, { ownerId: owner.id })
+    const ownTask = await createTask(db, {
+      projectId: project.id,
+      assigneeId: worker.id,
+      status: 'ASSIGNED',
+    })
+    const foreignTask = await createTask(db, {
+      projectId: project.id,
+      assigneeId: other.id,
+      status: 'ASSIGNED',
+    })
+    setSessionActor(await actorFor(db, worker.id))
+
+    await expect(startTaskAction({ id: ownTask.id })).resolves.toBeTruthy()
+    await expect(
+      addTaskCommentAction({ taskId: ownTask.id, body: 'تعليق على مهمتي' }),
+    ).resolves.toBeTruthy()
+
+    await expect(startTaskAction({ id: foreignTask.id })).rejects.toBeInstanceOf(
+      NotFoundError,
+    )
+    await expect(
+      addTaskCommentAction({ taskId: foreignTask.id, body: 'محاولة خارج النطاق' }),
+    ).rejects.toBeInstanceOf(NotFoundError)
+  })
 })
 
 async function baseFixture() {

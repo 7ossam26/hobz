@@ -20,7 +20,7 @@ import { pageAlert, signIn, signOut } from './helpers'
 
 test.describe.configure({ mode: 'serial' })
 
-const ROLE = { nameAr: 'مسؤول المستخدمين', nameEn: 'USER_ADMIN' }
+const ROLE = { nameAr: 'مسؤول المستخدمين', nameEn: 'user_admin' }
 const MEMBER = {
   username: 'e2e.member',
   password: 'member-initial-password',

@@ -1,3 +1,4 @@
+import { canonicalizeUsername } from '@/lib/auth/username'
 import type { Db } from '@/lib/db'
 
 /**
@@ -14,16 +15,30 @@ import type { Db } from '@/lib/db'
 export async function findUserByUsername(
   db: Db,
   username: string,
-): Promise<{ id: string; isActive: boolean; defaultTaskRate: string | null } | null> {
+): Promise<{
+  id: string
+  isActive: boolean
+  defaultTaskRate: string | null
+  roleIds: string[]
+} | null> {
   const row = await db.user.findFirst({
-    where: { username, deletedAt: null },
-    select: { id: true, isActive: true, defaultTaskRate: true },
+    where: { usernameCanonical: canonicalizeUsername(username), deletedAt: null },
+    select: {
+      id: true,
+      isActive: true,
+      defaultTaskRate: true,
+      roles: {
+        where: { role: { deletedAt: null } },
+        select: { roleId: true },
+      },
+    },
   })
   if (!row) return null
   return {
     id: row.id,
     isActive: row.isActive,
     defaultTaskRate: row.defaultTaskRate ? row.defaultTaskRate.toFixed(2) : null,
+    roleIds: row.roles.map((role) => role.roleId),
   }
 }
 

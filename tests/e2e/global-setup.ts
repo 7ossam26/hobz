@@ -1,8 +1,10 @@
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
+import { resolve } from 'node:path'
 
 import { PrismaClient } from '@prisma/client'
 
 import { hashPassword } from '../../src/lib/auth/password'
+import { canonicalizeUsername } from '../../src/lib/auth/username'
 import { SUPER_ADMIN_ROLE, permissionSeedRows } from '../../src/lib/rbac/catalog'
 import { assertTestDatabase, promoteTestDatabaseUrl } from '../setup/db-guard'
 
@@ -25,10 +27,14 @@ export default async function globalSetup(): Promise<void> {
   promoteTestDatabaseUrl()
   const dbName = assertTestDatabase()
 
-  execSync('pnpm prisma migrate deploy', {
-    stdio: 'inherit',
-    env: { ...process.env, NODE_ENV: 'test' },
-  })
+  execFileSync(
+    process.execPath,
+    [resolve('node_modules/prisma/build/index.js'), 'migrate', 'deploy'],
+    {
+      stdio: 'inherit',
+      env: { ...process.env, NODE_ENV: 'test' },
+    },
+  )
 
   const prisma = new PrismaClient()
 
@@ -57,6 +63,7 @@ export default async function globalSetup(): Promise<void> {
     await prisma.user.create({
       data: {
         username: E2E_ADMIN.username,
+        usernameCanonical: canonicalizeUsername(E2E_ADMIN.username),
         passwordHash: await hashPassword(E2E_ADMIN.password),
         fullName: E2E_ADMIN.fullName,
         isWorker: false,

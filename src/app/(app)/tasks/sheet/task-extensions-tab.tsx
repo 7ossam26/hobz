@@ -10,9 +10,11 @@ import { EmptyState } from '@/components/shared/empty-state'
 import { FormField } from '@/components/shared/form-field'
 import { useToast } from '@/components/shared/toast'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { DateTimeInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { ar } from '@/i18n/ar'
+import { cairoInstant, parseTimeOfDay } from '@/lib/calendar/cairo'
+import { toCairoDateTimeInput } from '@/lib/datetime'
 import type { Hue } from '@/lib/palette'
 import {
   decideExtensionAction,
@@ -50,10 +52,10 @@ const STATUS_HUE: Record<ExtensionStatusDto, Hue> = {
   REJECTED: 'orange',
 }
 
-/** `YYYY-MM-DDTHH:mm` — what `<input type="datetime-local">` reads and writes. */
-function toLocalInputValue(date: Date): string {
-  const offsetMs = date.getTimezoneOffset() * 60_000
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16)
+/** Convert the product's Cairo wall-clock input into its UTC instant. */
+function cairoDateTimeInputToDate(value: string): Date {
+  const [dateKey = '', time = ''] = value.split('T')
+  return cairoInstant(dateKey, parseTimeOfDay(time))
 }
 
 export function TaskExtensionsTab({
@@ -242,7 +244,7 @@ function RequestDialog({
     if (!open) return
     // Pre-filled with the current deadline: the operator is moving a date, not
     // inventing one, and a blank field makes them look it up again.
-    setNewDueDate(toLocalInputValue(new Date(currentDueDate)))
+    setNewDueDate(toCairoDateTimeInput(new Date(currentDueDate)))
     setReason('')
   }, [open, currentDueDate])
 
@@ -269,7 +271,7 @@ function RequestDialog({
             type="button"
             size="sm"
             disabled={!canSubmit || busy}
-            onClick={() => onSubmit(new Date(newDueDate), reason.trim())}
+            onClick={() => onSubmit(cairoDateTimeInputToDate(newDueDate), reason.trim())}
           >
             {ar.common.confirm}
           </Button>
@@ -279,11 +281,9 @@ function RequestDialog({
       <div className="flex flex-col gap-4">
         <FormField name="extension-due" label={ar.extensions.newDueDate} required>
           {(field) => (
-            <Input
+            <DateTimeInput
               {...field}
               data-autofocus
-              type="datetime-local"
-              dir="ltr"
               value={newDueDate}
               onChange={(event) => setNewDueDate(event.target.value)}
             />

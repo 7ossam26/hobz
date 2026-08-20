@@ -35,6 +35,13 @@ function assertCanViewReports(): Promise<void> {
   })
 }
 
+/** Export is a separate privilege from viewing the same figures on screen. */
+export function assertCanExportReports(): Promise<void> {
+  return requireActor().then((actor) => {
+    if (!can(actor, 'report.export')) throw new ForbiddenError('report.export')
+  })
+}
+
 function startOfCairoMonth(now: Date): Date {
   const { year, month } = cairoParts(now)
   return cairoInstant(cairoDateKeyOfParts(year, month, 1), 0)

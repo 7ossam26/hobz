@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client'
 
 import { hashPassword } from '@/lib/auth/password'
+import { canonicalizeUsername } from '@/lib/auth/username'
 import { permissionSeedRows, SUPER_ADMIN_ROLE, type Permission } from '@/lib/rbac'
 import { SETTINGS_CATALOG } from '@/lib/settings/catalog'
 import { ensureOpenCycle } from '@/modules/payout/cycle'
@@ -49,6 +50,7 @@ export interface CreateRoleOptions {
   nameEn?: string
   nameAr?: string
   isSystem?: boolean
+  isDefault?: boolean
   permissions?: readonly Permission[]
   deletedAt?: Date | null
 }
@@ -58,13 +60,18 @@ export async function createRole(
   options: CreateRoleOptions = {},
 ): Promise<{ id: string; nameEn: string; nameAr: string }> {
   const n = next()
-  const nameEn = options.nameEn ?? `ROLE_${n}`
+  const rawNameEn = options.nameEn ?? `role_${n}`
+  const nameEn =
+    rawNameEn.toUpperCase() === SUPER_ADMIN_ROLE
+      ? SUPER_ADMIN_ROLE
+      : rawNameEn.toLowerCase()
 
   return db.role.create({
     data: {
       nameEn,
       nameAr: options.nameAr ?? `دور ${n}`,
       isSystem: options.isSystem ?? false,
+      isDefault: options.isDefault ?? false,
       deletedAt: options.deletedAt ?? null,
       permissions: {
         create: (options.permissions ?? []).map((permissionKey) => ({ permissionKey })),
@@ -119,9 +126,11 @@ export async function createUser(
     ? await hashPassword(options.password)
     : await sharedPasswordHash()
 
+  const username = options.username ?? `user${n}`
   return db.user.create({
     data: {
-      username: options.username ?? `user${n}`,
+      username,
+      usernameCanonical: canonicalizeUsername(username),
       passwordHash,
       fullName:
         options.fullName ?? ARABIC_FULL_NAMES[n % ARABIC_FULL_NAMES.length] ?? 'مستخدم',

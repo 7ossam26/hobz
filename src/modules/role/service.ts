@@ -5,6 +5,7 @@ import { ConflictError, DomainError, NotFoundError } from '@/lib/errors'
 import {
   PERMISSIONS,
   SUPER_ADMIN_ROLE,
+  isSafeDefaultRolePermission,
   permissionDomain,
   type Actor,
   type Permission,
@@ -67,6 +68,7 @@ export async function listRoles(db: Db): Promise<RoleSummaryDto[]> {
       nameEn: true,
       description: true,
       isSystem: true,
+      isDefault: true,
       _count: { select: { permissions: true, users: ACTIVE_MEMBERS } },
     },
   })
@@ -77,6 +79,7 @@ export async function listRoles(db: Db): Promise<RoleSummaryDto[]> {
     nameEn: row.nameEn,
     description: row.description,
     isSystem: row.isSystem,
+    isDefault: row.isDefault,
     permissionCount: isSuperAdminRoleRow(row) ? null : row._count.permissions,
     memberCount: row._count.users,
   }))
@@ -91,6 +94,7 @@ export async function getRole(db: Db, id: string): Promise<RoleDetailDto> {
       nameEn: true,
       description: true,
       isSystem: true,
+      isDefault: true,
       permissions: { select: { permissionKey: true } },
       _count: { select: { users: ACTIVE_MEMBERS } },
     },
@@ -105,6 +109,7 @@ export async function getRole(db: Db, id: string): Promise<RoleDetailDto> {
     nameEn: row.nameEn,
     description: row.description,
     isSystem: row.isSystem,
+    isDefault: row.isDefault,
     permissionCount: holdsAll ? null : row.permissions.length,
     memberCount: row._count.users,
     permissions: holdsAll
@@ -149,23 +154,52 @@ export interface RoleMutationArgs {
   ip?: string | undefined
 }
 
+type CreateRoleServiceInput = Omit<CreateRoleInput, 'isDefault'> & {
+  isDefault?: boolean
+}
+type UpdateRoleServiceInput = Omit<UpdateRoleInput, 'isDefault'> & {
+  isDefault?: boolean
+}
+
+function assertSafeDefaultRole(
+  isDefault: boolean,
+  permissions: readonly Permission[],
+): void {
+  if (
+    isDefault &&
+    permissions.some((permission) => !isSafeDefaultRolePermission(permission))
+  ) {
+    throw new DomainError('roles.defaultRoleUnsafe')
+  }
+}
+
 export async function createRole(
   db: Db,
-  args: RoleMutationArgs & { input: CreateRoleInput },
+  args: RoleMutationArgs & { input: CreateRoleServiceInput },
 ): Promise<RoleDetailDto> {
   const { input } = args
+  const isDefault = input.isDefault ?? false
+  const nameEn =
+    input.nameEn.toUpperCase() === SUPER_ADMIN_ROLE
+      ? SUPER_ADMIN_ROLE
+      : input.nameEn.toLowerCase()
 
-  if (input.nameEn === SUPER_ADMIN_ROLE) {
-    throw new DomainError('roles.systemRoleLocked', { nameEn: input.nameEn })
+  if (nameEn === SUPER_ADMIN_ROLE) {
+    throw new DomainError('roles.systemRoleLocked', { nameEn })
   }
+  assertSafeDefaultRole(isDefault, input.permissions)
 
   const existing = await db.role.findUnique({
-    where: { nameEn: input.nameEn },
+    where: { nameEn },
     select: { id: true, deletedAt: true },
   })
 
   if (existing && existing.deletedAt === null) {
-    throw new ConflictError('validation.roleNameEnTaken', { nameEn: input.nameEn })
+    throw new ConflictError('validation.roleNameEnTaken', { nameEn })
+  }
+
+  if (isDefault) {
+    await db.role.updateMany({ where: { isDefault: true }, data: { isDefault: false } })
   }
 
   // `nameEn` is unique at the database level, so a soft-deleted row still owns
@@ -180,6 +214,7 @@ export async function createRole(
           description: input.description ?? null,
           deletedAt: null,
           isSystem: false,
+          isDefault,
           permissions: {
             deleteMany: {},
             create: input.permissions.map((permissionKey) => ({ permissionKey })),
@@ -190,9 +225,10 @@ export async function createRole(
     : await db.role.create({
         data: {
           nameAr: input.nameAr,
-          nameEn: input.nameEn,
+          nameEn,
           description: input.description ?? null,
           isSystem: false,
+          isDefault,
           permissions: {
             create: input.permissions.map((permissionKey) => ({ permissionKey })),
           },
@@ -207,8 +243,9 @@ export async function createRole(
     entityId: role.id,
     after: {
       nameAr: input.nameAr,
-      nameEn: input.nameEn,
+      nameEn,
       description: input.description ?? null,
+      isDefault,
       permissions: [...input.permissions].sort(),
     },
     ...(args.ip ? { ip: args.ip } : {}),
@@ -219,9 +256,10 @@ export async function createRole(
 
 export async function updateRole(
   db: Db,
-  args: RoleMutationArgs & { input: UpdateRoleInput },
+  args: RoleMutationArgs & { input: UpdateRoleServiceInput },
 ): Promise<RoleDetailDto> {
   const { input } = args
+  const isDefault = input.isDefault ?? false
 
   const before = await db.role.findFirst({
     where: { id: input.id, deletedAt: null },
@@ -231,17 +269,27 @@ export async function updateRole(
       nameEn: true,
       description: true,
       isSystem: true,
+      isDefault: true,
       permissions: { select: { permissionKey: true } },
     },
   })
   if (!before) throw new NotFoundError('Role', input.id)
   assertMutable(before)
+  assertSafeDefaultRole(isDefault, input.permissions)
+
+  if (isDefault) {
+    await db.role.updateMany({
+      where: { isDefault: true, id: { not: before.id } },
+      data: { isDefault: false },
+    })
+  }
 
   await db.role.update({
     where: { id: before.id },
     data: {
       nameAr: input.nameAr,
       description: input.description ?? null,
+      isDefault,
       // Replace wholesale. A diff would have to reason about concurrent edits
       // to the same role, and the set is at most a few dozen rows.
       permissions: {
@@ -265,11 +313,13 @@ export async function updateRole(
     before: {
       nameAr: before.nameAr,
       description: before.description,
+      isDefault: before.isDefault,
       permissions: beforePermissions,
     },
     after: {
       nameAr: input.nameAr,
       description: input.description ?? null,
+      isDefault,
       permissions: afterPermissions,
     },
     ...(args.ip ? { ip: args.ip } : {}),
@@ -289,11 +339,15 @@ export async function deleteRole(
       nameAr: true,
       nameEn: true,
       isSystem: true,
+      isDefault: true,
       _count: { select: { users: ACTIVE_MEMBERS } },
     },
   })
   if (!role) throw new NotFoundError('Role', args.id)
   assertMutable(role)
+  if (role.isDefault) {
+    throw new DomainError('roles.defaultRoleUnsafe', { nameEn: role.nameEn })
+  }
 
   // Deleting a role out from under its holders would silently strip their
   // access with no trace of why. Make the operator unassign it deliberately.

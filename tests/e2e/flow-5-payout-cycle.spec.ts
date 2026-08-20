@@ -37,8 +37,8 @@ test.describe.configure({ mode: 'serial' })
 
 const ROLE = {
   nameAr: 'منفّذ التجربة الخامسة',
-  nameEn: 'FLOW5_WORKER',
-  permissions: ['task.view.assigned', 'task.edit', 'ledger.view.own'],
+  nameEn: 'flow5_worker',
+  permissions: ['task.view.assigned', 'task.work.assigned', 'ledger.view.own'],
 } as const
 
 const WORKER = {

@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 
+import { canonicalizeUsername } from '../src/lib/auth/username'
 import { fanOut } from '../src/lib/events'
 import type { Actor } from '../src/lib/rbac'
 import { PERMISSIONS } from '../src/lib/rbac/catalog'
@@ -420,7 +421,7 @@ async function guardAlreadySeeded(): Promise<void> {
 async function superAdminActor(): Promise<Actor> {
   const username = process.env.SEED_ADMIN_USERNAME ?? 'admin'
   const user = await prisma.user.findUnique({
-    where: { username },
+    where: { usernameCanonical: canonicalizeUsername(username) },
     select: { id: true, fullName: true, username: true },
   })
   if (!user) {
@@ -451,7 +452,7 @@ async function seedRoles(actor: Actor): Promise<{ managerId: string; workerId: s
     [
       'project.view.assigned',
       'task.view.assigned',
-      'task.edit',
+      'task.work.assigned',
       'task.comment',
       'ledger.view.own',
       'extension.request',
@@ -463,7 +464,7 @@ async function seedRoles(actor: Actor): Promise<{ managerId: string; workerId: s
     actor,
     input: createRoleSchema.parse({
       nameAr: 'مدير عمليات',
-      nameEn: 'OPERATIONS_MANAGER',
+      nameEn: 'operations_manager',
       description: 'يدير المشاريع والمهام والمستحقات، دون الوصول إلى الإعدادات والأدوار.',
       permissions: managerPermissions,
     }),
@@ -473,7 +474,7 @@ async function seedRoles(actor: Actor): Promise<{ managerId: string; workerId: s
     actor,
     input: createRoleSchema.parse({
       nameAr: 'منفّذ',
-      nameEn: 'WORKER',
+      nameEn: 'worker',
       description: 'يرى مهامه ومستحقاته فقط.',
       permissions: workerPermissions,
     }),

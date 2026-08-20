@@ -83,7 +83,7 @@ export function TaskStatusControl({
         type="button"
         variant="outline"
         size="sm"
-        disabled={busy || !permissions.canEdit}
+        disabled={busy || !permissions.canWork}
         onClick={() => runDirect((id) => unblockTaskAction({ id }))}
       >
         {ar.tasks.actions.unblock}

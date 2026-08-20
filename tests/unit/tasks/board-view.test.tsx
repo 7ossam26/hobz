@@ -54,6 +54,7 @@ const ALL_PERMISSIONS: TaskPermissions = {
   canCreate: true,
   canAssign: true,
   canEdit: true,
+  canWork: true,
   canApprove: true,
   canCancel: true,
   canComment: true,

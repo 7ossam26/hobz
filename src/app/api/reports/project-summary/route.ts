@@ -1,6 +1,6 @@
 import type { NextResponse } from 'next/server'
 
-import { getProjectSummaryReport } from '@/modules/report/queries'
+import { assertCanExportReports, getProjectSummaryReport } from '@/modules/report/queries'
 import { buildProjectSummaryWorkbook } from '@/modules/report/xlsx'
 
 import { reportErrorResponse, xlsxResponse } from '../respond'
@@ -10,6 +10,7 @@ export const runtime = 'nodejs'
 
 export async function GET(): Promise<NextResponse> {
   try {
+    await assertCanExportReports()
     const report = await getProjectSummaryReport()
     return xlsxResponse(buildProjectSummaryWorkbook(report), 'project-summary.xlsx')
   } catch (error) {

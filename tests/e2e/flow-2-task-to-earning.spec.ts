@@ -36,11 +36,11 @@ test.describe.configure({ mode: 'serial' })
 
 const ROLE = {
   nameAr: 'منفّذ التجربة الثانية',
-  nameEn: 'FLOW2_WORKER',
+  nameEn: 'flow2_worker',
   permissions: [
     'project.view.assigned',
     'task.view.assigned',
-    'task.edit',
+    'task.work.assigned',
     'task.comment',
     'ledger.view.own',
   ],

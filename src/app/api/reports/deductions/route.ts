@@ -1,6 +1,7 @@
 import type { NextRequest, NextResponse } from 'next/server'
 
 import { getDeductionsReport } from '@/modules/penalty/queries'
+import { assertCanExportReports } from '@/modules/report/queries'
 import { buildDeductionsWorkbook } from '@/modules/report/xlsx'
 
 import { reportErrorResponse, xlsxResponse } from '../respond'
@@ -11,6 +12,7 @@ export const runtime = 'nodejs'
 /** SPEC R4's report — see `src/app/(app)/penalties/report/page.tsx` for the same defaults. */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
+    await assertCanExportReports()
     const params = request.nextUrl.searchParams
     const now = new Date()
     const groupBy = params.get('groupBy') ?? 'month'

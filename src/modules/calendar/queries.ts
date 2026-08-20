@@ -1,3 +1,4 @@
+import { taskHref } from '@/lib/entity-href'
 import { timed } from '@/lib/perf'
 import { getProjects } from '@/modules/project/queries'
 import { getTaskCalendar } from '@/modules/task/queries'
@@ -79,7 +80,7 @@ export async function getGlobalCalendarEvents(
     status: task.status,
     // Mirrors `modules/notification/service.ts`'s `hrefFor` — the same target
     // a `TASK_DUE_SOON` notification already links to.
-    href: `/tasks/${task.id}`,
+    href: taskHref(task.id),
   }))
 
   const projectEvents: CalendarEventDto[] = (projectPage?.items ?? [])

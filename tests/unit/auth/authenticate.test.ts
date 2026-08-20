@@ -90,7 +90,7 @@ describe('modules/auth — التحقق من بيانات الدخول', () => {
     })
 
     expect(db.user.findUnique).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { username: 'ahmed' } }),
+      expect.objectContaining({ where: { usernameCanonical: 'ahmed' } }),
     )
   })
 

@@ -54,6 +54,7 @@ type Draft = {
   nameAr: string
   nameEn: string
   description: string
+  isDefault: boolean
   permissions: Set<string>
 }
 
@@ -61,6 +62,7 @@ const emptyDraft = (): Draft => ({
   nameAr: '',
   nameEn: '',
   description: '',
+  isDefault: false,
   permissions: new Set(),
 })
 
@@ -83,6 +85,7 @@ export function RolesClient({ roles, groups, canManage, detailsById }: Props) {
       nameAr: role.nameAr,
       nameEn: role.nameEn,
       description: role.description ?? '',
+      isDefault: role.isDefault,
       permissions: new Set(detail?.permissions ?? []),
     })
   }
@@ -116,6 +119,7 @@ export function RolesClient({ roles, groups, canManage, detailsById }: Props) {
     const base = {
       nameAr: draft.nameAr,
       description: draft.description,
+      isDefault: draft.isDefault,
       permissions: [...draft.permissions],
     }
     const payload = draft.id
@@ -216,6 +220,9 @@ export function RolesClient({ roles, groups, canManage, detailsById }: Props) {
                           {ar.roles.systemRole}
                         </Badge>
                       ) : null}
+                      {role.isDefault ? (
+                        <Badge variant="outline">{ar.roles.defaultRole}</Badge>
+                      ) : null}
                     </div>
                   </TableCell>
                   <TableCell
@@ -249,13 +256,20 @@ export function RolesClient({ roles, groups, canManage, detailsById }: Props) {
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        disabled={!canManage || role.isSystem || role.memberCount > 0}
+                        disabled={
+                          !canManage ||
+                          role.isSystem ||
+                          role.isDefault ||
+                          role.memberCount > 0
+                        }
                         title={
                           role.isSystem
                             ? ar.roles.systemRoleLocked
-                            : role.memberCount > 0
-                              ? ar.roles.inUse
-                              : ar.common.delete
+                            : role.isDefault
+                              ? ar.roles.defaultRole
+                              : role.memberCount > 0
+                                ? ar.roles.inUse
+                                : ar.common.delete
                         }
                         aria-label={ar.common.delete}
                         onClick={() => remove(role)}
@@ -315,7 +329,7 @@ export function RolesClient({ roles, groups, canManage, detailsById }: Props) {
                   // history is written against.
                   disabled={Boolean(draft.id)}
                   onChange={(e) =>
-                    setDraft({ ...draft, nameEn: e.target.value.toUpperCase() })
+                    setDraft({ ...draft, nameEn: e.target.value.toLowerCase() })
                   }
                 />
               )}
@@ -330,6 +344,22 @@ export function RolesClient({ roles, groups, canManage, detailsById }: Props) {
                 />
               )}
             </FormField>
+
+            <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
+              <Checkbox
+                className="mt-0.5"
+                checked={draft.isDefault}
+                onChange={(event) =>
+                  setDraft({ ...draft, isDefault: event.target.checked })
+                }
+              />
+              <span className="flex flex-col gap-0.5">
+                <span className="font-medium">{ar.roles.defaultRole}</span>
+                <span className="text-muted-foreground text-xs">
+                  {ar.roles.defaultRoleHint}
+                </span>
+              </span>
+            </label>
 
             <fieldset className="flex flex-col gap-4">
               <legend className="pb-2 text-sm font-medium">{ar.roles.permissions}</legend>

@@ -6,6 +6,7 @@ export interface RoleSummaryDto {
   nameEn: string
   description: string | null
   isSystem: boolean
+  isDefault: boolean
   /**
    * `null` for SUPER_ADMIN — it holds every permission implicitly, and a count
    * would be a snapshot that goes stale the moment a phase adds a key

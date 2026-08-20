@@ -151,6 +151,7 @@ async function load(): Promise<void> {
 
   const newUsers = Array.from({ length: TARGET.users }, (_, i) => ({
     username: `perf.user.${i}`,
+    usernameCanonical: `perf.user.${i}`,
     passwordHash: '$2b$12$0000000000000000000000000000000000000000000000000000',
     fullName: `منفّذ اختبار ${i}`,
     isWorker: true,

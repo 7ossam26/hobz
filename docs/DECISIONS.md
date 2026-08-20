@@ -3107,7 +3107,7 @@ statements (Prisma issues one per relation level; the `relationJoins` preview is
 not enabled), six times per `/tasks` render — the layout, the header's
 notification read, the page, and four scoped queries: 17 of the 25 statements
 that render issued. React's `cache()` scopes it to one resolution per request.
-The invariant is unchanged — every *request* still re-reads, which is what makes
+The invariant is unchanged — every _request_ still re-reads, which is what makes
 a revoke take effect at noon rather than at next sign-out. `lib/auth/session.ts`
 needed a scoped ESLint exception to import `react`; it is one file, it is already
 the Auth.js wiring seam, and it was already excluded from coverage for that
@@ -3115,8 +3115,8 @@ reason. The rule stays on for the rest of `lib/`.
 
 **`staleTimes.dynamic` is 5 seconds, and the first answer of 30 was wrong.**
 Thirty looked defensible — SPEC §2 already promises only 30s freshness via
-polling. But the poll refreshes the page you are *looking at*, while this cache
-serves a page you are *arriving at*. Approving a task and then opening the
+polling. But the poll refreshes the page you are _looking at_, while this cache
+serves a page you are _arriving at_. Approving a task and then opening the
 مستحقات screen is two different routes, and `router.refresh()` covers only the
 first. A منفّذ reading a stale balance is the exact failure this product exists
 to prevent. Five seconds still removes the double fetch on an immediate
@@ -3169,11 +3169,11 @@ open, so a focus binding would pop a calendar nobody asked for every time a shee
 led with a date. There is a test for that, through the real `Sheet`.
 
 **The dark theme was flat because the test only measured text.** Its single
-surface-to-surface assertion was that three steps were *ordered*, so a ramp
+surface-to-surface assertion was that three steps were _ordered_, so a ramp
 spanning L 0.145→0.216 — 1.04:1 and 1.07:1 between neighbours — passed all 58
 tests. Nine distinct UI surfaces resolved to two colours (`--card` ===
 `--popover`; `--accent` === `--muted` === `--secondary`), and because `--accent`
-is every hover in the app and pointed at a step *below* a card, **hovering a row
+is every hover in the app and pointed at a step _below_ a card, **hovering a row
 in dark mode pushed it away from the viewer**. Inputs had no token at all and
 were painted the page colour. The fix is six named steps, three washes and a
 scrim; the guard is five new assertions — minimum step ratio, whole-ramp
@@ -3223,14 +3223,14 @@ files duplicating it would have been noise.
 
 ### Deferred
 
-| Deferred | Notes |
-| --- | --- |
-| Playwright flows 2, 4, 5 | Failing on `HEAD` before this pass; unrelated to it |
-| The other 31 `catch { ar.errors.unexpected }` call sites | The mechanism exists; conversion is mechanical |
-| Splitting `src/i18n/ar.ts` (108 KB) out of the client graph | Imported by 63 of 74 `'use client'` files |
-| `pnpm perf:explain --load` at 8,000-task volume | Index coverage unproven above demo scale |
-| `taskOrderBy` allows `sort=createdAt`/`title` with no index | Irrelevant at ~100 rows |
-| `--shadow-xs` and `--shadow-sm` are still the same token | Harmless, but one of them is a lie |
+| Deferred                                                    | Notes                                               |
+| ----------------------------------------------------------- | --------------------------------------------------- |
+| Playwright flows 2, 4, 5                                    | Failing on `HEAD` before this pass; unrelated to it |
+| The other 31 `catch { ar.errors.unexpected }` call sites    | The mechanism exists; conversion is mechanical      |
+| Splitting `src/i18n/ar.ts` (108 KB) out of the client graph | Imported by 63 of 74 `'use client'` files           |
+| `pnpm perf:explain --load` at 8,000-task volume             | Index coverage unproven above demo scale            |
+| `taskOrderBy` allows `sort=createdAt`/`title` with no index | Irrelevant at ~100 rows                             |
+| `--shadow-xs` and `--shadow-sm` are still the same token    | Harmless, but one of them is a lie                  |
 
 ### Known limitations
 
@@ -3307,7 +3307,7 @@ floors, so the fix is the same shape and size as the problem.
 **The rename (`--violet-*` → `--accent-*`) landed before the recolour, not with
 it.** A green ramp still named "violet" would have been a worse trap than the
 one this phase closes — the next person to touch it would trust the name over
-the value. Doing the rename with the *old* values first, running the suite, and
+the value. Doing the rename with the _old_ values first, running the suite, and
 only then changing the numbers meant a failure at either step pointed at
 exactly one cause.
 
@@ -3331,9 +3331,9 @@ exactly one cause.
 
 ### Deferred
 
-| Item | Why |
-|---|---|
-| Re-exporting `public/logo.png` as a real PNG or SVG | Cosmetic; the JPEG artifacts are invisible at the sizes it's rendered (28–80px). Flagged, not required for the rebrand. |
+| Item                                                                            | Why                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Re-exporting `public/logo.png` as a real PNG or SVG                             | Cosmetic; the JPEG artifacts are invisible at the sizes it's rendered (28–80px). Flagged, not required for the rebrand.                                                                      |
 | A human look at `/design-system`, `/tasks` board, and `/payouts` in both themes | The contrast suite proves AA; it cannot judge whether lime and the green accent read as visually distinct in practice — they are 25° apart, the suite's stated floor, not a generous margin. |
 
 ### Known limitations
@@ -3378,8 +3378,8 @@ table itself.
   only a lint run somebody remembers to invoke. This is that check again,
   dependency-light, so it can gate independently of the full `pnpm lint`.
 - **A global zod fallback** (`src/lib/zod-locale.ts`, `z.config({
-  customError })`). Every schema's own checks already carried an explicit
-  `ar.validation.*` message, but zod's *built-in* messages (a missing
+customError })`). Every schema's own checks already carried an explicit
+  `ar.validation.*` message, but zod's _built-in_ messages (a missing
   required field, a bare type mismatch) had no Arabic fallback and rendered
   in English — a real gap, unrelated to the register itself, found while
   auditing the validation path. Wired into both runtimes plus Vitest: the
@@ -3389,7 +3389,7 @@ table itself.
 - **The rewrite**: all 5 Arabic-Indic digit violations (CLAUDE.md: Western
   numerals only) and all 86 MSA-marker occurrences fixed with a TypeScript
   AST transform — walking `StringLiteral`/`NoSubstitutionTemplateLiteral`
-  nodes only, so the 240 Arabic lines in *comments* elsewhere in the file
+  nodes only, so the 240 Arabic lines in _comments_ elsewhere in the file
   were structurally untouched, not just spared by convention. Four strings
   (`import.noFileChosen`, the three `import.errors.unresolved*` "not found"
   messages) needed hand restructuring rather than substitution — the MSA
@@ -3458,11 +3458,11 @@ two unrelated defects into one diff.
 
 ### Deferred
 
-| Item | Why |
-|---|---|
-| Data migration for DB-persisted Arabic (`Setting` rows seeded from `ar.enums`/`ar.defaults`, `Notification.title`/`body`, `Role.nameAr`, `Holiday.nameAr`) | `prisma/seed.ts` never overwrites an existing `Setting` row, so a deployed database keeps the old wording until migrated separately. No production database confirmed to exist yet at time of writing — deliberately scoped out rather than guessed at. |
-| `ar.import.*` wording (124 strings) | Left in its already-professional form rather than rewritten — the sheet name and column headers are parsed back in on import (`modules/import/parse.ts`, `columns.ts`), so a wording change there invalidates every template a user has already downloaded. Out of scope for a register pass; would need its own template-version bump. |
-| Integration and e2e suites | Not run this phase — the local Prisma CLI (`prisma generate`'s postinstall) could not acquire the query-engine DLL because a long-running `next dev` process already had it loaded, which is an environment condition, not a defect in this change. `npx prisma migrate deploy` (bypassing pnpm's own dependency-status re-check) confirmed independently that the schema has no pending migrations. The full unit suite is green; nothing in this phase touches a service, a query, or the database schema. |
+| Item                                                                                                                                                       | Why                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Data migration for DB-persisted Arabic (`Setting` rows seeded from `ar.enums`/`ar.defaults`, `Notification.title`/`body`, `Role.nameAr`, `Holiday.nameAr`) | `prisma/seed.ts` never overwrites an existing `Setting` row, so a deployed database keeps the old wording until migrated separately. No production database confirmed to exist yet at time of writing — deliberately scoped out rather than guessed at.                                                                                                                                                                                                                                                      |
+| `ar.import.*` wording (124 strings)                                                                                                                        | Left in its already-professional form rather than rewritten — the sheet name and column headers are parsed back in on import (`modules/import/parse.ts`, `columns.ts`), so a wording change there invalidates every template a user has already downloaded. Out of scope for a register pass; would need its own template-version bump.                                                                                                                                                                      |
+| Integration and e2e suites                                                                                                                                 | Not run this phase — the local Prisma CLI (`prisma generate`'s postinstall) could not acquire the query-engine DLL because a long-running `next dev` process already had it loaded, which is an environment condition, not a defect in this change. `npx prisma migrate deploy` (bypassing pnpm's own dependency-status re-check) confirmed independently that the schema has no pending migrations. The full unit suite is green; nothing in this phase touches a service, a query, or the database schema. |
 
 ### Known limitations
 
@@ -3472,3 +3472,47 @@ two unrelated defects into one diff.
   `payouts`, `ledger`) end to end before this is called done — that is the
   copy a منفّذ reads when a deduction is explained to them, and it is the one
   place in the product where "does this read naturally" matters most.
+
+## Identity, safe access, dates, and task deep links
+
+**Date:** 2026-08-20
+
+### Built
+
+- Date and date-time fields keep native ISO controls and click-only picker
+  behavior, while a product-owned visible layer guarantees `dd/mm/yyyy`.
+  Extension deadlines now convert between the input and UTC through Cairo,
+  never through the browser machine's local timezone.
+- `User.usernameCanonical` is the unique lowercase identity used by login,
+  throttling, imports, and mentions. `User.username` preserves immutable display
+  casing. The migration aborts with an explicit collision error before adding
+  the unique index if existing accounts differ only by case or whitespace.
+- Ordinary role identifiers are normalized to `lower_snake_case`; the reserved
+  `SUPER_ADMIN` remains uppercase. `Role.isDefault` selects one live default
+  employee role, limited in schema and service to the reviewed safe allowlist.
+- New manual and imported users receive the configured default when no roles
+  were supplied. Import updates preserve memberships because the users workbook
+  has no roles column. Existing users are deliberately not backfilled.
+- `task.work.assigned` admits start, submit, block, and resume only for the
+  assignee. `task.comment` now scopes its target, and every report download
+  independently requires `report.export`.
+- Task notifications and calendar entries use `/tasks?task=<id>`. The task list
+  opens the existing scoped `EntitySheet`; unavailable ids fail closed without
+  a route-level 404. All stale `/tasks/<id>` revalidation calls were removed.
+- Integration/e2e migration setup now calls the repository's local Prisma CLI
+  directly, avoiding a package-manager reinstall during a guarded test run.
+
+### Migration and compatibility
+
+`20260823000000_identity_default_access_deep_links` backfills canonical
+usernames, normalizes ordinary role identifiers, seeds the new permission and
+safe employee role, and adds uniqueness constraints for canonical usernames and
+the single live default. No money, calendar arithmetic, ledger rows, existing
+user memberships, or notification payloads are rewritten.
+
+### Risks kept explicit
+
+- A deployed database containing case-only username or ordinary-role collisions
+  must resolve those rows before migration; the migration refuses to guess.
+- Native picker chrome still varies by browser, but it no longer controls the
+  value painted to the user. Keyboard and form semantics remain native.

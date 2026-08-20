@@ -54,13 +54,13 @@ export const TRANSITION_DIRECT_ACTIONS: Partial<
 export const TRANSITION_PERMISSION: Record<TaskStatus, keyof TaskPermissions> = {
   BACKLOG: 'canEdit',
   ASSIGNED: 'canAssign',
-  IN_PROGRESS: 'canEdit',
-  SUBMITTED: 'canEdit',
+  IN_PROGRESS: 'canWork',
+  SUBMITTED: 'canWork',
   IN_REVIEW: 'canEdit',
   REVISION_REQUESTED: 'canApprove',
   APPROVED: 'canApprove',
   DONE: 'canApprove',
-  BLOCKED: 'canEdit',
+  BLOCKED: 'canWork',
   CANCELLED: 'canCancel',
 }
 

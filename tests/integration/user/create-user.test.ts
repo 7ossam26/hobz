@@ -5,6 +5,7 @@ import { createUser, updateUser } from '@/modules/user/service'
 
 import {
   createPenaltyProfile,
+  createRole,
   createUser as createUserRow,
   createUserWithPermissions,
   seedPermissionCatalog,
@@ -99,6 +100,54 @@ describe('modules/user — إنشاء مستخدم: سبب الفشل مذكور
     })
 
     expect(created.username).toBe('new.person')
+  })
+
+  it('يحفظ حالة اسم المستخدم ويمنع تكراره بأي حالة أخرى', async () => {
+    await seedPermissionCatalog(db)
+    const admin = await createUserWithPermissions(db, ['user.create'])
+    const actor = await actorFor(db, admin.id)
+
+    const created = await createUser(db, {
+      actor,
+      input: validInput({ username: 'Ahmed.Person' }) as never,
+      policy,
+    })
+    expect(created.username).toBe('Ahmed.Person')
+    expect(
+      (await db.user.findUniqueOrThrow({ where: { id: created.id } })).usernameCanonical,
+    ).toBe('ahmed.person')
+
+    await expect(
+      createUser(db, {
+        actor,
+        input: validInput({ username: 'AHMED.PERSON' }) as never,
+        policy,
+      }),
+    ).rejects.toBeInstanceOf(ConflictError)
+  })
+
+  it('يسند الدور الافتراضي الآمن تلقائيًا حين لا يحدد المدير دورًا', async () => {
+    await seedPermissionCatalog(db)
+    const admin = await createUserWithPermissions(db, ['user.create'])
+    const defaultRole = await createRole(db, {
+      nameEn: 'employee',
+      isDefault: true,
+      permissions: [
+        'project.view.assigned',
+        'task.view.assigned',
+        'task.work.assigned',
+        'task.comment',
+        'ledger.view.own',
+      ],
+    })
+
+    const created = await createUser(db, {
+      actor: await actorFor(db, admin.id),
+      input: validInput() as never,
+      policy,
+    })
+
+    expect(created.roles.map((role) => role.id)).toEqual([defaultRole.id])
   })
 
   it('يسمّي اسم المستخدم المكرَّر بدل رسالة عامة', async () => {

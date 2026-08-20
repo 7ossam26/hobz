@@ -177,7 +177,7 @@ export const recomputeTaskPenaltyAction = requirePermission(
       }),
     )
 
-    revalidatePath(`/tasks/${input.taskId}`)
+    revalidatePath('/tasks')
     revalidateMoney()
     return outcome
   },

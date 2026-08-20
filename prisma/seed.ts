@@ -2,7 +2,12 @@ import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 import { ar } from '../src/i18n/ar'
-import { SUPER_ADMIN_ROLE, permissionSeedRows } from '../src/lib/rbac/catalog'
+import { canonicalizeUsername, normalizeUsernameDisplay } from '../src/lib/auth/username'
+import {
+  DEFAULT_ROLE_PERMISSIONS,
+  SUPER_ADMIN_ROLE,
+  permissionSeedRows,
+} from '../src/lib/rbac/catalog'
 import { settingSeedRows } from '../src/lib/settings/catalog'
 
 /**
@@ -40,7 +45,7 @@ function requireEnv(name: string): string {
  */
 function adminCredentials(): { username: string; password: string } {
   return {
-    username: requireEnv('SEED_ADMIN_USERNAME'),
+    username: normalizeUsernameDisplay(requireEnv('SEED_ADMIN_USERNAME')),
     password: requireEnv('SEED_ADMIN_PASSWORD'),
   }
 }
@@ -89,16 +94,56 @@ async function seedSuperAdminRole(): Promise<string> {
   return role.id
 }
 
+async function seedDefaultEmployeeRole(): Promise<void> {
+  const configured = await prisma.role.findFirst({
+    where: { isDefault: true, deletedAt: null },
+    select: { id: true },
+  })
+  if (configured) return
+
+  const nameEn = 'employee'
+  const existing = await prisma.role.findUnique({ where: { nameEn } })
+  const role = existing
+    ? await prisma.role.update({
+        where: { id: existing.id },
+        data: {
+          nameAr: 'موظف',
+          description: 'صلاحيات آمنة للحسابات الجديدة، وتقتصر على عمل المستخدم وبياناته.',
+          isSystem: false,
+          isDefault: true,
+          deletedAt: null,
+          permissions: {
+            deleteMany: {},
+            create: DEFAULT_ROLE_PERMISSIONS.map((permissionKey) => ({ permissionKey })),
+          },
+        },
+      })
+    : await prisma.role.create({
+        data: {
+          nameEn,
+          nameAr: 'موظف',
+          description: 'صلاحيات آمنة للحسابات الجديدة، وتقتصر على عمل المستخدم وبياناته.',
+          isDefault: true,
+          permissions: {
+            create: DEFAULT_ROLE_PERMISSIONS.map((permissionKey) => ({ permissionKey })),
+          },
+        },
+      })
+
+  console.info(`[seed] default employee role: ${role.id}`)
+}
+
 async function seedSuperAdminUser(roleId: string): Promise<void> {
   const { username, password } = adminCredentials()
+  const usernameCanonical = canonicalizeUsername(username)
   const fullName = process.env.SEED_ADMIN_FULL_NAME ?? username
 
-  const existing = await prisma.user.findUnique({ where: { username } })
+  const existing = await prisma.user.findUnique({ where: { usernameCanonical } })
 
   if (existing) {
     // Do not reset the password of an account already in use.
     await prisma.user.update({
-      where: { username },
+      where: { usernameCanonical },
       data: { isActive: true, deletedAt: null },
     })
     console.info(`[seed] super admin "${username}" already exists — left untouched`)
@@ -106,6 +151,7 @@ async function seedSuperAdminUser(roleId: string): Promise<void> {
     await prisma.user.create({
       data: {
         username,
+        usernameCanonical,
         passwordHash: await bcrypt.hash(password, BCRYPT_COST),
         fullName,
         isWorker: false,
@@ -119,7 +165,7 @@ async function seedSuperAdminUser(roleId: string): Promise<void> {
     console.info(`[seed] created super admin "${username}"`)
   }
 
-  const user = await prisma.user.findUniqueOrThrow({ where: { username } })
+  const user = await prisma.user.findUniqueOrThrow({ where: { usernameCanonical } })
   await prisma.userRole.upsert({
     where: { userId_roleId: { userId: user.id, roleId } },
     create: { userId: user.id, roleId },
@@ -157,6 +203,7 @@ async function main(): Promise<void> {
   console.info(`[seed] permission catalog: ${permissionCount} key(s)`)
 
   const roleId = await seedSuperAdminRole()
+  await seedDefaultEmployeeRole()
   await seedSuperAdminUser(roleId)
 
   const settings = await seedSettings()

@@ -9,7 +9,7 @@ import {
   NotImplementedError,
 } from '@/lib/errors'
 import { fitsColumn, gt, toMoney, toStorageString } from '@/lib/money'
-import type { Actor, Permission, WhereFragment } from '@/lib/rbac'
+import { scopeTasks, type Actor, type Permission, type WhereFragment } from '@/lib/rbac'
 import { normalizeArabic } from '@/lib/search'
 import { noopPenaltyPort, type PenaltyPort } from '@/modules/lateness/ports'
 
@@ -218,6 +218,8 @@ function toDetailDto(row: DetailRow, now: Date): TaskDetailDto {
 export interface TaskMutationArgs {
   actor: Actor
   ip?: string | undefined
+  /** Narrow worker workflow admitted by `task.work.assigned`. */
+  assignedWorkOnly?: boolean
   /**
    * Injected rather than read from the clock inside, so that a transition's
    * task timestamp and its `TaskActivity.createdAt` are provably the same
@@ -1370,6 +1372,8 @@ export async function removeDependency(db: Db, args: DependencyArgs): Promise<vo
 export interface AddCommentArgs extends TaskMutationArgs {
   input: AddCommentInput
   events?: TaskEventBus
+  /** Production actions set this; fixtures may arrange domain events directly. */
+  enforceReadScope?: boolean
 }
 
 /**
@@ -1383,19 +1387,30 @@ export async function addComment(db: Db, args: AddCommentArgs): Promise<TaskComm
   const { input } = args
   const now = nowOf(args)
   const events = args.events ?? noopTaskEvents
+  if (args.enforceReadScope) {
+    const visible = await db.task.findFirst({
+      where: {
+        id: input.taskId,
+        project: { deletedAt: null },
+        ...scopeTasks(args.actor),
+      },
+      select: { id: true },
+    })
+    if (!visible) throw new NotFoundError('Task', input.taskId)
+  }
   const task = await loadTask(db, input.taskId)
 
   const handles = parseMentions(input.body)
   const mentioned = handles.length
     ? await db.user.findMany({
-        where: { username: { in: handles }, deletedAt: null },
-        select: { id: true, username: true },
+        where: { usernameCanonical: { in: handles }, deletedAt: null },
+        select: { id: true, usernameCanonical: true },
       })
     : []
 
   // Ordered by first appearance in the body, not by whatever the database
   // returned, so the stored array is stable across re-parses.
-  const byHandle = new Map(mentioned.map((u) => [u.username, u.id]))
+  const byHandle = new Map(mentioned.map((u) => [u.usernameCanonical, u.id]))
   const mentions = handles
     .map((handle) => byHandle.get(handle))
     .filter((id): id is string => id !== undefined)
@@ -1525,6 +1540,8 @@ export interface TransitionTaskArgs extends TaskMutationArgs {
    * wrong, and knows nothing about how one is computed.
    */
   penalty?: PenaltyPort
+  /** Set only when `task.work.assigned`, rather than broad `task.edit`, admitted the call. */
+  assignedWorkOnly?: boolean
 }
 
 /**
@@ -1555,6 +1572,9 @@ export async function transitionTask(
   const events = args.events ?? noopTaskEvents
 
   const task = await loadTask(db, input.taskId)
+  if (args.assignedWorkOnly && task.assigneeId !== args.actor.id) {
+    throw new NotFoundError('Task', input.taskId)
+  }
   const from = task.status as TaskStatus
   const to = input.to
 
@@ -1790,6 +1810,7 @@ type SimpleTransitionArgs = TaskMutationArgs & {
   events?: TaskEventBus
   calendar?: Calendar | undefined
   penalty?: PenaltyPort
+  assignedWorkOnly?: boolean
 }
 
 export async function startTask(
@@ -1885,6 +1906,9 @@ export async function unblockTask(
   args: SimpleTransitionArgs,
 ): Promise<TaskTransitionResultDto> {
   const task = await loadTask(db, args.input.taskId)
+  if (args.assignedWorkOnly && task.assigneeId !== args.actor.id) {
+    throw new NotFoundError('Task', args.input.taskId)
+  }
   if (task.status !== 'BLOCKED') {
     throw new DomainError('tasks.errors.notBlocked', { taskId: task.id })
   }

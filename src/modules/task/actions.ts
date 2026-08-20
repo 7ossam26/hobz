@@ -7,7 +7,9 @@ import { clientIpFromHeaders } from '@/lib/auth/ip'
 import { requireAuth, requirePermission } from '@/lib/auth/session'
 import { calendarFor } from '@/lib/calendar'
 import { prisma } from '@/lib/db'
+import { ForbiddenError } from '@/lib/errors'
 import { fanOut } from '@/lib/events'
+import { can, type Actor } from '@/lib/rbac'
 import { getSetting } from '@/lib/settings'
 import { getExtensionList } from '@/modules/extension/queries'
 import type { ExtensionRequestDto } from '@/modules/extension/types'
@@ -121,9 +123,14 @@ async function categories() {
   return getSetting('tasks.categories')
 }
 
-function revalidateTask(taskId: string, projectId?: string): void {
+function assignedWorkOnly(actor: Actor): boolean {
+  if (can(actor, 'task.edit')) return false
+  if (can(actor, 'task.work.assigned')) return true
+  throw new ForbiddenError('task.work.assigned')
+}
+
+function revalidateTask(_taskId: string, projectId?: string): void {
   revalidatePath('/tasks')
-  revalidatePath(`/tasks/${taskId}`)
   if (projectId) revalidatePath(`/projects/${projectId}`)
 }
 
@@ -217,9 +224,9 @@ export const removeTaskDependencyAction = requirePermission(
   },
 )
 
-export const startTaskAction = requirePermission(
-  permissionForTransition('IN_PROGRESS'),
+export const startTaskAction = requireAuth(
   async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
+    const workOnly = assignedWorkOnly(actor)
     const { id } = taskIdSchema.parse(raw)
     const clientIp = await ip()
     const result = await prisma.$transaction((tx) =>
@@ -227,6 +234,7 @@ export const startTaskAction = requirePermission(
         actor,
         input: { taskId: id },
         penalty: prismaPenaltyPort,
+        assignedWorkOnly: workOnly,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )
@@ -235,9 +243,9 @@ export const startTaskAction = requirePermission(
   },
 )
 
-export const submitTaskAction = requirePermission(
-  permissionForTransition('SUBMITTED'),
+export const submitTaskAction = requireAuth(
   async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
+    const workOnly = assignedWorkOnly(actor)
     const { id } = taskIdSchema.parse(raw)
     const clientIp = await ip()
     // SPEC §5.4: delivery is the edge that *freezes* the accrual, so the
@@ -255,6 +263,7 @@ export const submitTaskAction = requirePermission(
         calendar: calendarFor(tx),
         penalty: prismaPenaltyPort,
         events: notificationTaskEvents,
+        assignedWorkOnly: workOnly,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )
@@ -345,9 +354,9 @@ export const completeTaskAction = requirePermission(
   },
 )
 
-export const blockTaskAction = requirePermission(
-  permissionForTransition('BLOCKED'),
+export const blockTaskAction = requireAuth(
   async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
+    const workOnly = assignedWorkOnly(actor)
     const input = blockTaskSchema.parse(raw)
     const clientIp = await ip()
     const result = await prisma.$transaction((tx) =>
@@ -355,6 +364,7 @@ export const blockTaskAction = requirePermission(
         actor,
         input,
         penalty: prismaPenaltyPort,
+        assignedWorkOnly: workOnly,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )
@@ -363,9 +373,9 @@ export const blockTaskAction = requirePermission(
   },
 )
 
-export const unblockTaskAction = requirePermission(
-  'task.edit',
+export const unblockTaskAction = requireAuth(
   async (actor, raw: unknown): Promise<TaskTransitionResultDto> => {
+    const workOnly = assignedWorkOnly(actor)
     const { id } = taskIdSchema.parse(raw)
     const clientIp = await ip()
     const result = await prisma.$transaction((tx) =>
@@ -373,6 +383,7 @@ export const unblockTaskAction = requirePermission(
         actor,
         input: { taskId: id },
         penalty: prismaPenaltyPort,
+        assignedWorkOnly: workOnly,
         ...(clientIp ? { ip: clientIp } : {}),
       }),
     )
@@ -411,6 +422,7 @@ export const addTaskCommentAction = requirePermission(
       actor,
       input,
       events: notificationTaskEvents,
+      enforceReadScope: true,
       ip: await ip(),
     })
     revalidateTask(input.taskId)

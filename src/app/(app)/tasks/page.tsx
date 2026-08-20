@@ -55,6 +55,7 @@ export default async function TasksPage({
     canCreate: can(actor, 'task.create'),
     canAssign: can(actor, 'task.assign'),
     canEdit: can(actor, 'task.edit'),
+    canWork: can(actor, 'task.edit') || can(actor, 'task.work.assigned'),
     canApprove: can(actor, 'task.approve'),
     canCancel: can(actor, 'task.cancel'),
     canComment: can(actor, 'task.comment'),
@@ -69,34 +70,28 @@ export default async function TasksPage({
   // mapped type" rule, not a loosening of validation.
   const rawFilters = filters as Record<string, unknown>
 
-  const [
-    board,
-    list,
-    calendar,
-    projectOptions,
-    userOptions,
-    categories,
-  ] = await Promise.all([
-    view === 'board' ? getTaskBoard(rawFilters, now) : Promise.resolve(null),
-    view === 'list'
-      ? getTasks(
-          {
-            ...rawFilters,
-            sort: state.sort ?? undefined,
-            dir: state.dir,
-            page: state.page,
-            pageSize: state.pageSize,
-          },
-          now,
-        )
-      : Promise.resolve(null),
-    view === 'calendar'
-      ? getTaskCalendar(rawFilters, { from: calRange.from, to: calRange.to }, now)
-      : Promise.resolve(null),
-    getProjectOptions(),
-    getUserOptions(),
-    getTaskCategories(),
-  ])
+  const [board, list, calendar, projectOptions, userOptions, categories] =
+    await Promise.all([
+      view === 'board' ? getTaskBoard(rawFilters, now) : Promise.resolve(null),
+      view === 'list'
+        ? getTasks(
+            {
+              ...rawFilters,
+              sort: state.sort ?? undefined,
+              dir: state.dir,
+              page: state.page,
+              pageSize: state.pageSize,
+            },
+            now,
+          )
+        : Promise.resolve(null),
+      view === 'calendar'
+        ? getTaskCalendar(rawFilters, { from: calRange.from, to: calRange.to }, now)
+        : Promise.resolve(null),
+      getProjectOptions(),
+      getUserOptions(),
+      getTaskCategories(),
+    ])
 
   return (
     <TasksClient

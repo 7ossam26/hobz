@@ -101,6 +101,47 @@ describe('modules/role — الدور المحجوز', () => {
 })
 
 describe('modules/role — دورة حياة الدور', () => {
+  it('يرفض دورًا افتراضيًا بصلاحية واسعة ويضمن افتراضيًا حيًا واحدًا', async () => {
+    const actor = await manager()
+
+    await expect(
+      createRole(db, {
+        actor,
+        input: {
+          nameAr: 'افتراضي خطر',
+          nameEn: 'unsafe_default',
+          isDefault: true,
+          permissions: ['task.edit'],
+        },
+      }),
+    ).rejects.toMatchObject({ messageKey: 'roles.defaultRoleUnsafe' })
+
+    const first = await createRole(db, {
+      actor,
+      input: {
+        nameAr: 'الأول',
+        nameEn: 'first_default',
+        isDefault: true,
+        permissions: ['task.view.assigned'],
+      },
+    })
+    const second = await createRole(db, {
+      actor,
+      input: {
+        nameAr: 'الثاني',
+        nameEn: 'second_default',
+        isDefault: true,
+        permissions: ['ledger.view.own'],
+      },
+    })
+
+    expect(await db.role.count({ where: { isDefault: true, deletedAt: null } })).toBe(1)
+    expect((await db.role.findUniqueOrThrow({ where: { id: first.id } })).isDefault).toBe(
+      false,
+    )
+    expect(second.isDefault).toBe(true)
+  })
+
   it('ينشئ دورًا بصلاحياته ويكتب سجل تدقيق', async () => {
     const actor = await manager()
 
@@ -108,7 +149,7 @@ describe('modules/role — دورة حياة الدور', () => {
       actor,
       input: {
         nameAr: 'مدير مشروع',
-        nameEn: 'PROJECT_MANAGER',
+        nameEn: 'project_manager',
         permissions: ['project.view.all', 'task.assign'],
       },
     })
@@ -119,7 +160,7 @@ describe('modules/role — دورة حياة الدور', () => {
       where: { action: 'role.created', entityId: role.id },
     })
     expect(audit.after).toMatchObject({
-      nameEn: 'PROJECT_MANAGER',
+      nameEn: 'project_manager',
       permissions: ['project.view.all', 'task.assign'],
     })
   })
@@ -135,7 +176,7 @@ describe('modules/role — دورة حياة الدور', () => {
       }),
     ).rejects.toBeInstanceOf(ConflictError)
 
-    expect(await db.role.count({ where: { nameEn: 'DESIGNER' } })).toBe(1)
+    expect(await db.role.count({ where: { nameEn: 'designer' } })).toBe(1)
   })
 
   it('يعيد إحياء دور محذوف ناعمًا بنفس المعرّف', async () => {
@@ -156,7 +197,7 @@ describe('modules/role — دورة حياة الدور', () => {
 
     expect(revived.id).toBe(dead.id)
     expect(revived.permissions).toEqual(['task.approve'])
-    expect(await db.role.count({ where: { nameEn: 'EDITOR' } })).toBe(1)
+    expect(await db.role.count({ where: { nameEn: 'editor' } })).toBe(1)
   })
 
   it('يستبدل مجموعة الصلاحيات كاملة عند التعديل', async () => {

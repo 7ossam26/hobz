@@ -6,6 +6,7 @@ import { confirmImport, previewImport } from '@/modules/import/service'
 import {
   createUser,
   createUserWithPermissions,
+  createRole,
   seedPermissionCatalog,
 } from '../../factories/db'
 import { actorFor } from '../../helpers/actor-from-db'
@@ -196,5 +197,23 @@ describe('modules/import — استيراد المستخدمين', () => {
     const after = await db.user.findUniqueOrThrow({ where: { id: existing.id } })
     expect(after.passwordHash).toBe(before.passwordHash)
     expect(after.fullName).toBe('جديد')
+  })
+
+  it('يحافظ على أدوار المستخدم الموجود لأن القالب لا يحتوي عمود أدوار', async () => {
+    const actor = await importerActor()
+    const role = await createRole(db, { nameEn: 'kept_role' })
+    const existing = await createUser(db, {
+      username: 'kept.roles',
+      fullName: 'قبل',
+      roleIds: [role.id],
+    })
+    const buffer = await buildImportFixture('users', [
+      { username: 'KEPT.ROLES', fullName: 'بعد', isWorker: ar.common.no },
+    ])
+
+    await db.$transaction((tx) => confirmImport(tx, { entity: 'users', buffer, actor }))
+
+    const memberships = await db.userRole.findMany({ where: { userId: existing.id } })
+    expect(memberships.map((membership) => membership.roleId)).toEqual([role.id])
   })
 })

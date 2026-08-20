@@ -26,7 +26,10 @@ export const createRoleAction = requirePermission(
   'role.manage',
   async (actor, raw: unknown): Promise<RoleDetailDto> => {
     const input = createRoleSchema.parse(raw)
-    const role = await createRole(prisma, { actor, input, ip: await ip() })
+    const requestIp = await ip()
+    const role = await prisma.$transaction((tx) =>
+      createRole(tx, { actor, input, ...(requestIp ? { ip: requestIp } : {}) }),
+    )
     revalidatePath('/roles')
     return role
   },
@@ -36,7 +39,10 @@ export const updateRoleAction = requirePermission(
   'role.manage',
   async (actor, raw: unknown): Promise<RoleDetailDto> => {
     const input = updateRoleSchema.parse(raw)
-    const role = await updateRole(prisma, { actor, input, ip: await ip() })
+    const requestIp = await ip()
+    const role = await prisma.$transaction((tx) =>
+      updateRole(tx, { actor, input, ...(requestIp ? { ip: requestIp } : {}) }),
+    )
     revalidatePath('/roles')
     // A permission change alters what every holder may do, and the navigation
     // is rendered from that. Revalidating the whole tree is the cheap way to

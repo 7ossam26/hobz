@@ -64,8 +64,8 @@ vi.mock('next-auth', () => {
  *
  * ── The exemptions ─────────────────────────────────────────────────────────
  *
- * Thirteen actions are built on `requireAuth` (or, for sign-in, on nothing at
- * all) because what they touch is the caller's *own* account or is not
+ * Thirteen actions intentionally have no permission-key gate (or, for sign-in,
+ * no actor at all) because what they touch is the caller's *own* account or is not
  * confidential. Each is named below with its reason, and the list is asserted
  * exact in both directions: a stale entry fails, and a new ungated action fails
  * until somebody writes down why. They still have to reject a caller with no

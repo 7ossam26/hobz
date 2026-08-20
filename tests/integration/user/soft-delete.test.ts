@@ -58,7 +58,7 @@ describe('الحذف الناعم — الصفوف تختفي والتاريخ �
     await createUser(db, { roleIds: [dead.id, live.id] })
 
     const page = await listUsers(db, listUsersSchema.parse({}))
-    expect(page.items[0]?.roles.map((r) => r.nameEn)).toEqual(['LIVE_ROLE'])
+    expect(page.items[0]?.roles.map((r) => r.nameEn)).toEqual(['live_role'])
   })
 
   it('لا يمنح الدور المحذوف أي صلاحية لحامله', async () => {

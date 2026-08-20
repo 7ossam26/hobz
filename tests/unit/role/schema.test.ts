@@ -8,24 +8,24 @@ import { permissionGroups } from '@/modules/role/service'
 describe('modules/role — مخطّط الدور', () => {
   const valid = {
     nameAr: 'مدير مشروع',
-    nameEn: 'PROJECT_MANAGER',
+    nameEn: 'project_manager',
     permissions: ['project.view.all', 'task.assign'],
   }
 
   it('يقبل دورًا صحيحًا', () => {
     const parsed = createRoleSchema.parse(valid)
-    expect(parsed.nameEn).toBe('PROJECT_MANAGER')
+    expect(parsed.nameEn).toBe('project_manager')
     expect(parsed.permissions).toEqual(['project.view.all', 'task.assign'])
   })
 
-  it('يرفع حالة المعرّف الإنجليزي تلقائيًا', () => {
+  it('يخفض حالة المعرّف الإنجليزي العادي تلقائيًا', () => {
     expect(createRoleSchema.parse({ ...valid, nameEn: 'project_manager' }).nameEn).toBe(
-      'PROJECT_MANAGER',
+      'project_manager',
     )
   })
 
   it('يرفض معرّفًا إنجليزيًا بصيغة خاطئة', () => {
-    for (const nameEn of ['project manager', '1MANAGER', '_MANAGER', 'مدير', 'A']) {
+    for (const nameEn of ['project manager', '1manager', '_manager', 'مدير', 'a']) {
       expect(
         createRoleSchema.safeParse({ ...valid, nameEn }).success,
         `accepted "${nameEn}"`,
@@ -80,6 +80,29 @@ describe('modules/role — مخطّط الدور', () => {
     // It is what audit history and the SUPER_ADMIN check are written against.
     const parsed = updateRoleSchema.parse({ id: 'r1', ...valid, nameEn: 'RENAMED' })
     expect(parsed).not.toHaveProperty('nameEn')
+  })
+
+  it('يرفض الصلاحيات الواسعة حين يكون الدور افتراضيًا', () => {
+    expect(
+      createRoleSchema.safeParse({
+        ...valid,
+        isDefault: true,
+        permissions: ['task.edit'],
+      }).success,
+    ).toBe(false)
+    expect(
+      createRoleSchema.safeParse({
+        ...valid,
+        isDefault: true,
+        permissions: [
+          'project.view.assigned',
+          'task.view.assigned',
+          'task.work.assigned',
+          'task.comment',
+          'ledger.view.own',
+        ],
+      }).success,
+    ).toBe(true)
   })
 })
 

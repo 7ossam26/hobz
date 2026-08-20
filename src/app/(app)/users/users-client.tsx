@@ -222,10 +222,9 @@ export function UsersClient({
     setMessage(null)
 
     const payload = { id: resetFor.id, newPassword: resetValue }
-    const parsed = resetPasswordSchemaFor(
-      minPasswordLength,
-      resetFor.username,
-    ).safeParse(payload)
+    const parsed = resetPasswordSchemaFor(minPasswordLength, resetFor.username).safeParse(
+      payload,
+    )
     if (!parsed.success) {
       fail(parsed.error.issues[0]?.message ?? ar.errors.validation)
       return
@@ -456,9 +455,7 @@ export function UsersClient({
                       dir="ltr"
                       className="text-start font-mono"
                       autoCapitalize="none"
-                      onChange={(e) =>
-                        setDraft({ ...draft, username: e.target.value.toLowerCase() })
-                      }
+                      onChange={(e) => setDraft({ ...draft, username: e.target.value })}
                     />
                   )}
                 </FormField>

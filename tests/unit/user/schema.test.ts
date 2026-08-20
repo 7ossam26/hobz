@@ -28,10 +28,10 @@ const valid = {
 }
 
 describe('modules/user — مخطّط الإنشاء', () => {
-  it('يقبل مدخلًا صحيحًا ويطبّع الهاتف واسم المستخدم', () => {
+  it('يقبل مدخلًا صحيحًا ويطبّع الهاتف ويحفظ حالة اسم المستخدم', () => {
     const parsed = createUserSchema.parse({ ...valid, username: '  Ahmed.Ibrahim ' })
 
-    expect(parsed.username).toBe('ahmed.ibrahim')
+    expect(parsed.username).toBe('Ahmed.Ibrahim')
     expect(parsed.phone).toBe('+201012345678')
   })
 
@@ -237,9 +237,7 @@ describe('modules/user — قاعدة كلمة المرور تصل إلى الن
     })
 
     expect(parsed.success).toBe(false)
-    expect(parsed.error?.issues[0]?.message).toBe(
-      ar.validation.passwordContainsUsername,
-    )
+    expect(parsed.error?.issues[0]?.message).toBe(ar.validation.passwordContainsUsername)
   })
 
   it('لا يشكو من احتواء اسم المستخدم حين لا يُمرَّر', () => {

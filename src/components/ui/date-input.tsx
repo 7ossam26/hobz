@@ -1,75 +1,157 @@
 'use client'
 
+import { CalendarDays } from 'lucide-react'
 import * as React from 'react'
 
-import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
+const DATE_KEY = /^(\d{4})-(\d{2})-(\d{2})$/
+const DATE_TIME_KEY = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/
+
+/** The stable, user-facing form; the underlying control continues to carry ISO. */
+export function formatDateInputDisplay(value: unknown): string {
+  if (typeof value !== 'string') return ''
+  const match = DATE_KEY.exec(value)
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : ''
+}
+
+/** `dd/mm/yyyy, HH:mm`, while the native value remains `YYYY-MM-DDTHH:mm`. */
+export function formatDateTimeInputDisplay(value: unknown): string {
+  if (typeof value !== 'string') return ''
+  const match = DATE_TIME_KEY.exec(value)
+  return match ? `${match[3]}/${match[2]}/${match[1]}, ${match[4]}:${match[5]}` : ''
+}
+
+type NativeInputProps = Omit<React.ComponentProps<'input'>, 'type'>
+
+interface PickerInputProps extends NativeInputProps {
+  nativeType: 'date' | 'datetime-local'
+  displayValue: string
+  placeholder: string
+}
+
 /**
- * The one date field in the product.
+ * A deterministic display over a real native picker.
  *
- * ── Why it exists ──────────────────────────────────────────────────────────
+ * Browsers own the text painted inside `type=date`, including its field order,
+ * so locale hints cannot guarantee `dd/mm/yyyy`. The native input therefore
+ * remains the focusable, form-owning control, stretched over this wrapper with
+ * transparent text; the product-owned display underneath is stable everywhere.
+ * Values and change events still come directly from the native input as ISO.
  *
- * A bare `<input type="date">` was reported as "opens sometimes". Three things
- * were true at once and this component closes all three, because betting on
- * which one a given user hit is how a bug gets fixed twice:
- *
- *  1. **The calendar indicator moves under RTL.** The document is `dir="rtl"`
- *     (`app/layout.tsx`), so Blink's `::-webkit-calendar-picker-indicator`
- *     renders at the inline end — the *left* edge — where nobody looks for it.
- *     Two screens had already worked around this locally with `dir="ltr"`
- *     (`audit-filters.tsx`, `holidays-section.tsx`); six others had not, which
- *     is exactly the kind of drift a shared component exists to prevent.
- *  2. **`min-w-0` let the control shrink below its intrinsic width.** `Input`
- *     sets `flex w-full min-w-0`, and inside a two-column grid in a sheet that
- *     can put the field near 150px, where Blink clips the indicator out of the
- *     box entirely — no click target anywhere.
- *  3. **Nothing ever called `showPicker()`.** So the *only* affordance was that
- *     indicator. Calling it explicitly makes a click anywhere on the field open
- *     the calendar, which is what a user means by "clicking the date field".
- *
- * ── Why `onClick` and deliberately not `onFocus` ───────────────────────────
- *
- * A modal focuses the first control in its body when it opens
- * (`use-modal.ts`). Binding `showPicker()` to focus would therefore pop a
- * calendar nobody asked for every time a sheet whose first field is a date is
- * opened — and again on every programmatic refocus. Click is the user actually
- * asking. There is a test asserting focus does *not* open it.
- *
- * `showPicker` throws `NotAllowedError` without user activation and is absent
- * on older Safari, so the call is optional-chained and guarded: the fallback is
- * exactly today's native behaviour, never worse.
+ * `showPicker()` stays click-only. Sheets autofocus their first control through
+ * `use-modal.ts`; opening a picker on focus would reopen the original modal bug.
  */
-function DateInput({
+function PickerInput({
+  nativeType,
+  displayValue,
+  placeholder,
   className,
   onClick,
+  disabled,
   ...props
-}: Omit<React.ComponentProps<typeof Input>, 'type'>) {
+}: PickerInputProps) {
   function handleClick(event: React.MouseEvent<HTMLInputElement>) {
     onClick?.(event)
     if (event.defaultPrevented) return
 
-    const element = event.currentTarget
     try {
-      element.showPicker?.()
+      event.currentTarget.showPicker?.()
     } catch {
-      // Unsupported, or the click did not count as user activation. The native
-      // indicator still works; this is an enhancement, not the mechanism.
+      // Older Safari and calls without user activation fall back to the
+      // browser's ordinary native-picker behaviour.
     }
   }
 
   return (
-    <Input
+    <span
+      className={cn(
+        'border-input bg-surface-field relative flex h-9 w-full min-w-[9.5rem] items-center rounded-md border shadow-xs transition-colors',
+        'focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]',
+        'has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-50',
+        'has-[input[aria-invalid=true]]:border-destructive has-[input[aria-invalid=true]]:ring-destructive/20',
+        className,
+      )}
+      data-slot="picker-input"
+    >
+      <span
+        aria-hidden="true"
+        dir="ltr"
+        className={cn(
+          'pointer-events-none flex w-full items-center justify-between gap-2 px-3 text-sm tabular-nums',
+          !displayValue && 'text-muted-foreground',
+        )}
+      >
+        <span>{displayValue || placeholder}</span>
+        <CalendarDays className="size-4 shrink-0" />
+      </span>
+      <input
+        {...props}
+        type={nativeType}
+        dir="ltr"
+        disabled={disabled}
+        onClick={handleClick}
+        className="absolute inset-0 size-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+        data-slot="input"
+      />
+    </span>
+  )
+}
+
+function DateInput({
+  className,
+  value,
+  defaultValue,
+  onChange,
+  ...props
+}: NativeInputProps) {
+  const [internalValue, setInternalValue] = React.useState(
+    typeof defaultValue === 'string' ? defaultValue : '',
+  )
+  const currentValue = value ?? internalValue
+  return (
+    <PickerInput
       {...props}
-      type="date"
-      // The calendar glyph belongs on the trailing edge where the browser puts
-      // it in an LTR document; the value itself (`2026-08-19`) is latin digits
-      // and reads left-to-right regardless of the page direction.
-      dir="ltr"
-      onClick={handleClick}
-      className={cn('min-w-[9.5rem] tabular-nums', className)}
+      value={value}
+      defaultValue={defaultValue}
+      onChange={(event) => {
+        if (value === undefined) setInternalValue(event.currentTarget.value)
+        onChange?.(event)
+      }}
+      nativeType="date"
+      displayValue={formatDateInputDisplay(currentValue)}
+      placeholder="dd/mm/yyyy"
+      className={className}
     />
   )
 }
 
-export { DateInput }
+function DateTimeInput({
+  className,
+  value,
+  defaultValue,
+  onChange,
+  ...props
+}: NativeInputProps) {
+  const [internalValue, setInternalValue] = React.useState(
+    typeof defaultValue === 'string' ? defaultValue : '',
+  )
+  const currentValue = value ?? internalValue
+  return (
+    <PickerInput
+      {...props}
+      value={value}
+      defaultValue={defaultValue}
+      onChange={(event) => {
+        if (value === undefined) setInternalValue(event.currentTarget.value)
+        onChange?.(event)
+      }}
+      nativeType="datetime-local"
+      displayValue={formatDateTimeInputDisplay(currentValue)}
+      placeholder="dd/mm/yyyy, HH:mm"
+      className={className}
+    />
+  )
+}
+
+export { DateInput, DateTimeInput }

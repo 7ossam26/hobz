@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import { ar } from '@/i18n/ar'
-import { normalizeUsername, validateUsername } from '@/lib/auth/username'
+import { normalizeUsernameDisplay, validateUsername } from '@/lib/auth/username'
 import { normalizeEgyptMobile } from '@/lib/phone'
 
 /**
@@ -15,7 +15,7 @@ import { normalizeEgyptMobile } from '@/lib/phone'
 
 const usernameSchema = z
   .string()
-  .transform(normalizeUsername)
+  .transform(normalizeUsernameDisplay)
   .superRefine((value, ctx) => {
     for (const key of validateUsername(value)) {
       ctx.addIssue({

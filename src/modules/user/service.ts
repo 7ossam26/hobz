@@ -1,5 +1,6 @@
 import { recordAudit } from '@/lib/audit'
 import { hashPassword, validatePassword, type PasswordPolicy } from '@/lib/auth/password'
+import { canonicalizeUsername } from '@/lib/auth/username'
 import type { Db } from '@/lib/db'
 import { AppError, ConflictError, DomainError, NotFoundError } from '@/lib/errors'
 import { SUPER_ADMIN_ROLE, type Actor } from '@/lib/rbac'
@@ -230,7 +231,10 @@ async function assertRolesExist(db: Db, roleIds: readonly string[]): Promise<voi
  * `assignPenaltyProfile` has always checked; this is the same check, on the
  * other path that sets the column.
  */
-async function assertPenaltyProfileExists(db: Db, profileId: string | null): Promise<void> {
+async function assertPenaltyProfileExists(
+  db: Db,
+  profileId: string | null,
+): Promise<void> {
   if (!profileId) return
   const profile = await db.penaltyProfile.findFirst({
     where: { id: profileId, deletedAt: null },
@@ -290,6 +294,7 @@ export async function createUser(
   args: UserMutationArgs & { input: CreateUserInput; policy: PasswordPolicy },
 ): Promise<UserDetailDto> {
   const { input } = args
+  const usernameCanonical = canonicalizeUsername(input.username)
 
   const problems = validatePassword(input.password, args.policy, {
     username: input.username,
@@ -301,7 +306,7 @@ export async function createUser(
   }
 
   const existing = await db.user.findUnique({
-    where: { username: input.username },
+    where: { usernameCanonical },
     select: { id: true },
   })
   if (existing) {
@@ -310,13 +315,25 @@ export async function createUser(
     throw new ConflictError('validation.usernameTaken', { username: input.username })
   }
 
-  await assertRolesExist(db, input.roles)
+  const roleIds =
+    input.roles.length > 0
+      ? input.roles
+      : (
+          await db.role.findMany({
+            where: { isDefault: true, deletedAt: null },
+            select: { id: true },
+            take: 1,
+          })
+        ).map((role) => role.id)
+
+  await assertRolesExist(db, roleIds)
   await assertPenaltyProfileExists(db, input.penaltyProfileId)
-  await assertMayChangeSuperAdminRole(db, args.actor, [], input.roles)
+  await assertMayChangeSuperAdminRole(db, args.actor, [], roleIds)
 
   const user = await db.user.create({
     data: {
       username: input.username,
+      usernameCanonical,
       passwordHash: await hashPassword(input.password),
       fullName: input.fullName,
       phone: input.phone,
@@ -330,7 +347,7 @@ export async function createUser(
       defaultTaskRate: input.defaultTaskRate,
       weeklyCapacityHours: input.weeklyCapacityHours,
       penaltyProfileId: input.penaltyProfileId,
-      roles: { create: input.roles.map((roleId) => ({ roleId })) },
+      roles: { create: roleIds.map((roleId) => ({ roleId })) },
     },
     select: { id: true },
   })
@@ -350,7 +367,7 @@ export async function createUser(
       defaultTaskRate: input.defaultTaskRate,
       weeklyCapacityHours: input.weeklyCapacityHours,
       penaltyProfileId: input.penaltyProfileId,
-      roles: [...input.roles].sort(),
+      roles: [...roleIds].sort(),
     },
     ...(args.ip ? { ip: args.ip } : {}),
   })

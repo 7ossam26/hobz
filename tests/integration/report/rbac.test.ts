@@ -20,6 +20,7 @@ import { testDb } from '../../setup/reset'
 vi.mock('@/lib/auth/session', () => import('../../helpers/session-mock'))
 
 const {
+  assertCanExportReports,
   getMonthlyVirallapSummary,
   getPayoutStatementReport,
   getProjectSummaryReport,
@@ -37,6 +38,18 @@ const NOW = cairo('2026-03-15T12:00')
  */
 
 describe('modules/report — report.view مطلوب لكل التقارير', () => {
+  it('يفصل التصدير عن العرض ويطلب report.export', async () => {
+    await seedPermissionCatalog(db)
+    const viewer = await createUserWithPermissions(db, ['report.view'])
+    setSessionActor(await actorFor(db, viewer.id))
+    await expect(assertCanExportReports()).rejects.toBeInstanceOf(ForbiddenError)
+
+    const exporter = await createUserWithPermissions(db, ['report.export'])
+    setSessionActor(await actorFor(db, exporter.id))
+    await expect(assertCanExportReports()).resolves.toBeUndefined()
+    clearSessionActor()
+  })
+
   it('يرفض كشف المستحقات بلا صلاحية', async () => {
     await seedPermissionCatalog(db)
     const nobody = await createUserWithPermissions(db, [])

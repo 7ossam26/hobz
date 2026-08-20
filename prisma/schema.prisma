@@ -36,6 +36,9 @@ enum PayType {
 model User {
   id                 String  @id @default(cuid())
   username           String  @unique
+  /// Case-insensitive identity. `username` preserves the spelling entered by
+  /// the administrator; authentication, imports and mentions resolve by this.
+  usernameCanonical  String  @unique
   passwordHash       String
   fullName           String
   /// E.164, normalised to +20… on write. Never used for email/SMS — WhatsApp
@@ -110,6 +113,7 @@ model Role {
   nameAr      String
   description String?
   isSystem    Boolean   @default(false)
+  isDefault   Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
@@ -1324,4 +1328,8 @@ model PerformanceScore {
 //     cycle", which is also what makes the accrual job idempotent.
 //  4. `payout_cycles_single_open` — UNIQUE ((status)) WHERE status = 'OPEN'.
 //     Two open cycles would mean two answers to "which cycle is this entry in".
+//  5. `roles_one_live_default_idx` — UNIQUE (isDefault) WHERE isDefault = true
+//     AND deletedAt IS NULL. Created by
+//     `20260823000000_identity_default_access_deep_links`; two automatic role
+//     baselines would make user creation depend on row order.
 // ─────────────────────────────────────────────────────────────────────────

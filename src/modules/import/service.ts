@@ -191,7 +191,13 @@ async function planUsers(
     }
 
     if (existing) {
-      const parsed = updateUserSchema.safeParse({ id: existing.id, ...shared })
+      const parsed = updateUserSchema.safeParse({
+        id: existing.id,
+        ...shared,
+        // The users template has no roles column. An update must therefore
+        // preserve memberships, never interpret the missing column as "none".
+        roles: existing.roleIds,
+      })
       if (!parsed.success) {
         plans.push(
           invalidPlan(

@@ -1,6 +1,7 @@
 ﻿import type { NotificationType, Prisma } from '@prisma/client'
 
 import type { Db } from '@/lib/db'
+import { taskHref } from '@/lib/entity-href'
 import { DomainError, NotFoundError } from '@/lib/errors'
 import { isUniqueViolation } from '@/modules/ledger/service'
 
@@ -20,8 +21,11 @@ import {
  */
 
 /** What a `Notification.entityType`/`entityId` pair resolves to on screen. */
-function hrefFor(entityType: string | null, entityId: string | null): string | null {
-  if (entityType === 'Task' && entityId) return `/tasks/${entityId}`
+export function hrefFor(
+  entityType: string | null,
+  entityId: string | null,
+): string | null {
+  if (entityType === 'Task' && entityId) return taskHref(entityId)
   if (entityType === 'Payout') return '/my-earnings'
   return null
 }

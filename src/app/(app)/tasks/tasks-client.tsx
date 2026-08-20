@@ -27,6 +27,7 @@ export interface TaskPermissions {
   canCreate: boolean
   canAssign: boolean
   canEdit: boolean
+  canWork: boolean
   canApprove: boolean
   canCancel: boolean
   canComment: boolean
@@ -88,6 +89,9 @@ export function TasksClient({
   const [openTaskId, setOpenTaskId] = React.useState<string | null>(null)
   const [sheetData, setSheetData] = React.useState<TaskSheetDataDto | null>(null)
   const [sheetPending, startSheetTransition] = React.useTransition()
+  const linkedTaskAttemptRef = React.useRef<string | null>(null)
+  const requestedTaskRef = React.useRef<string | null>(null)
+  const linkedTaskId = searchParams.get('task')
 
   const [quickCreateOpen, setQuickCreateOpen] = React.useState(false)
   const [quickCreatePreset, setQuickCreatePreset] = React.useState<{
@@ -130,24 +134,55 @@ export function TasksClient({
     router.push(`${pathname}?${usp.toString()}`, { scroll: false })
   }
 
-  function openTask(id: string) {
+  function taskUrl(id: string | null): string {
+    const next = new URLSearchParams(searchParams)
+    if (id) next.set('task', id)
+    else next.delete('task')
+    const query = next.toString()
+    return query ? `${pathname}?${query}` : pathname
+  }
+
+  function openTask(id: string, syncUrl = true) {
+    requestedTaskRef.current = id
+    if (syncUrl) linkedTaskAttemptRef.current = linkedTaskId
     setOpenTaskId(id)
     setSheetData(null)
+    if (syncUrl) router.push(taskUrl(id), { scroll: false })
     startSheetTransition(async () => {
       try {
         const data = await getTaskSheetDataAction(id)
-        setSheetData(data)
+        if (requestedTaskRef.current === id) setSheetData(data)
       } catch {
-        toast({ title: ar.errors.unexpected, tone: 'error' })
+        if (requestedTaskRef.current !== id) return
+        toast({ title: ar.errors.notFound, tone: 'error' })
+        requestedTaskRef.current = null
         setOpenTaskId(null)
+        router.replace(taskUrl(null), { scroll: false })
       }
     })
   }
 
   function closeTask() {
+    requestedTaskRef.current = null
+    linkedTaskAttemptRef.current = linkedTaskId
     setOpenTaskId(null)
     setSheetData(null)
+    router.replace(taskUrl(null), { scroll: false })
   }
+
+  React.useEffect(() => {
+    if (!linkedTaskId) {
+      linkedTaskAttemptRef.current = null
+      return
+    }
+    if (linkedTaskId === openTaskId || linkedTaskAttemptRef.current === linkedTaskId)
+      return
+    linkedTaskAttemptRef.current = linkedTaskId
+    openTask(linkedTaskId, false)
+    // `openTaskId` deliberately participates so navigating between two task
+    // links while the shell stays mounted opens the new entity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkedTaskId, openTaskId])
 
   function refreshOpenTask() {
     if (!openTaskId) return

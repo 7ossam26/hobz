@@ -166,7 +166,7 @@ describe('القراءة — الحذف الناعم محترم في كل مسا
     setSessionActor(await actorFor(db, viewer.id))
 
     const detail = await getUserById(member.id)
-    expect(detail.roles.map((r) => r.nameEn)).toEqual(['LIVE_ROLE'])
+    expect(detail.roles.map((r) => r.nameEn)).toEqual(['live_role'])
   })
 })
 
