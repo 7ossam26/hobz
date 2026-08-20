@@ -7,6 +7,8 @@
  * second runner harmless rather than catastrophic, but not running it at all is
  * cheaper than contending for a lock every night.
  */
+import '@/lib/zod-locale'
+
 export async function register(): Promise<void> {
   if (process.env.ENABLE_SCHEDULER !== 'true') return
 

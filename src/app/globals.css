@@ -96,14 +96,16 @@
 
      1. SURFACE  — a zinc ramp, never pure #fff / #000. Chrome only. Carries no
                    meaning, and nothing in this group is allowed a hue.
-     2. ACCENT   — one violet ramp. Actions and focus. Never used to classify a
-                   row, a status, or a number.
+     2. ACCENT   — one green ramp, hue 129, matched to the Virallap logo mark.
+                   Actions and focus. Never used to classify a row, a status,
+                   or a number.
      3. DATA     — ten hues. Every saturated colour on screen comes from here,
                    and every one of them names a fact: a status, a priority, a
                    health, a category, a project, a ledger type.
 
-   The data hues deliberately avoid the 275–300° band the accent occupies, so a
-   status chip can never be mistaken for a button.
+   The data hues deliberately avoid a 20° band around the accent hue, so a
+   status chip can never be mistaken for a button. `--data-lime` moved from
+   128° to 104° for exactly this reason when the accent became green.
 
    All values are OKLCH: perceptually uniform lightness, which is what makes a
    fixed L across ten hues actually *look* like one row of chips rather than a
@@ -118,10 +120,10 @@
      `sunken` < `base` < `raised`. Table headers and wells sit below the page;
      cards, sheets and popovers sit above it. Pure white is banned, so `raised`
      stops at L 0.993 — visibly paper rather than screen. */
-  --surface-sunken: oklch(0.957 0.004 286);
-  --surface-base: oklch(0.976 0.002 286);
-  --surface-raised: oklch(0.993 0.001 286);
-  --surface-inset: oklch(0.936 0.005 286);
+  --surface-sunken: oklch(0.957 0.004 198);
+  --surface-base: oklch(0.976 0.002 198);
+  --surface-raised: oklch(0.993 0.001 198);
+  --surface-inset: oklch(0.936 0.005 198);
 
   /* ── The four surfaces the ramp above never named ────────────────────────
      Nine distinct UI surfaces used to resolve to two colours: card, sheet,
@@ -145,37 +147,44 @@
   --surface-selected: oklch(0 0 0 / 0.07);
 
   /* The modal backdrop. Was `bg-zinc-950/40` hardcoded in three files. */
-  --scrim: oklch(0.18 0.005 286 / 0.42);
+  --scrim: oklch(0.18 0.005 198 / 0.42);
 
   /* Text. `subtle` is AA-large only (3.4:1) and is for timestamps and counts —
      never for anything a decision depends on. */
-  --fg: oklch(0.21 0.006 286);
-  --fg-muted: oklch(0.52 0.014 286);
-  --fg-subtle: oklch(0.62 0.012 286);
+  --fg: oklch(0.21 0.006 198);
+  --fg-muted: oklch(0.52 0.014 198);
+  --fg-subtle: oklch(0.62 0.012 198);
 
-  --line: oklch(0.9 0.004 286);
-  --line-strong: oklch(0.84 0.006 286);
+  --line: oklch(0.9 0.004 198);
+  --line-strong: oklch(0.84 0.006 198);
 
-  /* ── Accent: violet (light) ────────────────────────────────────────────── */
-  --violet-50: oklch(0.977 0.014 286);
-  --violet-100: oklch(0.946 0.033 286);
-  --violet-200: oklch(0.902 0.063 287);
-  --violet-300: oklch(0.827 0.108 288);
-  --violet-400: oklch(0.714 0.166 288);
-  --violet-500: oklch(0.606 0.213 289);
-  --violet-600: oklch(0.541 0.229 288);
-  --violet-700: oklch(0.487 0.217 288);
-  --violet-800: oklch(0.418 0.181 288);
-  --violet-900: oklch(0.36 0.144 288);
-  --violet-950: oklch(0.257 0.1 288);
+  /* ── Accent: Virallap green (light) ───────────────────────────────────────
+     Hue 129, matching the logo mark (#79B30F). `--accent-solid` is the true
+     logo green; `--accent-on-solid` is the logo's own dark ground rather than
+     near-white, because white text on this green only clears 2.47:1 — the
+     logo itself pairs the green with its dark ground at 6.48:1, and that is
+     the pairing used here. `--accent-ring` is a separate, darker step: the
+     logo green as a 1px ring on the page only clears 2.37:1, below the 3:1
+     floor, so the ring can no longer alias `--accent-solid`. */
+  --accent-50: oklch(0.977 0.020 129);
+  --accent-100: oklch(0.946 0.048 129);
+  --accent-200: oklch(0.902 0.090 129);
+  --accent-300: oklch(0.827 0.140 129);
+  --accent-400: oklch(0.760 0.168 129);
+  --accent-500: oklch(0.700 0.183 129);
+  --accent-600: oklch(0.640 0.180 129);
+  --accent-700: oklch(0.560 0.160 129);
+  --accent-800: oklch(0.470 0.135 129);
+  --accent-900: oklch(0.400 0.112 129);
+  --accent-950: oklch(0.290 0.078 129);
 
-  --accent-solid: var(--violet-600);
-  --accent-solid-hover: var(--violet-700);
-  --accent-on-solid: oklch(0.99 0.005 286);
-  --accent-soft: var(--violet-100);
-  --accent-on-soft: var(--violet-800);
-  --accent-line: var(--violet-300);
-  --accent-ring: var(--violet-600);
+  --accent-solid: var(--accent-500);
+  --accent-solid-hover: var(--accent-600);
+  --accent-on-solid: oklch(0.236 0.033 198);
+  --accent-soft: var(--accent-100);
+  --accent-on-soft: var(--accent-900);
+  --accent-line: var(--accent-300);
+  --accent-ring: var(--accent-700);
 
   /* ── Data palette (light) ───────────────────────────────────────────────
      Per hue: `surface` (chip tint) · `text` (≥4.7:1 on that tint and on every
@@ -201,10 +210,15 @@
   --data-amber-line: oklch(0.87 0.089 85);
   --data-amber-solid: oklch(0.6 0.123 85);
 
-  --data-lime-surface: oklch(0.945 0.049 128);
-  --data-lime-text: oklch(0.512 0.134 128);
-  --data-lime-line: oklch(0.87 0.089 128);
-  --data-lime-solid: oklch(0.6 0.157 128);
+  /* Was hue 128. The Virallap accent moved to hue 129, 1° from where lime
+     sat — a straight collision with the >20° accent-distance rule below.
+     Shifted to 104°: still reads as the same yellow-green, clears the rule
+     with room (25° from the accent, 19° from amber), and needed no change to
+     `lib/palette.ts` — DONE and BONUS keep their green-family identity. */
+  --data-lime-surface: oklch(0.945 0.049 104);
+  --data-lime-text: oklch(0.512 0.134 104);
+  --data-lime-line: oklch(0.87 0.089 104);
+  --data-lime-solid: oklch(0.6 0.157 104);
 
   --data-emerald-surface: oklch(0.945 0.049 162);
   --data-emerald-text: oklch(0.51 0.112 162);
@@ -284,10 +298,10 @@
      layers — SPEC §9 bans drop-shadow stacks. Depth in this product comes from
      the surface ramp and a border, not from blur. */
   --elevation-flat: 0 0 0 0 transparent;
-  --elevation-raised: 0 1px 2px 0 oklch(0.21 0.006 286 / 0.06);
+  --elevation-raised: 0 1px 2px 0 oklch(0.21 0.006 198 / 0.06);
   --elevation-overlay:
-    0 1px 2px 0 oklch(0.21 0.006 286 / 0.08),
-    0 12px 32px -12px oklch(0.21 0.006 286 / 0.22);
+    0 1px 2px 0 oklch(0.21 0.006 198 / 0.08),
+    0 12px 32px -12px oklch(0.21 0.006 198 / 0.22);
 
   /* ── Density. One variable per measurement, set on <html data-density>.
      Components read the variable; nothing takes a `density` prop, so a new
@@ -334,16 +348,16 @@
      step at about L 0.275. Every value below was solved against that
      constraint, the same way the palette was solved in Phase 2 — and the suite
      now asserts a minimum step, so this cannot flatten again unnoticed. */
-  --surface-inset: oklch(0.105 0.004 286);
-  --surface-sunken: oklch(0.14 0.004 286);
-  --surface-base: oklch(0.175 0.004 286);
-  --surface-raised: oklch(0.225 0.005 286);
-  --surface-overlay: oklch(0.265 0.006 286);
+  --surface-inset: oklch(0.105 0.004 198);
+  --surface-sunken: oklch(0.14 0.004 198);
+  --surface-base: oklch(0.175 0.004 198);
+  --surface-raised: oklch(0.225 0.005 198);
+  --surface-overlay: oklch(0.265 0.006 198);
 
   /* Inputs are a well, not the page. `bg-background` made a field the exact
      colour of the surface behind it, so on a card the only thing saying "you
      can type here" was a 1.21:1 border. */
-  --surface-field: oklch(0.115 0.004 286);
+  --surface-field: oklch(0.115 0.004 198);
 
   /* White, so hover *lifts*. See the light block for why this is a wash. */
   --hover-wash: oklch(1 0 0 / 0.06);
@@ -353,26 +367,28 @@
      from what it covers. */
   --scrim: oklch(0 0 0 / 0.66);
 
-  --fg: oklch(0.96 0.001 286);
+  --fg: oklch(0.96 0.001 198);
   /* Was L 0.72 — 7.6:1, nearly as loud as `--fg` itself, which is the other
      half of "everything looks the same". 5.3:1 on the lightest surface keeps it
      comfortably above AA while letting primary text lead again. */
-  --fg-muted: oklch(0.678 0.013 286);
-  --fg-subtle: oklch(0.6 0.012 286);
+  --fg-muted: oklch(0.678 0.013 198);
+  --fg-subtle: oklch(0.6 0.012 198);
 
   /* On a dark ground a drop shadow is invisible and the border does the work
      (see the elevation note below). It was never strengthened to match: 1.21:1
      against a card. These are the compensation. */
-  --line: oklch(0.35 0.007 286);
-  --line-strong: oklch(0.45 0.009 286);
+  --line: oklch(0.35 0.007 198);
+  --line-strong: oklch(0.45 0.009 198);
 
-  --accent-solid: oklch(0.7 0.18 288);
-  --accent-solid-hover: oklch(0.75 0.16 288);
-  --accent-on-solid: oklch(0.16 0.01 286);
-  --accent-soft: oklch(0.335 0.08 288);
-  --accent-on-soft: oklch(0.88 0.09 288);
-  --accent-line: oklch(0.46 0.13 288);
-  --accent-ring: oklch(0.7 0.18 288);
+  /* Virallap green (dark). Dark mode already paired a bright accent with a
+     dark label, so the polarity here needed no change — only the hue. */
+  --accent-solid: oklch(0.760 0.168 129);
+  --accent-solid-hover: oklch(0.820 0.150 129);
+  --accent-on-solid: oklch(0.180 0.030 198);
+  --accent-soft: oklch(0.360 0.090 129);
+  --accent-on-soft: oklch(0.890 0.090 129);
+  --accent-line: oklch(0.460 0.130 129);
+  --accent-ring: oklch(0.760 0.168 129);
 
   --data-neutral-surface: oklch(0.32 0.005 286);
   --data-neutral-text: oklch(0.698 0.011 286);
@@ -394,10 +410,10 @@
   --data-amber-line: oklch(0.42 0.078 85);
   --data-amber-solid: oklch(0.68 0.139 85);
 
-  --data-lime-surface: oklch(0.32 0.059 128);
-  --data-lime-text: oklch(0.69 0.168 128);
-  --data-lime-line: oklch(0.42 0.089 128);
-  --data-lime-solid: oklch(0.68 0.178 128);
+  --data-lime-surface: oklch(0.32 0.059 104);
+  --data-lime-text: oklch(0.69 0.168 104);
+  --data-lime-line: oklch(0.42 0.089 104);
+  --data-lime-solid: oklch(0.68 0.178 104);
 
   --data-emerald-surface: oklch(0.32 0.059 162);
   --data-emerald-text: oklch(0.688 0.14 162);

@@ -64,7 +64,7 @@ Violating any of these is a bug, even if the feature "works":
 - Full RTL. `dir="rtl"`, logical properties (`ms-*`, `me-*`), never `ml-/mr-`.
 - Arabic strings live in `src/i18n/ar.ts` — **no Arabic string literals in JSX.**
 - Font: IBM Plex Sans Arabic. Numerals: Western. Dates: Gregorian, Arabic months.
-- **Color encodes data.** Neutral zinc chrome + one violet accent + a distinct hue
+- **Color encodes data.** Neutral zinc chrome + one green accent (Virallap brand) + a distinct hue
   per status/priority/category. No gradients, no glassmorphism, no emoji icons,
   no `rounded-3xl` everywhere, no AI-template aesthetics.
 - **Sheet-first interaction:** entities open in a side sheet or dialog over the

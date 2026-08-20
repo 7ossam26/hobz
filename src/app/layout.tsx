@@ -33,8 +33,8 @@ export const viewport: Viewport = {
   themeColor: [
     // `--surface-base` in each theme, kept in step with globals.css by
     // `tests/unit/design/palette-contrast.test.ts`.
-    { media: '(prefers-color-scheme: light)', color: '#f7f7f8' },
-    { media: '(prefers-color-scheme: dark)', color: '#101012' },
+    { media: '(prefers-color-scheme: light)', color: '#f6f7f7' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f1111' },
   ],
 }
 

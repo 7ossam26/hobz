@@ -1,0 +1,5150 @@
+{
+  "a11y.loading": {
+    "status": "reviewed"
+  },
+  "a11y.openMenu": {
+    "status": "reviewed"
+  },
+  "a11y.resultsUpdated": {
+    "status": "reviewed"
+  },
+  "a11y.skipToContent": {
+    "status": "reviewed"
+  },
+  "a11y.toggleTheme": {
+    "status": "reviewed"
+  },
+  "adjustments.amount": {
+    "status": "reviewed"
+  },
+  "adjustments.create": {
+    "status": "reviewed"
+  },
+  "adjustments.created": {
+    "status": "reviewed"
+  },
+  "adjustments.hint": {
+    "status": "reviewed"
+  },
+  "adjustments.reason": {
+    "status": "reviewed"
+  },
+  "adjustments.title": {
+    "status": "reviewed"
+  },
+  "advances.amount": {
+    "status": "reviewed"
+  },
+  "advances.create": {
+    "status": "reviewed"
+  },
+  "advances.created": {
+    "status": "reviewed"
+  },
+  "advances.hint": {
+    "status": "reviewed"
+  },
+  "advances.note": {
+    "status": "reviewed"
+  },
+  "advances.title": {
+    "status": "reviewed"
+  },
+  "app.description": {
+    "status": "reviewed"
+  },
+  "app.name": {
+    "status": "reviewed"
+  },
+  "app.shortName": {
+    "status": "reviewed"
+  },
+  "app.tagline": {
+    "status": "reviewed"
+  },
+  "audit.action": {
+    "status": "reviewed"
+  },
+  "audit.actor": {
+    "status": "reviewed"
+  },
+  "audit.added": {
+    "status": "reviewed"
+  },
+  "audit.after": {
+    "status": "reviewed"
+  },
+  "audit.allActors": {
+    "status": "reviewed"
+  },
+  "audit.allEntities": {
+    "status": "reviewed"
+  },
+  "audit.before": {
+    "status": "reviewed"
+  },
+  "audit.changed": {
+    "status": "reviewed"
+  },
+  "audit.date": {
+    "status": "reviewed"
+  },
+  "audit.dateFrom": {
+    "status": "reviewed"
+  },
+  "audit.dateTo": {
+    "status": "reviewed"
+  },
+  "audit.diff": {
+    "status": "reviewed"
+  },
+  "audit.empty": {
+    "status": "reviewed"
+  },
+  "audit.entity": {
+    "status": "reviewed"
+  },
+  "audit.entityId": {
+    "status": "reviewed"
+  },
+  "audit.ip": {
+    "status": "reviewed"
+  },
+  "audit.noChanges": {
+    "status": "reviewed"
+  },
+  "audit.reason": {
+    "status": "reviewed"
+  },
+  "audit.removed": {
+    "status": "reviewed"
+  },
+  "audit.subtitle": {
+    "status": "reviewed"
+  },
+  "audit.system": {
+    "status": "reviewed"
+  },
+  "audit.title": {
+    "status": "reviewed"
+  },
+  "audit.viaImpersonation": {
+    "status": "reviewed"
+  },
+  "auditActions.advance.created": {
+    "status": "reviewed"
+  },
+  "auditActions.auth.passwordChanged": {
+    "status": "reviewed"
+  },
+  "auditActions.auth.signInFailed": {
+    "status": "reviewed"
+  },
+  "auditActions.auth.signedIn": {
+    "status": "reviewed"
+  },
+  "auditActions.auth.signedOut": {
+    "status": "reviewed"
+  },
+  "auditActions.auth.throttled": {
+    "status": "reviewed"
+  },
+  "auditActions.bonus.created": {
+    "status": "reviewed"
+  },
+  "auditActions.bonus.reversed": {
+    "status": "reviewed"
+  },
+  "auditActions.client.created": {
+    "status": "reviewed"
+  },
+  "auditActions.client.deleted": {
+    "status": "reviewed"
+  },
+  "auditActions.client.updated": {
+    "status": "reviewed"
+  },
+  "auditActions.extension.approved": {
+    "status": "reviewed"
+  },
+  "auditActions.extension.penaltyRecomputeRequested": {
+    "status": "reviewed"
+  },
+  "auditActions.extension.rejected": {
+    "status": "reviewed"
+  },
+  "auditActions.extension.requested": {
+    "status": "reviewed"
+  },
+  "auditActions.holiday.created": {
+    "status": "reviewed"
+  },
+  "auditActions.holiday.deleted": {
+    "status": "reviewed"
+  },
+  "auditActions.holiday.imported": {
+    "status": "reviewed"
+  },
+  "auditActions.holiday.updated": {
+    "status": "reviewed"
+  },
+  "auditActions.impersonation.started": {
+    "status": "reviewed"
+  },
+  "auditActions.impersonation.stopped": {
+    "status": "reviewed"
+  },
+  "auditActions.leave.approved": {
+    "status": "reviewed"
+  },
+  "auditActions.leave.recorded": {
+    "status": "reviewed"
+  },
+  "auditActions.leave.rejected": {
+    "status": "reviewed"
+  },
+  "auditActions.leave.requested": {
+    "status": "reviewed"
+  },
+  "auditActions.ledger.adjustment": {
+    "status": "reviewed"
+  },
+  "auditActions.ledger.earningSkipped": {
+    "status": "reviewed"
+  },
+  "auditActions.ledger.entryCreated": {
+    "status": "reviewed"
+  },
+  "auditActions.ledger.reversalBlocked": {
+    "status": "reviewed"
+  },
+  "auditActions.ledger.reversed": {
+    "status": "reviewed"
+  },
+  "auditActions.milestone.created": {
+    "status": "reviewed"
+  },
+  "auditActions.milestone.deleted": {
+    "status": "reviewed"
+  },
+  "auditActions.milestone.reordered": {
+    "status": "reviewed"
+  },
+  "auditActions.milestone.updated": {
+    "status": "reviewed"
+  },
+  "auditActions.payout.approved": {
+    "status": "reviewed"
+  },
+  "auditActions.payout.cycleClosed": {
+    "status": "reviewed"
+  },
+  "auditActions.payout.cycleSettled": {
+    "status": "reviewed"
+  },
+  "auditActions.payout.drafted": {
+    "status": "reviewed"
+  },
+  "auditActions.payout.paid": {
+    "status": "reviewed"
+  },
+  "auditActions.payout.partiallyPaid": {
+    "status": "reviewed"
+  },
+  "auditActions.payout.salarySkipped": {
+    "status": "reviewed"
+  },
+  "auditActions.payout.skippedDeletedUser": {
+    "status": "reviewed"
+  },
+  "auditActions.penalty.applied": {
+    "status": "reviewed"
+  },
+  "auditActions.penalty.cleared": {
+    "status": "reviewed"
+  },
+  "auditActions.penalty.created": {
+    "status": "reviewed"
+  },
+  "auditActions.penalty.recalculated": {
+    "status": "reviewed"
+  },
+  "auditActions.penalty.reversed": {
+    "status": "reviewed"
+  },
+  "auditActions.penalty.skipped": {
+    "status": "reviewed"
+  },
+  "auditActions.penaltyProfile.assigned": {
+    "status": "reviewed"
+  },
+  "auditActions.penaltyProfile.created": {
+    "status": "reviewed"
+  },
+  "auditActions.penaltyProfile.deleted": {
+    "status": "reviewed"
+  },
+  "auditActions.penaltyProfile.updated": {
+    "status": "reviewed"
+  },
+  "auditActions.project.created": {
+    "status": "reviewed"
+  },
+  "auditActions.project.createdFromTemplate": {
+    "status": "reviewed"
+  },
+  "auditActions.project.deleted": {
+    "status": "reviewed"
+  },
+  "auditActions.project.healthOverrideCleared": {
+    "status": "reviewed"
+  },
+  "auditActions.project.healthOverrideSet": {
+    "status": "reviewed"
+  },
+  "auditActions.project.membersChanged": {
+    "status": "reviewed"
+  },
+  "auditActions.project.updated": {
+    "status": "reviewed"
+  },
+  "auditActions.projectTemplate.created": {
+    "status": "reviewed"
+  },
+  "auditActions.role.created": {
+    "status": "reviewed"
+  },
+  "auditActions.role.deleted": {
+    "status": "reviewed"
+  },
+  "auditActions.role.permissionsChanged": {
+    "status": "reviewed"
+  },
+  "auditActions.role.updated": {
+    "status": "reviewed"
+  },
+  "auditActions.setting.updated": {
+    "status": "reviewed"
+  },
+  "auditActions.task.approved": {
+    "status": "reviewed"
+  },
+  "auditActions.task.assigned": {
+    "status": "reviewed"
+  },
+  "auditActions.task.assignedDuringLeave": {
+    "status": "reviewed"
+  },
+  "auditActions.task.cancelled": {
+    "status": "reviewed"
+  },
+  "auditActions.task.commented": {
+    "status": "reviewed"
+  },
+  "auditActions.task.created": {
+    "status": "reviewed"
+  },
+  "auditActions.task.deleted": {
+    "status": "reviewed"
+  },
+  "auditActions.task.dependencyAdded": {
+    "status": "reviewed"
+  },
+  "auditActions.task.dependencyRemoved": {
+    "status": "reviewed"
+  },
+  "auditActions.task.dueDateExtended": {
+    "status": "reviewed"
+  },
+  "auditActions.task.escalated": {
+    "status": "reviewed"
+  },
+  "auditActions.task.partialPaymentIntent": {
+    "status": "reviewed"
+  },
+  "auditActions.task.reassigned": {
+    "status": "reviewed"
+  },
+  "auditActions.task.revisionRequested": {
+    "status": "reviewed"
+  },
+  "auditActions.task.statusChanged": {
+    "status": "reviewed"
+  },
+  "auditActions.task.updated": {
+    "status": "reviewed"
+  },
+  "auditActions.task.watcherAdded": {
+    "status": "reviewed"
+  },
+  "auditActions.task.watcherRemoved": {
+    "status": "reviewed"
+  },
+  "auditActions.user.activated": {
+    "status": "reviewed"
+  },
+  "auditActions.user.created": {
+    "status": "reviewed"
+  },
+  "auditActions.user.deactivated": {
+    "status": "reviewed"
+  },
+  "auditActions.user.passwordReset": {
+    "status": "reviewed"
+  },
+  "auditActions.user.rolesChanged": {
+    "status": "reviewed"
+  },
+  "auditActions.user.updated": {
+    "status": "reviewed"
+  },
+  "auth.accountInactive": {
+    "status": "reviewed"
+  },
+  "auth.changePassword": {
+    "status": "reviewed"
+  },
+  "auth.confirmPassword": {
+    "status": "reviewed"
+  },
+  "auth.currentPassword": {
+    "status": "reviewed"
+  },
+  "auth.forgotPassword": {
+    "status": "reviewed"
+  },
+  "auth.invalidCredentials": {
+    "status": "reviewed"
+  },
+  "auth.lockedForMinutes": {
+    "status": "reviewed"
+  },
+  "auth.mustChangePassword": {
+    "status": "reviewed"
+  },
+  "auth.mustChangePasswordHint": {
+    "status": "reviewed"
+  },
+  "auth.newPassword": {
+    "status": "reviewed"
+  },
+  "auth.noSelfSignup": {
+    "status": "reviewed"
+  },
+  "auth.password": {
+    "status": "reviewed"
+  },
+  "auth.passwordChanged": {
+    "status": "reviewed"
+  },
+  "auth.passwordMismatch": {
+    "status": "reviewed"
+  },
+  "auth.passwordSameAsOld": {
+    "status": "reviewed"
+  },
+  "auth.sessionExpired": {
+    "status": "reviewed"
+  },
+  "auth.signIn": {
+    "status": "reviewed"
+  },
+  "auth.signInHint": {
+    "status": "reviewed"
+  },
+  "auth.signOut": {
+    "status": "reviewed"
+  },
+  "auth.signingIn": {
+    "status": "reviewed"
+  },
+  "auth.tooManyAttempts": {
+    "status": "reviewed"
+  },
+  "auth.username": {
+    "status": "reviewed"
+  },
+  "auth.welcome": {
+    "status": "reviewed"
+  },
+  "bonuses.amount": {
+    "status": "reviewed"
+  },
+  "bonuses.bonus": {
+    "status": "reviewed"
+  },
+  "bonuses.create": {
+    "status": "reviewed"
+  },
+  "bonuses.created": {
+    "status": "reviewed"
+  },
+  "bonuses.empty": {
+    "status": "reviewed"
+  },
+  "bonuses.errors.amountRequired": {
+    "status": "reviewed"
+  },
+  "bonuses.errors.reasonRequired": {
+    "status": "reviewed"
+  },
+  "bonuses.hint": {
+    "status": "reviewed"
+  },
+  "bonuses.reason": {
+    "status": "reviewed"
+  },
+  "bonuses.reasonHint": {
+    "status": "reviewed"
+  },
+  "bonuses.title": {
+    "status": "reviewed"
+  },
+  "calendar.errors.invalidDate": {
+    "status": "reviewed"
+  },
+  "calendar.errors.invalidTime": {
+    "status": "reviewed"
+  },
+  "calendar.errors.noWorkingDay": {
+    "status": "reviewed"
+  },
+  "calendar.errors.rangeTooLarge": {
+    "status": "reviewed"
+  },
+  "calendar.nonWorkingDay": {
+    "status": "reviewed"
+  },
+  "calendar.title": {
+    "status": "reviewed"
+  },
+  "calendar.weekendDays": {
+    "status": "reviewed"
+  },
+  "calendar.workdayEnd": {
+    "status": "reviewed"
+  },
+  "calendar.workdayStart": {
+    "status": "reviewed"
+  },
+  "calendar.workingDay": {
+    "status": "reviewed"
+  },
+  "calendar.workingDaysCount": {
+    "status": "reviewed"
+  },
+  "calendar.workingDaysPerMonth": {
+    "status": "reviewed"
+  },
+  "clients.create": {
+    "status": "reviewed"
+  },
+  "clients.created": {
+    "status": "reviewed"
+  },
+  "clients.deleteDescription": {
+    "status": "reviewed"
+  },
+  "clients.deleteTitle": {
+    "status": "reviewed"
+  },
+  "clients.deleted": {
+    "status": "reviewed"
+  },
+  "clients.edit": {
+    "status": "reviewed"
+  },
+  "clients.empty": {
+    "status": "reviewed"
+  },
+  "clients.emptyAction": {
+    "status": "reviewed"
+  },
+  "clients.name": {
+    "status": "reviewed"
+  },
+  "clients.notes": {
+    "status": "reviewed"
+  },
+  "clients.phone": {
+    "status": "reviewed"
+  },
+  "clients.projectCount": {
+    "status": "reviewed"
+  },
+  "clients.searchPlaceholder": {
+    "status": "reviewed"
+  },
+  "clients.title": {
+    "status": "reviewed"
+  },
+  "clients.updated": {
+    "status": "reviewed"
+  },
+  "command.empty": {
+    "status": "reviewed"
+  },
+  "command.emptyHint": {
+    "status": "reviewed"
+  },
+  "command.groups.actions": {
+    "status": "reviewed"
+  },
+  "command.groups.appearance": {
+    "status": "reviewed"
+  },
+  "command.groups.navigation": {
+    "status": "reviewed"
+  },
+  "command.groups.roles": {
+    "status": "reviewed"
+  },
+  "command.groups.users": {
+    "status": "reviewed"
+  },
+  "command.hints.close": {
+    "status": "reviewed"
+  },
+  "command.hints.navigate": {
+    "status": "reviewed"
+  },
+  "command.hints.select": {
+    "status": "reviewed"
+  },
+  "command.placeholder": {
+    "status": "reviewed"
+  },
+  "command.searching": {
+    "status": "reviewed"
+  },
+  "command.title": {
+    "status": "reviewed"
+  },
+  "common.actions": {
+    "status": "reviewed"
+  },
+  "common.active": {
+    "status": "reviewed"
+  },
+  "common.add": {
+    "status": "reviewed"
+  },
+  "common.all": {
+    "status": "reviewed"
+  },
+  "common.andMore": {
+    "status": "reviewed"
+  },
+  "common.apply": {
+    "status": "reviewed"
+  },
+  "common.back": {
+    "status": "reviewed"
+  },
+  "common.cancel": {
+    "status": "reviewed"
+  },
+  "common.clear": {
+    "status": "reviewed"
+  },
+  "common.clearSelection": {
+    "status": "reviewed"
+  },
+  "common.close": {
+    "status": "reviewed"
+  },
+  "common.collapse": {
+    "status": "reviewed"
+  },
+  "common.confirm": {
+    "status": "reviewed"
+  },
+  "common.copied": {
+    "status": "reviewed"
+  },
+  "common.copy": {
+    "status": "reviewed"
+  },
+  "common.create": {
+    "status": "reviewed"
+  },
+  "common.createdAt": {
+    "status": "reviewed"
+  },
+  "common.delete": {
+    "status": "reviewed"
+  },
+  "common.density": {
+    "status": "reviewed"
+  },
+  "common.densityComfortable": {
+    "status": "reviewed"
+  },
+  "common.densityCompact": {
+    "status": "reviewed"
+  },
+  "common.details": {
+    "status": "reviewed"
+  },
+  "common.dismiss": {
+    "status": "reviewed"
+  },
+  "common.edit": {
+    "status": "reviewed"
+  },
+  "common.expand": {
+    "status": "reviewed"
+  },
+  "common.filter": {
+    "status": "reviewed"
+  },
+  "common.from": {
+    "status": "reviewed"
+  },
+  "common.inactive": {
+    "status": "reviewed"
+  },
+  "common.listSeparator": {
+    "status": "reviewed"
+  },
+  "common.loading": {
+    "status": "reviewed"
+  },
+  "common.more": {
+    "status": "reviewed"
+  },
+  "common.never": {
+    "status": "reviewed"
+  },
+  "common.next": {
+    "status": "reviewed"
+  },
+  "common.no": {
+    "status": "reviewed"
+  },
+  "common.noResults": {
+    "status": "reviewed"
+  },
+  "common.none": {
+    "status": "reviewed"
+  },
+  "common.notes": {
+    "status": "reviewed"
+  },
+  "common.open": {
+    "status": "reviewed"
+  },
+  "common.optional": {
+    "status": "reviewed"
+  },
+  "common.page": {
+    "status": "reviewed"
+  },
+  "common.previous": {
+    "status": "reviewed"
+  },
+  "common.reason": {
+    "status": "reviewed"
+  },
+  "common.refresh": {
+    "status": "reviewed"
+  },
+  "common.remove": {
+    "status": "reviewed"
+  },
+  "common.required": {
+    "status": "reviewed"
+  },
+  "common.reset": {
+    "status": "reviewed"
+  },
+  "common.results": {
+    "status": "reviewed"
+  },
+  "common.retry": {
+    "status": "reviewed"
+  },
+  "common.save": {
+    "status": "reviewed"
+  },
+  "common.saved": {
+    "status": "reviewed"
+  },
+  "common.saving": {
+    "status": "reviewed"
+  },
+  "common.search": {
+    "status": "reviewed"
+  },
+  "common.select": {
+    "status": "reviewed"
+  },
+  "common.selectAll": {
+    "status": "reviewed"
+  },
+  "common.theme": {
+    "status": "reviewed"
+  },
+  "common.themeDark": {
+    "status": "reviewed"
+  },
+  "common.themeLight": {
+    "status": "reviewed"
+  },
+  "common.to": {
+    "status": "reviewed"
+  },
+  "common.total": {
+    "status": "reviewed"
+  },
+  "common.undo": {
+    "status": "reviewed"
+  },
+  "common.unknown": {
+    "status": "reviewed"
+  },
+  "common.updatedAt": {
+    "status": "reviewed"
+  },
+  "common.view": {
+    "status": "reviewed"
+  },
+  "common.yes": {
+    "status": "reviewed"
+  },
+  "confirm.irreversible": {
+    "status": "reviewed"
+  },
+  "confirm.mismatch": {
+    "status": "reviewed"
+  },
+  "confirm.proceed": {
+    "status": "reviewed"
+  },
+  "confirm.title": {
+    "status": "reviewed"
+  },
+  "confirm.typeToConfirm": {
+    "status": "reviewed"
+  },
+  "dashboard.manager.awaitingApproval": {
+    "status": "reviewed"
+  },
+  "dashboard.manager.awaitingApprovalEmpty": {
+    "status": "reviewed"
+  },
+  "dashboard.manager.monthDeductions": {
+    "status": "reviewed"
+  },
+  "dashboard.manager.overdueTasks": {
+    "status": "reviewed"
+  },
+  "dashboard.manager.overdueTasksEmpty": {
+    "status": "reviewed"
+  },
+  "dashboard.manager.pendingAmount": {
+    "status": "reviewed"
+  },
+  "dashboard.manager.pendingPayouts": {
+    "status": "reviewed"
+  },
+  "dashboard.manager.pendingPayoutsEmpty": {
+    "status": "reviewed"
+  },
+  "dashboard.manager.projectsAtRisk": {
+    "status": "reviewed"
+  },
+  "dashboard.manager.projectsAtRiskEmpty": {
+    "status": "reviewed"
+  },
+  "dashboard.manager.viewAll": {
+    "status": "reviewed"
+  },
+  "dashboard.manager.workload": {
+    "status": "reviewed"
+  },
+  "dashboard.manager.workloadEmpty": {
+    "status": "reviewed"
+  },
+  "dashboard.welcomeBack": {
+    "status": "reviewed"
+  },
+  "dashboard.worker.activeTasks": {
+    "status": "reviewed"
+  },
+  "dashboard.worker.activeTasksEmpty": {
+    "status": "reviewed"
+  },
+  "dashboard.worker.awaitingMySubmission": {
+    "status": "reviewed"
+  },
+  "dashboard.worker.awaitingReview": {
+    "status": "reviewed"
+  },
+  "dashboard.worker.dueNext": {
+    "status": "reviewed"
+  },
+  "dashboard.worker.dueNextEmpty": {
+    "status": "reviewed"
+  },
+  "dashboard.worker.performance": {
+    "status": "reviewed"
+  },
+  "dashboard.worker.performanceHint": {
+    "status": "reviewed"
+  },
+  "defaults.leaveTypes.0.id": {
+    "status": "reviewed"
+  },
+  "defaults.leaveTypes.0.label": {
+    "status": "reviewed"
+  },
+  "defaults.leaveTypes.1.id": {
+    "status": "reviewed"
+  },
+  "defaults.leaveTypes.1.label": {
+    "status": "reviewed"
+  },
+  "defaults.leaveTypes.2.id": {
+    "status": "reviewed"
+  },
+  "defaults.leaveTypes.2.label": {
+    "status": "reviewed"
+  },
+  "defaults.leaveTypes.3.id": {
+    "status": "reviewed"
+  },
+  "defaults.leaveTypes.3.label": {
+    "status": "reviewed"
+  },
+  "defaults.paymentMethods.0": {
+    "status": "reviewed"
+  },
+  "defaults.paymentMethods.1": {
+    "status": "reviewed"
+  },
+  "defaults.paymentMethods.2": {
+    "status": "reviewed"
+  },
+  "defaults.paymentMethods.3": {
+    "status": "reviewed"
+  },
+  "defaults.taskCategories.0.id": {
+    "status": "reviewed"
+  },
+  "defaults.taskCategories.0.label": {
+    "status": "reviewed"
+  },
+  "defaults.taskCategories.1.id": {
+    "status": "reviewed"
+  },
+  "defaults.taskCategories.1.label": {
+    "status": "reviewed"
+  },
+  "defaults.taskCategories.2.id": {
+    "status": "reviewed"
+  },
+  "defaults.taskCategories.2.label": {
+    "status": "reviewed"
+  },
+  "defaults.taskCategories.3.id": {
+    "status": "reviewed"
+  },
+  "defaults.taskCategories.3.label": {
+    "status": "reviewed"
+  },
+  "defaults.taskCategories.4.id": {
+    "status": "reviewed"
+  },
+  "defaults.taskCategories.4.label": {
+    "status": "reviewed"
+  },
+  "defaults.taskCategories.5.id": {
+    "status": "reviewed"
+  },
+  "defaults.taskCategories.5.label": {
+    "status": "reviewed"
+  },
+  "defaults.whatsappTemplates.payoutPaid": {
+    "status": "reviewed"
+  },
+  "defaults.whatsappTemplates.penaltyApplied": {
+    "status": "reviewed"
+  },
+  "defaults.whatsappTemplates.taskAssigned": {
+    "status": "reviewed"
+  },
+  "defaults.whatsappTemplates.taskOverdue": {
+    "status": "reviewed"
+  },
+  "designSystem.devOnly": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.both": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.contrast": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.density": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.hue": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.openConfirm": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.openEntitySheet": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.openSheet": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.sample": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.showErrorToast": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.showToast": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.surfaceBase": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.surfaceField": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.surfaceHover": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.surfaceInset": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.surfaceOverlay": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.surfaceRaised": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.surfaceScrim": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.surfaceSelected": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.surfaceSunken": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.theme": {
+    "status": "reviewed"
+  },
+  "designSystem.labels.token": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.columnAssignee": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.columnDue": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.columnPriority": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.columnProject": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.columnStatus": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.columnTask": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.columnValue": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.confirmDescription": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.confirmTitle": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.emptyAction": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.emptyDescription": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.emptyTitle": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.formError": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.formHint": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.formLabel": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.paragraph": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.people.0.fullName": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.people.0.phone": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.people.0.username": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.people.1.fullName": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.people.1.phone": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.people.1.username": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.people.2.fullName": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.people.2.phone": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.people.2.username": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.people.3.fullName": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.people.3.phone": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.people.3.username": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.projects.0.code": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.projects.0.name": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.projects.1.code": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.projects.1.name": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.projects.2.code": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.projects.2.name": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.sheetBody": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.sheetSubtitle": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.sheetTabs.activity": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.sheetTabs.comments": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.sheetTabs.details": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.sheetTitle": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.tasks.0": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.tasks.1": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.tasks.2": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.tasks.3": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.tasks.4": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.toastFailed": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.toastFailedDetail": {
+    "status": "reviewed"
+  },
+  "designSystem.samples.toastSaved": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.accent": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.buttons": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.data": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.dates": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.dialogs": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.feedback": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.forms": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.health": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.ledger": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.money": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.people": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.priority": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.projectStatus": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.sheet": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.skeletons": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.status": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.surfaces": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.table": {
+    "status": "reviewed"
+  },
+  "designSystem.sections.typography": {
+    "status": "reviewed"
+  },
+  "designSystem.subtitle": {
+    "status": "reviewed"
+  },
+  "designSystem.title": {
+    "status": "reviewed"
+  },
+  "enums.delayAttribution.CLIENT": {
+    "status": "reviewed"
+  },
+  "enums.delayAttribution.DEPENDENCY": {
+    "status": "reviewed"
+  },
+  "enums.delayAttribution.INTERNAL": {
+    "status": "reviewed"
+  },
+  "enums.delayAttribution.WORKER": {
+    "status": "reviewed"
+  },
+  "enums.engagementType.FIXED_PRICE": {
+    "status": "reviewed"
+  },
+  "enums.engagementType.HOURLY": {
+    "status": "reviewed"
+  },
+  "enums.engagementType.MILESTONE_BASED": {
+    "status": "reviewed"
+  },
+  "enums.engagementType.RETAINER": {
+    "status": "reviewed"
+  },
+  "enums.ledgerType.ADJUSTMENT": {
+    "status": "reviewed"
+  },
+  "enums.ledgerType.ADVANCE": {
+    "status": "reviewed"
+  },
+  "enums.ledgerType.BONUS": {
+    "status": "reviewed"
+  },
+  "enums.ledgerType.EARNING": {
+    "status": "reviewed"
+  },
+  "enums.ledgerType.PAYOUT": {
+    "status": "reviewed"
+  },
+  "enums.ledgerType.PENALTY": {
+    "status": "reviewed"
+  },
+  "enums.ledgerType.REVERSAL": {
+    "status": "reviewed"
+  },
+  "enums.ledgerType.SALARY": {
+    "status": "reviewed"
+  },
+  "enums.milestoneStatus.DELAYED": {
+    "status": "reviewed"
+  },
+  "enums.milestoneStatus.DONE": {
+    "status": "reviewed"
+  },
+  "enums.milestoneStatus.IN_PROGRESS": {
+    "status": "reviewed"
+  },
+  "enums.milestoneStatus.PENDING": {
+    "status": "reviewed"
+  },
+  "enums.payType.HYBRID": {
+    "status": "reviewed"
+  },
+  "enums.payType.PER_TASK": {
+    "status": "reviewed"
+  },
+  "enums.payType.SALARY": {
+    "status": "reviewed"
+  },
+  "enums.payoutCycleStatus.CLOSED": {
+    "status": "reviewed"
+  },
+  "enums.payoutCycleStatus.OPEN": {
+    "status": "reviewed"
+  },
+  "enums.payoutCycleStatus.PAID": {
+    "status": "reviewed"
+  },
+  "enums.payoutStatus.APPROVED": {
+    "status": "reviewed"
+  },
+  "enums.payoutStatus.DRAFT": {
+    "status": "reviewed"
+  },
+  "enums.payoutStatus.PAID": {
+    "status": "reviewed"
+  },
+  "enums.penaltyMode.FIXED_ONCE": {
+    "status": "reviewed"
+  },
+  "enums.penaltyMode.FIXED_PER_DAY": {
+    "status": "reviewed"
+  },
+  "enums.penaltyMode.PCT_DAILY_RATE_PER_DAY": {
+    "status": "reviewed"
+  },
+  "enums.penaltyMode.PCT_TASK_VALUE_ONCE": {
+    "status": "reviewed"
+  },
+  "enums.penaltyMode.PCT_TASK_VALUE_PER_DAY": {
+    "status": "reviewed"
+  },
+  "enums.priority.HIGH": {
+    "status": "reviewed"
+  },
+  "enums.priority.LOW": {
+    "status": "reviewed"
+  },
+  "enums.priority.MEDIUM": {
+    "status": "reviewed"
+  },
+  "enums.priority.URGENT": {
+    "status": "reviewed"
+  },
+  "enums.projectMemberRole.CONTRIBUTOR": {
+    "status": "reviewed"
+  },
+  "enums.projectMemberRole.MANAGER": {
+    "status": "reviewed"
+  },
+  "enums.projectMemberRole.VIEWER": {
+    "status": "reviewed"
+  },
+  "enums.projectStatus.ACTIVE": {
+    "status": "reviewed"
+  },
+  "enums.projectStatus.ARCHIVED": {
+    "status": "reviewed"
+  },
+  "enums.projectStatus.CANCELLED": {
+    "status": "reviewed"
+  },
+  "enums.projectStatus.COMPLETED": {
+    "status": "reviewed"
+  },
+  "enums.projectStatus.DRAFT": {
+    "status": "reviewed"
+  },
+  "enums.projectStatus.IN_REVIEW": {
+    "status": "reviewed"
+  },
+  "enums.projectStatus.ON_HOLD": {
+    "status": "reviewed"
+  },
+  "enums.projectStatus.PROPOSED": {
+    "status": "reviewed"
+  },
+  "enums.taskActivityType.ASSIGNED": {
+    "status": "reviewed"
+  },
+  "enums.taskActivityType.COMMENTED": {
+    "status": "reviewed"
+  },
+  "enums.taskActivityType.CREATED": {
+    "status": "reviewed"
+  },
+  "enums.taskActivityType.DEPENDENCY_ADDED": {
+    "status": "reviewed"
+  },
+  "enums.taskActivityType.DEPENDENCY_REMOVED": {
+    "status": "reviewed"
+  },
+  "enums.taskActivityType.DUE_DATE_CHANGED": {
+    "status": "reviewed"
+  },
+  "enums.taskActivityType.ELAPSED_RECOMPUTED": {
+    "status": "reviewed"
+  },
+  "enums.taskActivityType.STATUS_CHANGED": {
+    "status": "reviewed"
+  },
+  "enums.taskActivityType.UPDATED": {
+    "status": "reviewed"
+  },
+  "enums.taskActivityType.VALUE_CHANGED": {
+    "status": "reviewed"
+  },
+  "enums.taskActivityType.WATCHER_ADDED": {
+    "status": "reviewed"
+  },
+  "enums.taskActivityType.WATCHER_REMOVED": {
+    "status": "reviewed"
+  },
+  "enums.taskStatus.APPROVED": {
+    "status": "reviewed"
+  },
+  "enums.taskStatus.ASSIGNED": {
+    "status": "reviewed"
+  },
+  "enums.taskStatus.BACKLOG": {
+    "status": "reviewed"
+  },
+  "enums.taskStatus.BLOCKED": {
+    "status": "reviewed"
+  },
+  "enums.taskStatus.CANCELLED": {
+    "status": "reviewed"
+  },
+  "enums.taskStatus.DONE": {
+    "status": "reviewed"
+  },
+  "enums.taskStatus.IN_PROGRESS": {
+    "status": "reviewed"
+  },
+  "enums.taskStatus.IN_REVIEW": {
+    "status": "reviewed"
+  },
+  "enums.taskStatus.REVISION_REQUESTED": {
+    "status": "reviewed"
+  },
+  "enums.taskStatus.SUBMITTED": {
+    "status": "reviewed"
+  },
+  "enums.weekday.FRI": {
+    "status": "reviewed"
+  },
+  "enums.weekday.MON": {
+    "status": "reviewed"
+  },
+  "enums.weekday.SAT": {
+    "status": "reviewed"
+  },
+  "enums.weekday.SUN": {
+    "status": "reviewed"
+  },
+  "enums.weekday.THU": {
+    "status": "reviewed"
+  },
+  "enums.weekday.TUE": {
+    "status": "reviewed"
+  },
+  "enums.weekday.WED": {
+    "status": "reviewed"
+  },
+  "errors.conflict": {
+    "status": "reviewed"
+  },
+  "errors.domain": {
+    "status": "reviewed"
+  },
+  "errors.forbidden": {
+    "status": "reviewed"
+  },
+  "errors.notFound": {
+    "status": "reviewed"
+  },
+  "errors.notImplemented": {
+    "status": "reviewed"
+  },
+  "errors.settingInvalid": {
+    "status": "reviewed"
+  },
+  "errors.settingUnknown": {
+    "status": "reviewed"
+  },
+  "errors.unauthenticated": {
+    "status": "reviewed"
+  },
+  "errors.unexpected": {
+    "status": "reviewed"
+  },
+  "errors.validation": {
+    "status": "reviewed"
+  },
+  "extensions.approve": {
+    "status": "reviewed"
+  },
+  "extensions.approved": {
+    "status": "reviewed"
+  },
+  "extensions.decidedBy": {
+    "status": "reviewed"
+  },
+  "extensions.decisionNote": {
+    "status": "reviewed"
+  },
+  "extensions.empty": {
+    "status": "reviewed"
+  },
+  "extensions.errors.alreadyDecided": {
+    "status": "reviewed"
+  },
+  "extensions.errors.alreadyPending": {
+    "status": "reviewed"
+  },
+  "extensions.errors.notAssignee": {
+    "status": "reviewed"
+  },
+  "extensions.errors.notFound": {
+    "status": "reviewed"
+  },
+  "extensions.errors.notLater": {
+    "status": "reviewed"
+  },
+  "extensions.errors.reasonRequired": {
+    "status": "reviewed"
+  },
+  "extensions.errors.stale": {
+    "status": "reviewed"
+  },
+  "extensions.errors.taskDelivered": {
+    "status": "reviewed"
+  },
+  "extensions.newDueDate": {
+    "status": "reviewed"
+  },
+  "extensions.oldDueDate": {
+    "status": "reviewed"
+  },
+  "extensions.reason": {
+    "status": "reviewed"
+  },
+  "extensions.reject": {
+    "status": "reviewed"
+  },
+  "extensions.rejected": {
+    "status": "reviewed"
+  },
+  "extensions.request": {
+    "status": "reviewed"
+  },
+  "extensions.requestedBy": {
+    "status": "reviewed"
+  },
+  "extensions.status.APPROVED": {
+    "status": "reviewed"
+  },
+  "extensions.status.PENDING": {
+    "status": "reviewed"
+  },
+  "extensions.status.REJECTED": {
+    "status": "reviewed"
+  },
+  "extensions.title": {
+    "status": "reviewed"
+  },
+  "globalCalendar.allProjects": {
+    "status": "reviewed"
+  },
+  "globalCalendar.allWorkers": {
+    "status": "reviewed"
+  },
+  "globalCalendar.empty": {
+    "status": "reviewed"
+  },
+  "globalCalendar.filterProject": {
+    "status": "reviewed"
+  },
+  "globalCalendar.filterWorker": {
+    "status": "reviewed"
+  },
+  "globalCalendar.subtitle": {
+    "status": "reviewed"
+  },
+  "globalCalendar.title": {
+    "status": "reviewed"
+  },
+  "globalCalendar.types.MILESTONE": {
+    "status": "reviewed"
+  },
+  "globalCalendar.types.PROJECT": {
+    "status": "reviewed"
+  },
+  "globalCalendar.types.TASK": {
+    "status": "reviewed"
+  },
+  "health.AMBER": {
+    "status": "reviewed"
+  },
+  "health.GREEN": {
+    "status": "reviewed"
+  },
+  "health.RED": {
+    "status": "reviewed"
+  },
+  "health.override": {
+    "status": "reviewed"
+  },
+  "holidays.create": {
+    "status": "reviewed"
+  },
+  "holidays.date": {
+    "status": "reviewed"
+  },
+  "holidays.edit": {
+    "status": "reviewed"
+  },
+  "holidays.empty": {
+    "status": "reviewed"
+  },
+  "holidays.errors.duplicate": {
+    "status": "reviewed"
+  },
+  "holidays.errors.nameRequired": {
+    "status": "reviewed"
+  },
+  "holidays.errors.notFound": {
+    "status": "reviewed"
+  },
+  "holidays.import": {
+    "status": "reviewed"
+  },
+  "holidays.importPreview": {
+    "status": "reviewed"
+  },
+  "holidays.importSummary": {
+    "status": "reviewed"
+  },
+  "holidays.name": {
+    "status": "reviewed"
+  },
+  "holidays.recurring": {
+    "status": "reviewed"
+  },
+  "holidays.recurringHint": {
+    "status": "reviewed"
+  },
+  "holidays.subtitle": {
+    "status": "reviewed"
+  },
+  "holidays.title": {
+    "status": "reviewed"
+  },
+  "holidays.year": {
+    "status": "reviewed"
+  },
+  "impersonation.alreadyImpersonating": {
+    "status": "reviewed"
+  },
+  "impersonation.banner": {
+    "status": "reviewed"
+  },
+  "impersonation.bannerHint": {
+    "status": "reviewed"
+  },
+  "impersonation.cannotImpersonateInactive": {
+    "status": "reviewed"
+  },
+  "impersonation.cannotImpersonateSelf": {
+    "status": "reviewed"
+  },
+  "impersonation.notAllowed": {
+    "status": "reviewed"
+  },
+  "impersonation.start": {
+    "status": "reviewed"
+  },
+  "impersonation.started": {
+    "status": "reviewed"
+  },
+  "impersonation.stop": {
+    "status": "reviewed"
+  },
+  "impersonation.stopped": {
+    "status": "reviewed"
+  },
+  "import.actions.changeFile": {
+    "status": "reviewed"
+  },
+  "import.actions.chooseFile": {
+    "status": "reviewed"
+  },
+  "import.actions.confirmImport": {
+    "status": "reviewed"
+  },
+  "import.actions.downloadTemplate": {
+    "status": "reviewed"
+  },
+  "import.actions.runDryRun": {
+    "status": "reviewed"
+  },
+  "import.actions.startOver": {
+    "status": "reviewed"
+  },
+  "import.columns.clients.name.header": {
+    "status": "reviewed"
+  },
+  "import.columns.clients.name.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.clients.name.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.clients.notes.header": {
+    "status": "reviewed"
+  },
+  "import.columns.clients.notes.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.clients.notes.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.clients.phone.header": {
+    "status": "reviewed"
+  },
+  "import.columns.clients.phone.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.clients.phone.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.clientName.header": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.clientName.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.clientName.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.code.header": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.code.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.code.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.dueDate.header": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.dueDate.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.dueDate.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.engagementType.header": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.engagementType.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.engagementType.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.name.header": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.name.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.name.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.ownerUsername.header": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.ownerUsername.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.ownerUsername.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.startDate.header": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.startDate.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.startDate.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.status.header": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.status.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.projects.status.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.assigneeUsername.header": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.assigneeUsername.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.assigneeUsername.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.categoryLabel.header": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.categoryLabel.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.categoryLabel.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.description.header": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.description.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.description.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.dueDate.header": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.dueDate.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.dueDate.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.estimatedHours.header": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.estimatedHours.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.estimatedHours.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.priority.header": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.priority.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.priority.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.projectCode.header": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.projectCode.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.projectCode.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.taskValue.header": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.taskValue.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.taskValue.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.title.header": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.title.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.tasks.title.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.users.defaultTaskRate.header": {
+    "status": "reviewed"
+  },
+  "import.columns.users.defaultTaskRate.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.users.defaultTaskRate.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.users.fullName.header": {
+    "status": "reviewed"
+  },
+  "import.columns.users.fullName.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.users.fullName.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.users.isWorker.header": {
+    "status": "reviewed"
+  },
+  "import.columns.users.isWorker.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.users.isWorker.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.users.monthlySalary.header": {
+    "status": "reviewed"
+  },
+  "import.columns.users.monthlySalary.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.users.monthlySalary.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.users.password.header": {
+    "status": "reviewed"
+  },
+  "import.columns.users.password.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.users.password.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.users.payType.header": {
+    "status": "reviewed"
+  },
+  "import.columns.users.payType.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.users.payType.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.users.phone.header": {
+    "status": "reviewed"
+  },
+  "import.columns.users.phone.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.users.phone.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.users.username.header": {
+    "status": "reviewed"
+  },
+  "import.columns.users.username.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.users.username.sample": {
+    "status": "reviewed"
+  },
+  "import.columns.users.weeklyCapacityHours.header": {
+    "status": "reviewed"
+  },
+  "import.columns.users.weeklyCapacityHours.hint": {
+    "status": "reviewed"
+  },
+  "import.columns.users.weeklyCapacityHours.sample": {
+    "status": "reviewed"
+  },
+  "import.entities.clients": {
+    "status": "reviewed"
+  },
+  "import.entities.projects": {
+    "status": "reviewed"
+  },
+  "import.entities.tasks": {
+    "status": "reviewed"
+  },
+  "import.entities.users": {
+    "status": "reviewed"
+  },
+  "import.entityLabel": {
+    "status": "reviewed"
+  },
+  "import.errors.ambiguousClient": {
+    "status": "reviewed"
+  },
+  "import.errors.duplicateInFile": {
+    "status": "reviewed"
+  },
+  "import.errors.emptyFile": {
+    "status": "reviewed"
+  },
+  "import.errors.fileRequired": {
+    "status": "reviewed"
+  },
+  "import.errors.fileTooLarge": {
+    "status": "reviewed"
+  },
+  "import.errors.inactiveAssignee": {
+    "status": "reviewed"
+  },
+  "import.errors.invalidFile": {
+    "status": "reviewed"
+  },
+  "import.errors.invalidOption": {
+    "status": "reviewed"
+  },
+  "import.errors.staleImport": {
+    "status": "reviewed"
+  },
+  "import.errors.tooManyRows": {
+    "status": "reviewed"
+  },
+  "import.errors.unresolvedClient": {
+    "status": "reviewed"
+  },
+  "import.errors.unresolvedProject": {
+    "status": "reviewed"
+  },
+  "import.errors.unresolvedUser": {
+    "status": "reviewed"
+  },
+  "import.errors.wrongTemplate": {
+    "status": "reviewed"
+  },
+  "import.fileLabel": {
+    "status": "reviewed"
+  },
+  "import.instructions.column": {
+    "status": "reviewed"
+  },
+  "import.instructions.explanation": {
+    "status": "reviewed"
+  },
+  "import.instructions.intro": {
+    "status": "reviewed"
+  },
+  "import.instructions.required": {
+    "status": "reviewed"
+  },
+  "import.instructions.requiredNo": {
+    "status": "reviewed"
+  },
+  "import.instructions.requiredYes": {
+    "status": "reviewed"
+  },
+  "import.instructions.sheetName": {
+    "status": "reviewed"
+  },
+  "import.instructions.title": {
+    "status": "reviewed"
+  },
+  "import.meta.entityRow": {
+    "status": "reviewed"
+  },
+  "import.meta.field": {
+    "status": "reviewed"
+  },
+  "import.meta.sheetName": {
+    "status": "reviewed"
+  },
+  "import.meta.value": {
+    "status": "reviewed"
+  },
+  "import.meta.versionRow": {
+    "status": "reviewed"
+  },
+  "import.noFileChosen": {
+    "status": "reviewed"
+  },
+  "import.preview.errors": {
+    "status": "reviewed"
+  },
+  "import.preview.invalidCount": {
+    "status": "reviewed"
+  },
+  "import.preview.noValidRows": {
+    "status": "reviewed"
+  },
+  "import.preview.row": {
+    "status": "reviewed"
+  },
+  "import.preview.status": {
+    "status": "reviewed"
+  },
+  "import.preview.summary": {
+    "status": "reviewed"
+  },
+  "import.preview.title": {
+    "status": "reviewed"
+  },
+  "import.preview.toCreate": {
+    "status": "reviewed"
+  },
+  "import.preview.toUpdate": {
+    "status": "reviewed"
+  },
+  "import.preview.totalRows": {
+    "status": "reviewed"
+  },
+  "import.result.created": {
+    "status": "reviewed"
+  },
+  "import.result.skipped": {
+    "status": "reviewed"
+  },
+  "import.result.title": {
+    "status": "reviewed"
+  },
+  "import.result.updated": {
+    "status": "reviewed"
+  },
+  "import.rowStatus.create": {
+    "status": "reviewed"
+  },
+  "import.rowStatus.invalid": {
+    "status": "reviewed"
+  },
+  "import.rowStatus.update": {
+    "status": "reviewed"
+  },
+  "import.subtitle": {
+    "status": "reviewed"
+  },
+  "import.title": {
+    "status": "reviewed"
+  },
+  "lateness.dueDate": {
+    "status": "reviewed"
+  },
+  "lateness.effectiveDueDate": {
+    "status": "reviewed"
+  },
+  "lateness.escalation.ADMIN": {
+    "status": "reviewed"
+  },
+  "lateness.escalation.NONE": {
+    "status": "reviewed"
+  },
+  "lateness.escalation.PM": {
+    "status": "reviewed"
+  },
+  "lateness.extended": {
+    "status": "reviewed"
+  },
+  "lateness.frozen": {
+    "status": "reviewed"
+  },
+  "lateness.graceHours": {
+    "status": "reviewed"
+  },
+  "lateness.graceHoursValue": {
+    "status": "reviewed"
+  },
+  "lateness.measuredAt": {
+    "status": "reviewed"
+  },
+  "lateness.onTime": {
+    "status": "reviewed"
+  },
+  "lateness.originalDueDate": {
+    "status": "reviewed"
+  },
+  "lateness.title": {
+    "status": "reviewed"
+  },
+  "lateness.workingDaysLate": {
+    "status": "reviewed"
+  },
+  "leave.approve": {
+    "status": "reviewed"
+  },
+  "leave.approvedBy": {
+    "status": "reviewed"
+  },
+  "leave.assignWarning": {
+    "status": "reviewed"
+  },
+  "leave.days": {
+    "status": "reviewed"
+  },
+  "leave.decidedAt": {
+    "status": "reviewed"
+  },
+  "leave.decisionNote": {
+    "status": "reviewed"
+  },
+  "leave.edit": {
+    "status": "reviewed"
+  },
+  "leave.empty": {
+    "status": "reviewed"
+  },
+  "leave.endDate": {
+    "status": "reviewed"
+  },
+  "leave.errors.alreadyDecided": {
+    "status": "reviewed"
+  },
+  "leave.errors.notFound": {
+    "status": "reviewed"
+  },
+  "leave.errors.notOwn": {
+    "status": "reviewed"
+  },
+  "leave.errors.overlap": {
+    "status": "reviewed"
+  },
+  "leave.errors.rangeInvalid": {
+    "status": "reviewed"
+  },
+  "leave.errors.subjectInactive": {
+    "status": "reviewed"
+  },
+  "leave.errors.unknownType": {
+    "status": "reviewed"
+  },
+  "leave.note": {
+    "status": "reviewed"
+  },
+  "leave.record": {
+    "status": "reviewed"
+  },
+  "leave.reject": {
+    "status": "reviewed"
+  },
+  "leave.request": {
+    "status": "reviewed"
+  },
+  "leave.startDate": {
+    "status": "reviewed"
+  },
+  "leave.status.APPROVED": {
+    "status": "reviewed"
+  },
+  "leave.status.PENDING": {
+    "status": "reviewed"
+  },
+  "leave.status.REJECTED": {
+    "status": "reviewed"
+  },
+  "leave.subtitle": {
+    "status": "reviewed"
+  },
+  "leave.title": {
+    "status": "reviewed"
+  },
+  "leave.type": {
+    "status": "reviewed"
+  },
+  "leave.worker": {
+    "status": "reviewed"
+  },
+  "ledger.allTypes": {
+    "status": "reviewed"
+  },
+  "ledger.amount": {
+    "status": "reviewed"
+  },
+  "ledger.automatic": {
+    "status": "reviewed"
+  },
+  "ledger.balance": {
+    "status": "reviewed"
+  },
+  "ledger.balanceHint": {
+    "status": "reviewed"
+  },
+  "ledger.createdBy": {
+    "status": "reviewed"
+  },
+  "ledger.currentCycle": {
+    "status": "reviewed"
+  },
+  "ledger.currentCycleHint": {
+    "status": "reviewed"
+  },
+  "ledger.date": {
+    "status": "reviewed"
+  },
+  "ledger.empty": {
+    "status": "reviewed"
+  },
+  "ledger.emptyHint": {
+    "status": "reviewed"
+  },
+  "ledger.errors.alreadyReversed": {
+    "status": "reviewed"
+  },
+  "ledger.errors.amountOutOfRange": {
+    "status": "reviewed"
+  },
+  "ledger.errors.amountScale": {
+    "status": "reviewed"
+  },
+  "ledger.errors.amountZero": {
+    "status": "reviewed"
+  },
+  "ledger.errors.cannotReversePayout": {
+    "status": "reviewed"
+  },
+  "ledger.errors.cannotReverseReversal": {
+    "status": "reviewed"
+  },
+  "ledger.errors.cycleAlreadyPaid": {
+    "status": "reviewed"
+  },
+  "ledger.errors.magnitudeMustBePositive": {
+    "status": "reviewed"
+  },
+  "ledger.errors.mustBeCredit": {
+    "status": "reviewed"
+  },
+  "ledger.errors.mustBeDebit": {
+    "status": "reviewed"
+  },
+  "ledger.errors.notHumanReversible": {
+    "status": "reviewed"
+  },
+  "ledger.errors.noteRequired": {
+    "status": "reviewed"
+  },
+  "ledger.errors.reasonRequired": {
+    "status": "reviewed"
+  },
+  "ledger.errors.signedAmountRequired": {
+    "status": "reviewed"
+  },
+  "ledger.manual": {
+    "status": "reviewed"
+  },
+  "ledger.myEarnings": {
+    "status": "reviewed"
+  },
+  "ledger.note": {
+    "status": "reviewed"
+  },
+  "ledger.notes.payout": {
+    "status": "reviewed"
+  },
+  "ledger.notes.salary": {
+    "status": "reviewed"
+  },
+  "ledger.notes.taskCancelled": {
+    "status": "reviewed"
+  },
+  "ledger.notes.taskEarning": {
+    "status": "reviewed"
+  },
+  "ledger.outstanding": {
+    "status": "reviewed"
+  },
+  "ledger.reversed": {
+    "status": "reviewed"
+  },
+  "ledger.reversedNotice": {
+    "status": "reviewed"
+  },
+  "ledger.subtitle": {
+    "status": "reviewed"
+  },
+  "ledger.task": {
+    "status": "reviewed"
+  },
+  "ledger.title": {
+    "status": "reviewed"
+  },
+  "ledger.type": {
+    "status": "reviewed"
+  },
+  "months.0": {
+    "status": "reviewed"
+  },
+  "months.1": {
+    "status": "reviewed"
+  },
+  "months.10": {
+    "status": "reviewed"
+  },
+  "months.11": {
+    "status": "reviewed"
+  },
+  "months.2": {
+    "status": "reviewed"
+  },
+  "months.3": {
+    "status": "reviewed"
+  },
+  "months.4": {
+    "status": "reviewed"
+  },
+  "months.5": {
+    "status": "reviewed"
+  },
+  "months.6": {
+    "status": "reviewed"
+  },
+  "months.7": {
+    "status": "reviewed"
+  },
+  "months.8": {
+    "status": "reviewed"
+  },
+  "months.9": {
+    "status": "reviewed"
+  },
+  "nav.auditLog": {
+    "status": "reviewed"
+  },
+  "nav.bonuses": {
+    "status": "reviewed"
+  },
+  "nav.calendar": {
+    "status": "reviewed"
+  },
+  "nav.clients": {
+    "status": "reviewed"
+  },
+  "nav.dashboard": {
+    "status": "reviewed"
+  },
+  "nav.import": {
+    "status": "reviewed"
+  },
+  "nav.leave": {
+    "status": "reviewed"
+  },
+  "nav.ledger": {
+    "status": "reviewed"
+  },
+  "nav.myEarnings": {
+    "status": "reviewed"
+  },
+  "nav.notifications": {
+    "status": "reviewed"
+  },
+  "nav.payouts": {
+    "status": "reviewed"
+  },
+  "nav.penalties": {
+    "status": "reviewed"
+  },
+  "nav.projects": {
+    "status": "reviewed"
+  },
+  "nav.reports": {
+    "status": "reviewed"
+  },
+  "nav.roles": {
+    "status": "reviewed"
+  },
+  "nav.settings": {
+    "status": "reviewed"
+  },
+  "nav.tasks": {
+    "status": "reviewed"
+  },
+  "nav.users": {
+    "status": "reviewed"
+  },
+  "notifications.empty": {
+    "status": "reviewed"
+  },
+  "notifications.emptyHint": {
+    "status": "reviewed"
+  },
+  "notifications.errors.mandatoryType": {
+    "status": "reviewed"
+  },
+  "notifications.errors.notFound": {
+    "status": "reviewed"
+  },
+  "notifications.markAllRead": {
+    "status": "reviewed"
+  },
+  "notifications.markRead": {
+    "status": "reviewed"
+  },
+  "notifications.messages.bonusGranted.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.bonusGranted.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.extensionApproved.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.extensionApproved.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.extensionRejected.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.extensionRejected.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.extensionRequested.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.extensionRequested.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.managerDigest.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.managerDigest.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.moneyReversed.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.moneyReversed.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.payoutApproved.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.payoutApproved.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.payoutPaid.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.payoutPaid.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.penaltyApplied.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.penaltyApplied.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.penaltyAppliedManual.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.penaltyAppliedManual.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskApproved.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskApproved.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskAssigned.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskAssigned.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskDueSoon.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskDueSoon.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskEscalatedAdmin.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskEscalatedAdmin.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskEscalatedPm.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskEscalatedPm.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskMentioned.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskMentioned.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskOverdue.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskOverdue.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskRevisionRequested.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskRevisionRequested.title": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskSubmitted.body": {
+    "status": "reviewed"
+  },
+  "notifications.messages.taskSubmitted.title": {
+    "status": "reviewed"
+  },
+  "notifications.nonDismissable": {
+    "status": "reviewed"
+  },
+  "notifications.preferences.disabled": {
+    "status": "reviewed"
+  },
+  "notifications.preferences.enabled": {
+    "status": "reviewed"
+  },
+  "notifications.preferences.mandatory": {
+    "status": "reviewed"
+  },
+  "notifications.preferences.mandatoryHint": {
+    "status": "reviewed"
+  },
+  "notifications.preferences.saved": {
+    "status": "reviewed"
+  },
+  "notifications.preferences.subtitle": {
+    "status": "reviewed"
+  },
+  "notifications.preferences.title": {
+    "status": "reviewed"
+  },
+  "notifications.preferencesLink": {
+    "status": "reviewed"
+  },
+  "notifications.title": {
+    "status": "reviewed"
+  },
+  "notifications.types.BONUS_GRANTED": {
+    "status": "reviewed"
+  },
+  "notifications.types.EXTENSION_DECIDED": {
+    "status": "reviewed"
+  },
+  "notifications.types.EXTENSION_REQUESTED": {
+    "status": "reviewed"
+  },
+  "notifications.types.MANAGER_DIGEST": {
+    "status": "reviewed"
+  },
+  "notifications.types.MONEY_REVERSED": {
+    "status": "reviewed"
+  },
+  "notifications.types.PAYOUT_APPROVED": {
+    "status": "reviewed"
+  },
+  "notifications.types.PAYOUT_PAID": {
+    "status": "reviewed"
+  },
+  "notifications.types.PENALTY_APPLIED": {
+    "status": "reviewed"
+  },
+  "notifications.types.TASK_APPROVED": {
+    "status": "reviewed"
+  },
+  "notifications.types.TASK_ASSIGNED": {
+    "status": "reviewed"
+  },
+  "notifications.types.TASK_DUE_SOON": {
+    "status": "reviewed"
+  },
+  "notifications.types.TASK_ESCALATED": {
+    "status": "reviewed"
+  },
+  "notifications.types.TASK_MENTIONED": {
+    "status": "reviewed"
+  },
+  "notifications.types.TASK_OVERDUE": {
+    "status": "reviewed"
+  },
+  "notifications.types.TASK_REVISION_REQUESTED": {
+    "status": "reviewed"
+  },
+  "notifications.types.TASK_SUBMITTED": {
+    "status": "reviewed"
+  },
+  "notifications.unreadCount": {
+    "status": "reviewed"
+  },
+  "notifications.viewAll": {
+    "status": "reviewed"
+  },
+  "payouts.adjustments": {
+    "status": "reviewed"
+  },
+  "payouts.advances": {
+    "status": "reviewed"
+  },
+  "payouts.amountToPay": {
+    "status": "reviewed"
+  },
+  "payouts.approve": {
+    "status": "reviewed"
+  },
+  "payouts.bonuses": {
+    "status": "reviewed"
+  },
+  "payouts.breakdown": {
+    "status": "reviewed"
+  },
+  "payouts.breakdownHint": {
+    "status": "reviewed"
+  },
+  "payouts.carriedForward": {
+    "status": "reviewed"
+  },
+  "payouts.closeCycle": {
+    "status": "reviewed"
+  },
+  "payouts.closeCycleConfirm": {
+    "status": "reviewed"
+  },
+  "payouts.closeCycleDone": {
+    "status": "reviewed"
+  },
+  "payouts.closeCycleLocked": {
+    "status": "reviewed"
+  },
+  "payouts.closedAt": {
+    "status": "reviewed"
+  },
+  "payouts.closedBy": {
+    "status": "reviewed"
+  },
+  "payouts.cycle": {
+    "status": "reviewed"
+  },
+  "payouts.cycles": {
+    "status": "reviewed"
+  },
+  "payouts.empty": {
+    "status": "reviewed"
+  },
+  "payouts.emptyHint": {
+    "status": "reviewed"
+  },
+  "payouts.errors.alreadyPaid": {
+    "status": "reviewed"
+  },
+  "payouts.errors.amountRequired": {
+    "status": "reviewed"
+  },
+  "payouts.errors.concurrentPayment": {
+    "status": "reviewed"
+  },
+  "payouts.errors.cycleNotOpen": {
+    "status": "reviewed"
+  },
+  "payouts.errors.exceedsBalance": {
+    "status": "reviewed"
+  },
+  "payouts.errors.exceedsOutstanding": {
+    "status": "reviewed"
+  },
+  "payouts.errors.methodRequired": {
+    "status": "reviewed"
+  },
+  "payouts.errors.negativeAmount": {
+    "status": "reviewed"
+  },
+  "payouts.errors.notApproved": {
+    "status": "reviewed"
+  },
+  "payouts.errors.notDraft": {
+    "status": "reviewed"
+  },
+  "payouts.errors.unknownMethod": {
+    "status": "reviewed"
+  },
+  "payouts.flooredAtZero": {
+    "status": "reviewed"
+  },
+  "payouts.gross": {
+    "status": "reviewed"
+  },
+  "payouts.markPaid": {
+    "status": "reviewed"
+  },
+  "payouts.method": {
+    "status": "reviewed"
+  },
+  "payouts.net": {
+    "status": "reviewed"
+  },
+  "payouts.noPayouts": {
+    "status": "reviewed"
+  },
+  "payouts.outstanding": {
+    "status": "reviewed"
+  },
+  "payouts.paidAmount": {
+    "status": "reviewed"
+  },
+  "payouts.partialHint": {
+    "status": "reviewed"
+  },
+  "payouts.paymentNote": {
+    "status": "reviewed"
+  },
+  "payouts.payoutCount": {
+    "status": "reviewed"
+  },
+  "payouts.penalties": {
+    "status": "reviewed"
+  },
+  "payouts.period": {
+    "status": "reviewed"
+  },
+  "payouts.periodEnd": {
+    "status": "reviewed"
+  },
+  "payouts.periodStart": {
+    "status": "reviewed"
+  },
+  "payouts.reference": {
+    "status": "reviewed"
+  },
+  "payouts.statement": {
+    "status": "reviewed"
+  },
+  "payouts.subtitle": {
+    "status": "reviewed"
+  },
+  "payouts.title": {
+    "status": "reviewed"
+  },
+  "payouts.totalNet": {
+    "status": "reviewed"
+  },
+  "payouts.totalPaid": {
+    "status": "reviewed"
+  },
+  "payouts.worker": {
+    "status": "reviewed"
+  },
+  "penalties.amount": {
+    "status": "reviewed"
+  },
+  "penalties.automatic": {
+    "status": "reviewed"
+  },
+  "penalties.basis.DAILY_RATE": {
+    "status": "reviewed"
+  },
+  "penalties.basis.FIXED": {
+    "status": "reviewed"
+  },
+  "penalties.basis.TASK_VALUE": {
+    "status": "reviewed"
+  },
+  "penalties.basisFallback": {
+    "status": "reviewed"
+  },
+  "penalties.basisTerms.amount": {
+    "status": "reviewed"
+  },
+  "penalties.basisTerms.dailyRate": {
+    "status": "reviewed"
+  },
+  "penalties.breakdown": {
+    "status": "reviewed"
+  },
+  "penalties.breakdownHint": {
+    "status": "reviewed"
+  },
+  "penalties.causes.extensionApproved": {
+    "status": "reviewed"
+  },
+  "penalties.causes.manual": {
+    "status": "reviewed"
+  },
+  "penalties.causes.scheduled": {
+    "status": "reviewed"
+  },
+  "penalties.causes.statusChanged": {
+    "status": "reviewed"
+  },
+  "penalties.create": {
+    "status": "reviewed"
+  },
+  "penalties.created": {
+    "status": "reviewed"
+  },
+  "penalties.date": {
+    "status": "reviewed"
+  },
+  "penalties.empty": {
+    "status": "reviewed"
+  },
+  "penalties.emptyHint": {
+    "status": "reviewed"
+  },
+  "penalties.errors.amountRequired": {
+    "status": "reviewed"
+  },
+  "penalties.errors.notPenalty": {
+    "status": "reviewed"
+  },
+  "penalties.errors.reasonRequired": {
+    "status": "reviewed"
+  },
+  "penalties.errors.recomputeLocked": {
+    "status": "reviewed"
+  },
+  "penalties.errors.reverseReasonRequired": {
+    "status": "reviewed"
+  },
+  "penalties.errors.taskNotFound": {
+    "status": "reviewed"
+  },
+  "penalties.errors.userRequired": {
+    "status": "reviewed"
+  },
+  "penalties.fields.amount": {
+    "status": "reviewed"
+  },
+  "penalties.fields.basis": {
+    "status": "reviewed"
+  },
+  "penalties.fields.blockedWorkingDays": {
+    "status": "reviewed"
+  },
+  "penalties.fields.dueDate": {
+    "status": "reviewed"
+  },
+  "penalties.fields.effectiveDueDate": {
+    "status": "reviewed"
+  },
+  "penalties.fields.formula": {
+    "status": "reviewed"
+  },
+  "penalties.fields.graceHours": {
+    "status": "reviewed"
+  },
+  "penalties.fields.lateWorkingDays": {
+    "status": "reviewed"
+  },
+  "penalties.fields.mode": {
+    "status": "reviewed"
+  },
+  "penalties.formulas.fixedOnce": {
+    "status": "reviewed"
+  },
+  "penalties.formulas.fixedPerDay": {
+    "status": "reviewed"
+  },
+  "penalties.formulas.percentOnce": {
+    "status": "reviewed"
+  },
+  "penalties.formulas.percentPerDay": {
+    "status": "reviewed"
+  },
+  "penalties.frozen": {
+    "status": "reviewed"
+  },
+  "penalties.frozenHint": {
+    "status": "reviewed"
+  },
+  "penalties.live": {
+    "status": "reviewed"
+  },
+  "penalties.liveHint": {
+    "status": "reviewed"
+  },
+  "penalties.manual": {
+    "status": "reviewed"
+  },
+  "penalties.noBasis": {
+    "status": "reviewed"
+  },
+  "penalties.noPenaltyForTask": {
+    "status": "reviewed"
+  },
+  "penalties.notes.auto": {
+    "status": "reviewed"
+  },
+  "penalties.notes.autoRevision": {
+    "status": "reviewed"
+  },
+  "penalties.notes.manual": {
+    "status": "reviewed"
+  },
+  "penalties.notes.recalculated": {
+    "status": "reviewed"
+  },
+  "penalties.onTime": {
+    "status": "reviewed"
+  },
+  "penalties.originalDelivery": {
+    "status": "reviewed"
+  },
+  "penalties.penalties": {
+    "status": "reviewed"
+  },
+  "penalties.penalty": {
+    "status": "reviewed"
+  },
+  "penalties.profile": {
+    "status": "reviewed"
+  },
+  "penalties.profileDefault": {
+    "status": "reviewed"
+  },
+  "penalties.reason": {
+    "status": "reviewed"
+  },
+  "penalties.reasonLabel": {
+    "status": "reviewed"
+  },
+  "penalties.reasonOnlyOther": {
+    "status": "reviewed"
+  },
+  "penalties.reasonPlaceholder": {
+    "status": "reviewed"
+  },
+  "penalties.recordedBy": {
+    "status": "reviewed"
+  },
+  "penalties.register": {
+    "status": "reviewed"
+  },
+  "penalties.reverse.action": {
+    "status": "reviewed"
+  },
+  "penalties.reverse.confirm": {
+    "status": "reviewed"
+  },
+  "penalties.reverse.done": {
+    "status": "reviewed"
+  },
+  "penalties.reverse.doneBonus": {
+    "status": "reviewed"
+  },
+  "penalties.reverse.reason": {
+    "status": "reviewed"
+  },
+  "penalties.reverse.reasonHint": {
+    "status": "reviewed"
+  },
+  "penalties.reverse.title": {
+    "status": "reviewed"
+  },
+  "penalties.revisionNotPenalized": {
+    "status": "reviewed"
+  },
+  "penalties.revisionRound": {
+    "status": "reviewed"
+  },
+  "penalties.revisionSeparate": {
+    "status": "reviewed"
+  },
+  "penalties.subtitle": {
+    "status": "reviewed"
+  },
+  "penalties.task": {
+    "status": "reviewed"
+  },
+  "penalties.title": {
+    "status": "reviewed"
+  },
+  "penalties.worker": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.assignedUsers": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.create": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.created": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.delete": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.deleteConfirm": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.deleted": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.edit": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.empty": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.emptyHint": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.errors.duplicateName": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.errors.nameRequired": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.errors.notFound": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.errors.valueNegative": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.graceHours": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.graceHoursHint": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.mode": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.name": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.namePlaceholder": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.noCap": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.subtitle": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.title": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.updated": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.usersCount": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.value": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.valueCurrency": {
+    "status": "reviewed"
+  },
+  "penaltyProfiles.valuePercent": {
+    "status": "reviewed"
+  },
+  "performance.computedAt": {
+    "status": "reviewed"
+  },
+  "performance.estimateAccuracy": {
+    "status": "reviewed"
+  },
+  "performance.noData": {
+    "status": "reviewed"
+  },
+  "performance.onTimeRate": {
+    "status": "reviewed"
+  },
+  "performance.qualityScore": {
+    "status": "reviewed"
+  },
+  "performance.score": {
+    "status": "reviewed"
+  },
+  "performance.taskCount": {
+    "status": "reviewed"
+  },
+  "performance.volumeScore": {
+    "status": "reviewed"
+  },
+  "permissionDomains.advance": {
+    "status": "reviewed"
+  },
+  "permissionDomains.audit": {
+    "status": "reviewed"
+  },
+  "permissionDomains.bonus": {
+    "status": "reviewed"
+  },
+  "permissionDomains.calendar": {
+    "status": "reviewed"
+  },
+  "permissionDomains.client": {
+    "status": "reviewed"
+  },
+  "permissionDomains.import": {
+    "status": "reviewed"
+  },
+  "permissionDomains.leave": {
+    "status": "reviewed"
+  },
+  "permissionDomains.ledger": {
+    "status": "reviewed"
+  },
+  "permissionDomains.payout": {
+    "status": "reviewed"
+  },
+  "permissionDomains.penalty": {
+    "status": "reviewed"
+  },
+  "permissionDomains.project": {
+    "status": "reviewed"
+  },
+  "permissionDomains.report": {
+    "status": "reviewed"
+  },
+  "permissionDomains.role": {
+    "status": "reviewed"
+  },
+  "permissionDomains.settings": {
+    "status": "reviewed"
+  },
+  "permissionDomains.task": {
+    "status": "reviewed"
+  },
+  "permissionDomains.user": {
+    "status": "reviewed"
+  },
+  "permissions.advance.create": {
+    "status": "reviewed"
+  },
+  "permissions.audit.view": {
+    "status": "reviewed"
+  },
+  "permissions.bonus.create": {
+    "status": "reviewed"
+  },
+  "permissions.bonus.reverse": {
+    "status": "reviewed"
+  },
+  "permissions.calendar.manage": {
+    "status": "reviewed"
+  },
+  "permissions.client.manage": {
+    "status": "reviewed"
+  },
+  "permissions.client.view": {
+    "status": "reviewed"
+  },
+  "permissions.import.run": {
+    "status": "reviewed"
+  },
+  "permissions.leave.manage": {
+    "status": "reviewed"
+  },
+  "permissions.leave.view": {
+    "status": "reviewed"
+  },
+  "permissions.ledger.view.all": {
+    "status": "reviewed"
+  },
+  "permissions.ledger.view.own": {
+    "status": "reviewed"
+  },
+  "permissions.payout.approve": {
+    "status": "reviewed"
+  },
+  "permissions.payout.generate": {
+    "status": "reviewed"
+  },
+  "permissions.payout.markPaid": {
+    "status": "reviewed"
+  },
+  "permissions.payout.view": {
+    "status": "reviewed"
+  },
+  "permissions.penalty.create": {
+    "status": "reviewed"
+  },
+  "permissions.penalty.reverse": {
+    "status": "reviewed"
+  },
+  "permissions.penalty.view": {
+    "status": "reviewed"
+  },
+  "permissions.project.create": {
+    "status": "reviewed"
+  },
+  "permissions.project.delete": {
+    "status": "reviewed"
+  },
+  "permissions.project.edit": {
+    "status": "reviewed"
+  },
+  "permissions.project.view.all": {
+    "status": "reviewed"
+  },
+  "permissions.project.view.assigned": {
+    "status": "reviewed"
+  },
+  "permissions.report.export": {
+    "status": "reviewed"
+  },
+  "permissions.report.view": {
+    "status": "reviewed"
+  },
+  "permissions.role.manage": {
+    "status": "reviewed"
+  },
+  "permissions.role.view": {
+    "status": "reviewed"
+  },
+  "permissions.settings.edit": {
+    "status": "reviewed"
+  },
+  "permissions.settings.view": {
+    "status": "reviewed"
+  },
+  "permissions.task.approve": {
+    "status": "reviewed"
+  },
+  "permissions.task.assign": {
+    "status": "reviewed"
+  },
+  "permissions.task.cancel": {
+    "status": "reviewed"
+  },
+  "permissions.task.comment": {
+    "status": "reviewed"
+  },
+  "permissions.task.create": {
+    "status": "reviewed"
+  },
+  "permissions.task.edit": {
+    "status": "reviewed"
+  },
+  "permissions.task.extend": {
+    "status": "reviewed"
+  },
+  "permissions.task.view.all": {
+    "status": "reviewed"
+  },
+  "permissions.task.view.assigned": {
+    "status": "reviewed"
+  },
+  "permissions.user.create": {
+    "status": "reviewed"
+  },
+  "permissions.user.deactivate": {
+    "status": "reviewed"
+  },
+  "permissions.user.edit": {
+    "status": "reviewed"
+  },
+  "permissions.user.impersonate": {
+    "status": "reviewed"
+  },
+  "permissions.user.resetPassword": {
+    "status": "reviewed"
+  },
+  "permissions.user.view": {
+    "status": "reviewed"
+  },
+  "projects.client": {
+    "status": "reviewed"
+  },
+  "projects.code": {
+    "status": "reviewed"
+  },
+  "projects.codeHint": {
+    "status": "reviewed"
+  },
+  "projects.codeTaken": {
+    "status": "reviewed"
+  },
+  "projects.create": {
+    "status": "reviewed"
+  },
+  "projects.createFromTemplate": {
+    "status": "reviewed"
+  },
+  "projects.created": {
+    "status": "reviewed"
+  },
+  "projects.dateRangeInvalid": {
+    "status": "reviewed"
+  },
+  "projects.deleteDescription": {
+    "status": "reviewed"
+  },
+  "projects.deleteTitle": {
+    "status": "reviewed"
+  },
+  "projects.deleted": {
+    "status": "reviewed"
+  },
+  "projects.dueDate": {
+    "status": "reviewed"
+  },
+  "projects.edit": {
+    "status": "reviewed"
+  },
+  "projects.empty": {
+    "status": "reviewed"
+  },
+  "projects.emptyAction": {
+    "status": "reviewed"
+  },
+  "projects.engagementType": {
+    "status": "reviewed"
+  },
+  "projects.facets.client": {
+    "status": "reviewed"
+  },
+  "projects.facets.health": {
+    "status": "reviewed"
+  },
+  "projects.facets.owner": {
+    "status": "reviewed"
+  },
+  "projects.facets.status": {
+    "status": "reviewed"
+  },
+  "projects.gracePeriodHint": {
+    "status": "reviewed"
+  },
+  "projects.gracePeriodHours": {
+    "status": "reviewed"
+  },
+  "projects.health.clearOverride": {
+    "status": "reviewed"
+  },
+  "projects.health.clearOverrideTitle": {
+    "status": "reviewed"
+  },
+  "projects.health.computed": {
+    "status": "reviewed"
+  },
+  "projects.health.overrideAction": {
+    "status": "reviewed"
+  },
+  "projects.health.overrideBadge": {
+    "status": "reviewed"
+  },
+  "projects.health.overrideCleared": {
+    "status": "reviewed"
+  },
+  "projects.health.overrideReasonRequired": {
+    "status": "reviewed"
+  },
+  "projects.health.overrideSet": {
+    "status": "reviewed"
+  },
+  "projects.health.selectHealth": {
+    "status": "reviewed"
+  },
+  "projects.health.setOverrideTitle": {
+    "status": "reviewed"
+  },
+  "projects.health.title": {
+    "status": "reviewed"
+  },
+  "projects.milestones.add": {
+    "status": "reviewed"
+  },
+  "projects.milestones.created": {
+    "status": "reviewed"
+  },
+  "projects.milestones.deleteDescription": {
+    "status": "reviewed"
+  },
+  "projects.milestones.deleteTitle": {
+    "status": "reviewed"
+  },
+  "projects.milestones.deleted": {
+    "status": "reviewed"
+  },
+  "projects.milestones.dragHandle": {
+    "status": "reviewed"
+  },
+  "projects.milestones.dueDate": {
+    "status": "reviewed"
+  },
+  "projects.milestones.edit": {
+    "status": "reviewed"
+  },
+  "projects.milestones.empty": {
+    "status": "reviewed"
+  },
+  "projects.milestones.emptyAction": {
+    "status": "reviewed"
+  },
+  "projects.milestones.moveDown": {
+    "status": "reviewed"
+  },
+  "projects.milestones.moveUp": {
+    "status": "reviewed"
+  },
+  "projects.milestones.name": {
+    "status": "reviewed"
+  },
+  "projects.milestones.reordered": {
+    "status": "reviewed"
+  },
+  "projects.milestones.status": {
+    "status": "reviewed"
+  },
+  "projects.milestones.title": {
+    "status": "reviewed"
+  },
+  "projects.milestones.updated": {
+    "status": "reviewed"
+  },
+  "projects.name": {
+    "status": "reviewed"
+  },
+  "projects.noClient": {
+    "status": "reviewed"
+  },
+  "projects.owner": {
+    "status": "reviewed"
+  },
+  "projects.penalizeRevisionLateness": {
+    "status": "reviewed"
+  },
+  "projects.penalizeRevisionLatenessHint": {
+    "status": "reviewed"
+  },
+  "projects.searchPlaceholder": {
+    "status": "reviewed"
+  },
+  "projects.startDate": {
+    "status": "reviewed"
+  },
+  "projects.status": {
+    "status": "reviewed"
+  },
+  "projects.tabs.overview": {
+    "status": "reviewed"
+  },
+  "projects.tabs.tasks": {
+    "status": "reviewed"
+  },
+  "projects.tabs.team": {
+    "status": "reviewed"
+  },
+  "projects.tabs.timeline": {
+    "status": "reviewed"
+  },
+  "projects.tasksPlaceholder.description": {
+    "status": "reviewed"
+  },
+  "projects.tasksPlaceholder.title": {
+    "status": "reviewed"
+  },
+  "projects.team.addMember": {
+    "status": "reviewed"
+  },
+  "projects.team.alreadyMember": {
+    "status": "reviewed"
+  },
+  "projects.team.empty": {
+    "status": "reviewed"
+  },
+  "projects.team.removeMember": {
+    "status": "reviewed"
+  },
+  "projects.team.role": {
+    "status": "reviewed"
+  },
+  "projects.team.selectUser": {
+    "status": "reviewed"
+  },
+  "projects.team.title": {
+    "status": "reviewed"
+  },
+  "projects.templates.createFromTemplateTitle": {
+    "status": "reviewed"
+  },
+  "projects.templates.milestoneCount": {
+    "status": "reviewed"
+  },
+  "projects.templates.noTemplates": {
+    "status": "reviewed"
+  },
+  "projects.templates.saveAsTemplate": {
+    "status": "reviewed"
+  },
+  "projects.templates.saveAsTemplateDescription": {
+    "status": "reviewed"
+  },
+  "projects.templates.saveAsTemplateTitle": {
+    "status": "reviewed"
+  },
+  "projects.templates.saved": {
+    "status": "reviewed"
+  },
+  "projects.templates.selectTemplate": {
+    "status": "reviewed"
+  },
+  "projects.templates.templateName": {
+    "status": "reviewed"
+  },
+  "projects.templates.title": {
+    "status": "reviewed"
+  },
+  "projects.title": {
+    "status": "reviewed"
+  },
+  "projects.updated": {
+    "status": "reviewed"
+  },
+  "projects.usesDefault": {
+    "status": "reviewed"
+  },
+  "pwa.install": {
+    "status": "reviewed"
+  },
+  "pwa.installHint": {
+    "status": "reviewed"
+  },
+  "pwa.installTitle": {
+    "status": "reviewed"
+  },
+  "pwa.later": {
+    "status": "reviewed"
+  },
+  "pwa.offlineHint": {
+    "status": "reviewed"
+  },
+  "pwa.offlineTitle": {
+    "status": "reviewed"
+  },
+  "reports.deductions": {
+    "status": "reviewed"
+  },
+  "reports.deductionsAsIncome": {
+    "status": "reviewed"
+  },
+  "reports.defaultSheetName": {
+    "status": "reviewed"
+  },
+  "reports.empty": {
+    "status": "reviewed"
+  },
+  "reports.entryCount": {
+    "status": "reviewed"
+  },
+  "reports.export": {
+    "status": "reviewed"
+  },
+  "reports.exportFailed": {
+    "status": "reviewed"
+  },
+  "reports.exporting": {
+    "status": "reviewed"
+  },
+  "reports.from": {
+    "status": "reviewed"
+  },
+  "reports.grossPenalties": {
+    "status": "reviewed"
+  },
+  "reports.groupBy": {
+    "status": "reviewed"
+  },
+  "reports.groups.cycle": {
+    "status": "reviewed"
+  },
+  "reports.groups.month": {
+    "status": "reviewed"
+  },
+  "reports.groups.project": {
+    "status": "reviewed"
+  },
+  "reports.groups.worker": {
+    "status": "reviewed"
+  },
+  "reports.hub.deductions": {
+    "status": "reviewed"
+  },
+  "reports.hub.deductionsHint": {
+    "status": "reviewed"
+  },
+  "reports.hub.payoutStatement": {
+    "status": "reviewed"
+  },
+  "reports.hub.payoutStatementHint": {
+    "status": "reviewed"
+  },
+  "reports.hub.projectSummary": {
+    "status": "reviewed"
+  },
+  "reports.hub.projectSummaryHint": {
+    "status": "reviewed"
+  },
+  "reports.hub.virallapSummary": {
+    "status": "reviewed"
+  },
+  "reports.hub.virallapSummaryHint": {
+    "status": "reviewed"
+  },
+  "reports.hub.workerPerformance": {
+    "status": "reviewed"
+  },
+  "reports.hub.workerPerformanceHint": {
+    "status": "reviewed"
+  },
+  "reports.netPenalties": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.adjustments": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.advances": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.bonuses": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.carriedForward": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.gross": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.method": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.net": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.outstanding": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.paid": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.paidAt": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.penalties": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.status": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.username": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.columns.worker": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.empty": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.selectCycle": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.sheetName": {
+    "status": "reviewed"
+  },
+  "reports.payoutStatement.title": {
+    "status": "reviewed"
+  },
+  "reports.period": {
+    "status": "reviewed"
+  },
+  "reports.projectSummary.columns.code": {
+    "status": "reviewed"
+  },
+  "reports.projectSummary.columns.completedTasks": {
+    "status": "reviewed"
+  },
+  "reports.projectSummary.columns.completionPercent": {
+    "status": "reviewed"
+  },
+  "reports.projectSummary.columns.health": {
+    "status": "reviewed"
+  },
+  "reports.projectSummary.columns.name": {
+    "status": "reviewed"
+  },
+  "reports.projectSummary.columns.overdueTasks": {
+    "status": "reviewed"
+  },
+  "reports.projectSummary.columns.status": {
+    "status": "reviewed"
+  },
+  "reports.projectSummary.columns.totalTasks": {
+    "status": "reviewed"
+  },
+  "reports.projectSummary.empty": {
+    "status": "reviewed"
+  },
+  "reports.projectSummary.sheetName": {
+    "status": "reviewed"
+  },
+  "reports.projectSummary.title": {
+    "status": "reviewed"
+  },
+  "reports.reversedPenalties": {
+    "status": "reviewed"
+  },
+  "reports.subtitle": {
+    "status": "reviewed"
+  },
+  "reports.title": {
+    "status": "reviewed"
+  },
+  "reports.to": {
+    "status": "reviewed"
+  },
+  "reports.virallapSummary.completedTasks": {
+    "status": "reviewed"
+  },
+  "reports.virallapSummary.month": {
+    "status": "reviewed"
+  },
+  "reports.virallapSummary.onTimeRate": {
+    "status": "reviewed"
+  },
+  "reports.virallapSummary.sheetName": {
+    "status": "reviewed"
+  },
+  "reports.virallapSummary.title": {
+    "status": "reviewed"
+  },
+  "reports.virallapSummary.totalDeductions": {
+    "status": "reviewed"
+  },
+  "reports.virallapSummary.totalPaid": {
+    "status": "reviewed"
+  },
+  "reports.workerPerformance.columns.computedAt": {
+    "status": "reviewed"
+  },
+  "reports.workerPerformance.columns.estimateAccuracy": {
+    "status": "reviewed"
+  },
+  "reports.workerPerformance.columns.onTimeRate": {
+    "status": "reviewed"
+  },
+  "reports.workerPerformance.columns.qualityScore": {
+    "status": "reviewed"
+  },
+  "reports.workerPerformance.columns.score": {
+    "status": "reviewed"
+  },
+  "reports.workerPerformance.columns.taskCount": {
+    "status": "reviewed"
+  },
+  "reports.workerPerformance.columns.username": {
+    "status": "reviewed"
+  },
+  "reports.workerPerformance.columns.volumeScore": {
+    "status": "reviewed"
+  },
+  "reports.workerPerformance.columns.worker": {
+    "status": "reviewed"
+  },
+  "reports.workerPerformance.empty": {
+    "status": "reviewed"
+  },
+  "reports.workerPerformance.neverComputed": {
+    "status": "reviewed"
+  },
+  "reports.workerPerformance.sheetName": {
+    "status": "reviewed"
+  },
+  "reports.workerPerformance.title": {
+    "status": "reviewed"
+  },
+  "roles.assignedUsers": {
+    "status": "reviewed"
+  },
+  "roles.create": {
+    "status": "reviewed"
+  },
+  "roles.created": {
+    "status": "reviewed"
+  },
+  "roles.delete": {
+    "status": "reviewed"
+  },
+  "roles.deleted": {
+    "status": "reviewed"
+  },
+  "roles.description": {
+    "status": "reviewed"
+  },
+  "roles.edit": {
+    "status": "reviewed"
+  },
+  "roles.empty": {
+    "status": "reviewed"
+  },
+  "roles.emptyAction": {
+    "status": "reviewed"
+  },
+  "roles.inUse": {
+    "status": "reviewed"
+  },
+  "roles.memberCount": {
+    "status": "reviewed"
+  },
+  "roles.nameAr": {
+    "status": "reviewed"
+  },
+  "roles.nameEn": {
+    "status": "reviewed"
+  },
+  "roles.nameEnHint": {
+    "status": "reviewed"
+  },
+  "roles.permissionCount": {
+    "status": "reviewed"
+  },
+  "roles.permissions": {
+    "status": "reviewed"
+  },
+  "roles.superAdmin": {
+    "status": "reviewed"
+  },
+  "roles.superAdminDescription": {
+    "status": "reviewed"
+  },
+  "roles.superAdminImplicit": {
+    "status": "reviewed"
+  },
+  "roles.systemRole": {
+    "status": "reviewed"
+  },
+  "roles.systemRoleLocked": {
+    "status": "reviewed"
+  },
+  "roles.title": {
+    "status": "reviewed"
+  },
+  "roles.updated": {
+    "status": "reviewed"
+  },
+  "settings.discard": {
+    "status": "reviewed"
+  },
+  "settings.groupHints.calendar": {
+    "status": "reviewed"
+  },
+  "settings.groupHints.health": {
+    "status": "reviewed"
+  },
+  "settings.groupHints.holidays": {
+    "status": "reviewed"
+  },
+  "settings.groupHints.labels": {
+    "status": "reviewed"
+  },
+  "settings.groupHints.notifications": {
+    "status": "reviewed"
+  },
+  "settings.groupHints.payout": {
+    "status": "reviewed"
+  },
+  "settings.groupHints.penalty": {
+    "status": "reviewed"
+  },
+  "settings.groupHints.performance": {
+    "status": "reviewed"
+  },
+  "settings.groupHints.projects": {
+    "status": "reviewed"
+  },
+  "settings.groupHints.security": {
+    "status": "reviewed"
+  },
+  "settings.groupHints.tasks": {
+    "status": "reviewed"
+  },
+  "settings.groupHints.whatsapp": {
+    "status": "reviewed"
+  },
+  "settings.groups.calendar": {
+    "status": "reviewed"
+  },
+  "settings.groups.health": {
+    "status": "reviewed"
+  },
+  "settings.groups.holidays": {
+    "status": "reviewed"
+  },
+  "settings.groups.labels": {
+    "status": "reviewed"
+  },
+  "settings.groups.notifications": {
+    "status": "reviewed"
+  },
+  "settings.groups.payout": {
+    "status": "reviewed"
+  },
+  "settings.groups.penalty": {
+    "status": "reviewed"
+  },
+  "settings.groups.performance": {
+    "status": "reviewed"
+  },
+  "settings.groups.projects": {
+    "status": "reviewed"
+  },
+  "settings.groups.security": {
+    "status": "reviewed"
+  },
+  "settings.groups.tasks": {
+    "status": "reviewed"
+  },
+  "settings.groups.whatsapp": {
+    "status": "reviewed"
+  },
+  "settings.invalidValue": {
+    "status": "reviewed"
+  },
+  "settings.isDefault": {
+    "status": "reviewed"
+  },
+  "settings.keys.calendar.leaveTypes": {
+    "status": "reviewed"
+  },
+  "settings.keys.calendar.weekendDays": {
+    "status": "reviewed"
+  },
+  "settings.keys.calendar.workdayEnd": {
+    "status": "reviewed"
+  },
+  "settings.keys.calendar.workdayStart": {
+    "status": "reviewed"
+  },
+  "settings.keys.calendar.workingDaysPerMonth": {
+    "status": "reviewed"
+  },
+  "settings.keys.health.amberDaysBeforeDue": {
+    "status": "reviewed"
+  },
+  "settings.keys.health.blockedDaysThreshold": {
+    "status": "reviewed"
+  },
+  "settings.keys.health.overdueTasksThreshold": {
+    "status": "reviewed"
+  },
+  "settings.keys.labels.priority": {
+    "status": "reviewed"
+  },
+  "settings.keys.labels.projectStatus": {
+    "status": "reviewed"
+  },
+  "settings.keys.labels.taskStatus": {
+    "status": "reviewed"
+  },
+  "settings.keys.notifications.digestHourCairo": {
+    "status": "reviewed"
+  },
+  "settings.keys.notifications.dueSoonHours": {
+    "status": "reviewed"
+  },
+  "settings.keys.notifications.escalateToAdminAfterDays": {
+    "status": "reviewed"
+  },
+  "settings.keys.notifications.escalateToPmAfterDays": {
+    "status": "reviewed"
+  },
+  "settings.keys.notifications.pollingIntervalSeconds": {
+    "status": "reviewed"
+  },
+  "settings.keys.payout.cycleDay": {
+    "status": "reviewed"
+  },
+  "settings.keys.payout.paymentMethods": {
+    "status": "reviewed"
+  },
+  "settings.keys.penalty.defaultGraceHours": {
+    "status": "reviewed"
+  },
+  "settings.keys.penalty.defaultMode": {
+    "status": "reviewed"
+  },
+  "settings.keys.penalty.defaultValue": {
+    "status": "reviewed"
+  },
+  "settings.keys.penalty.penalizeRevisionLateness": {
+    "status": "reviewed"
+  },
+  "settings.keys.performance.weightEstimateAccuracy": {
+    "status": "reviewed"
+  },
+  "settings.keys.performance.weightOnTime": {
+    "status": "reviewed"
+  },
+  "settings.keys.performance.weightQuality": {
+    "status": "reviewed"
+  },
+  "settings.keys.performance.weightVolume": {
+    "status": "reviewed"
+  },
+  "settings.keys.projects.engagementTypes": {
+    "status": "reviewed"
+  },
+  "settings.keys.security.lockoutMinutes": {
+    "status": "reviewed"
+  },
+  "settings.keys.security.loginWindowMinutes": {
+    "status": "reviewed"
+  },
+  "settings.keys.security.maxLoginAttempts": {
+    "status": "reviewed"
+  },
+  "settings.keys.security.minPasswordLength": {
+    "status": "reviewed"
+  },
+  "settings.keys.tasks.categories": {
+    "status": "reviewed"
+  },
+  "settings.keys.tasks.dueSoonDays": {
+    "status": "reviewed"
+  },
+  "settings.keys.whatsapp.templates": {
+    "status": "reviewed"
+  },
+  "settings.list.addItem": {
+    "status": "reviewed"
+  },
+  "settings.list.atLeastOne": {
+    "status": "reviewed"
+  },
+  "settings.list.duplicateId": {
+    "status": "reviewed"
+  },
+  "settings.list.empty": {
+    "status": "reviewed"
+  },
+  "settings.list.idHint": {
+    "status": "reviewed"
+  },
+  "settings.list.idLocked": {
+    "status": "reviewed"
+  },
+  "settings.list.itemId": {
+    "status": "reviewed"
+  },
+  "settings.list.itemLabel": {
+    "status": "reviewed"
+  },
+  "settings.noChanges": {
+    "status": "reviewed"
+  },
+  "settings.readOnly": {
+    "status": "reviewed"
+  },
+  "settings.restoreDefault": {
+    "status": "reviewed"
+  },
+  "settings.save": {
+    "status": "reviewed"
+  },
+  "settings.saveFailed": {
+    "status": "reviewed"
+  },
+  "settings.saved": {
+    "status": "reviewed"
+  },
+  "settings.sections": {
+    "status": "reviewed"
+  },
+  "settings.subtitle": {
+    "status": "reviewed"
+  },
+  "settings.templates.variablesHint": {
+    "status": "reviewed"
+  },
+  "settings.title": {
+    "status": "reviewed"
+  },
+  "settings.unsavedChanges": {
+    "status": "reviewed"
+  },
+  "settings.weights.notHundred": {
+    "status": "reviewed"
+  },
+  "settings.weights.total": {
+    "status": "reviewed"
+  },
+  "shell.account": {
+    "status": "reviewed"
+  },
+  "shell.appearance": {
+    "status": "reviewed"
+  },
+  "shell.breadcrumb": {
+    "status": "reviewed"
+  },
+  "shell.collapseSidebar": {
+    "status": "reviewed"
+  },
+  "shell.commandShortcut": {
+    "status": "reviewed"
+  },
+  "shell.expandSidebar": {
+    "status": "reviewed"
+  },
+  "shell.navigation": {
+    "status": "reviewed"
+  },
+  "shell.notifications": {
+    "status": "reviewed"
+  },
+  "shell.notificationsEmpty": {
+    "status": "reviewed"
+  },
+  "shell.notificationsHint": {
+    "status": "reviewed"
+  },
+  "shell.openCommandPalette": {
+    "status": "reviewed"
+  },
+  "shell.pageActions": {
+    "status": "reviewed"
+  },
+  "shell.toggleSidebar": {
+    "status": "reviewed"
+  },
+  "shell.unreadCount": {
+    "status": "reviewed"
+  },
+  "shell.userMenu": {
+    "status": "reviewed"
+  },
+  "table.activeFilters": {
+    "status": "reviewed"
+  },
+  "table.clearFilters": {
+    "status": "reviewed"
+  },
+  "table.columns": {
+    "status": "reviewed"
+  },
+  "table.columnsHint": {
+    "status": "reviewed"
+  },
+  "table.defaultView": {
+    "status": "reviewed"
+  },
+  "table.deleteView": {
+    "status": "reviewed"
+  },
+  "table.empty": {
+    "status": "reviewed"
+  },
+  "table.emptyFiltered": {
+    "status": "reviewed"
+  },
+  "table.filters": {
+    "status": "reviewed"
+  },
+  "table.firstPage": {
+    "status": "reviewed"
+  },
+  "table.lastPage": {
+    "status": "reviewed"
+  },
+  "table.nextPage": {
+    "status": "reviewed"
+  },
+  "table.pageOf": {
+    "status": "reviewed"
+  },
+  "table.previousPage": {
+    "status": "reviewed"
+  },
+  "table.range": {
+    "status": "reviewed"
+  },
+  "table.rowsPerPage": {
+    "status": "reviewed"
+  },
+  "table.saveView": {
+    "status": "reviewed"
+  },
+  "table.saveViewHint": {
+    "status": "reviewed"
+  },
+  "table.savedViews": {
+    "status": "reviewed"
+  },
+  "table.selectedCount": {
+    "status": "reviewed"
+  },
+  "table.sortAscending": {
+    "status": "reviewed"
+  },
+  "table.sortClear": {
+    "status": "reviewed"
+  },
+  "table.sortDescending": {
+    "status": "reviewed"
+  },
+  "table.viewName": {
+    "status": "reviewed"
+  },
+  "tasks.actions.addWatcher": {
+    "status": "reviewed"
+  },
+  "tasks.actions.approve": {
+    "status": "reviewed"
+  },
+  "tasks.actions.assign": {
+    "status": "reviewed"
+  },
+  "tasks.actions.block": {
+    "status": "reviewed"
+  },
+  "tasks.actions.cancel": {
+    "status": "reviewed"
+  },
+  "tasks.actions.complete": {
+    "status": "reviewed"
+  },
+  "tasks.actions.reassign": {
+    "status": "reviewed"
+  },
+  "tasks.actions.removeWatcher": {
+    "status": "reviewed"
+  },
+  "tasks.actions.requestRevision": {
+    "status": "reviewed"
+  },
+  "tasks.actions.sendToReview": {
+    "status": "reviewed"
+  },
+  "tasks.actions.start": {
+    "status": "reviewed"
+  },
+  "tasks.actions.submit": {
+    "status": "reviewed"
+  },
+  "tasks.actions.unblock": {
+    "status": "reviewed"
+  },
+  "tasks.activity.empty": {
+    "status": "reviewed"
+  },
+  "tasks.activity.system": {
+    "status": "reviewed"
+  },
+  "tasks.activity.title": {
+    "status": "reviewed"
+  },
+  "tasks.activity.types.ASSIGNED": {
+    "status": "reviewed"
+  },
+  "tasks.activity.types.COMMENTED": {
+    "status": "reviewed"
+  },
+  "tasks.activity.types.CREATED": {
+    "status": "reviewed"
+  },
+  "tasks.activity.types.DEPENDENCY_ADDED": {
+    "status": "reviewed"
+  },
+  "tasks.activity.types.DEPENDENCY_REMOVED": {
+    "status": "reviewed"
+  },
+  "tasks.activity.types.DUE_DATE_CHANGED": {
+    "status": "reviewed"
+  },
+  "tasks.activity.types.ELAPSED_RECOMPUTED": {
+    "status": "reviewed"
+  },
+  "tasks.activity.types.STATUS_CHANGED": {
+    "status": "reviewed"
+  },
+  "tasks.activity.types.UPDATED": {
+    "status": "reviewed"
+  },
+  "tasks.activity.types.VALUE_CHANGED": {
+    "status": "reviewed"
+  },
+  "tasks.activity.types.WATCHER_ADDED": {
+    "status": "reviewed"
+  },
+  "tasks.activity.types.WATCHER_REMOVED": {
+    "status": "reviewed"
+  },
+  "tasks.approval.approved": {
+    "status": "reviewed"
+  },
+  "tasks.approval.ratingHint": {
+    "status": "reviewed"
+  },
+  "tasks.approval.ratingLabel": {
+    "status": "reviewed"
+  },
+  "tasks.approval.revisionNewDueDate": {
+    "status": "reviewed"
+  },
+  "tasks.approval.revisionReason": {
+    "status": "reviewed"
+  },
+  "tasks.approval.revisionRequested": {
+    "status": "reviewed"
+  },
+  "tasks.approval.revisionTitle": {
+    "status": "reviewed"
+  },
+  "tasks.approval.title": {
+    "status": "reviewed"
+  },
+  "tasks.assignee": {
+    "status": "reviewed"
+  },
+  "tasks.assignment.assigned": {
+    "status": "reviewed"
+  },
+  "tasks.assignment.payPreviousAmount": {
+    "status": "reviewed"
+  },
+  "tasks.assignment.payPreviousDescription": {
+    "status": "reviewed"
+  },
+  "tasks.assignment.payPreviousNote": {
+    "status": "reviewed"
+  },
+  "tasks.assignment.payPreviousSkip": {
+    "status": "reviewed"
+  },
+  "tasks.assignment.payPreviousTitle": {
+    "status": "reviewed"
+  },
+  "tasks.assignment.reassigned": {
+    "status": "reviewed"
+  },
+  "tasks.assignment.selectAssignee": {
+    "status": "reviewed"
+  },
+  "tasks.assignment.title": {
+    "status": "reviewed"
+  },
+  "tasks.assignment.watcherAdded": {
+    "status": "reviewed"
+  },
+  "tasks.assignment.watcherRemoved": {
+    "status": "reviewed"
+  },
+  "tasks.board.addTask": {
+    "status": "reviewed"
+  },
+  "tasks.board.dropHint": {
+    "status": "reviewed"
+  },
+  "tasks.board.emptyColumn": {
+    "status": "reviewed"
+  },
+  "tasks.board.illegalDrop": {
+    "status": "reviewed"
+  },
+  "tasks.board.moreCards": {
+    "status": "reviewed"
+  },
+  "tasks.calendarView.empty": {
+    "status": "reviewed"
+  },
+  "tasks.calendarView.month": {
+    "status": "reviewed"
+  },
+  "tasks.calendarView.moreOnDay": {
+    "status": "reviewed"
+  },
+  "tasks.calendarView.nextPeriod": {
+    "status": "reviewed"
+  },
+  "tasks.calendarView.previousPeriod": {
+    "status": "reviewed"
+  },
+  "tasks.calendarView.today": {
+    "status": "reviewed"
+  },
+  "tasks.calendarView.week": {
+    "status": "reviewed"
+  },
+  "tasks.category": {
+    "status": "reviewed"
+  },
+  "tasks.comments.added": {
+    "status": "reviewed"
+  },
+  "tasks.comments.empty": {
+    "status": "reviewed"
+  },
+  "tasks.comments.mentionHint": {
+    "status": "reviewed"
+  },
+  "tasks.comments.placeholder": {
+    "status": "reviewed"
+  },
+  "tasks.comments.submit": {
+    "status": "reviewed"
+  },
+  "tasks.comments.title": {
+    "status": "reviewed"
+  },
+  "tasks.create": {
+    "status": "reviewed"
+  },
+  "tasks.created": {
+    "status": "reviewed"
+  },
+  "tasks.delayAttribution": {
+    "status": "reviewed"
+  },
+  "tasks.delayReason": {
+    "status": "reviewed"
+  },
+  "tasks.deleteDescription": {
+    "status": "reviewed"
+  },
+  "tasks.deleteTitle": {
+    "status": "reviewed"
+  },
+  "tasks.deleted": {
+    "status": "reviewed"
+  },
+  "tasks.dependencies.add": {
+    "status": "reviewed"
+  },
+  "tasks.dependencies.added": {
+    "status": "reviewed"
+  },
+  "tasks.dependencies.dependents": {
+    "status": "reviewed"
+  },
+  "tasks.dependencies.dependsOn": {
+    "status": "reviewed"
+  },
+  "tasks.dependencies.empty": {
+    "status": "reviewed"
+  },
+  "tasks.dependencies.removed": {
+    "status": "reviewed"
+  },
+  "tasks.dependencies.title": {
+    "status": "reviewed"
+  },
+  "tasks.dependencies.warningDescription": {
+    "status": "reviewed"
+  },
+  "tasks.dependencies.warningDismiss": {
+    "status": "reviewed"
+  },
+  "tasks.dependencies.warningTitle": {
+    "status": "reviewed"
+  },
+  "tasks.dependencyPicker.empty": {
+    "status": "reviewed"
+  },
+  "tasks.dependencyPicker.placeholder": {
+    "status": "reviewed"
+  },
+  "tasks.description": {
+    "status": "reviewed"
+  },
+  "tasks.detail.tabs.activity": {
+    "status": "reviewed"
+  },
+  "tasks.detail.tabs.comments": {
+    "status": "reviewed"
+  },
+  "tasks.detail.tabs.dependencies": {
+    "status": "reviewed"
+  },
+  "tasks.detail.tabs.details": {
+    "status": "reviewed"
+  },
+  "tasks.detail.tabs.extensions": {
+    "status": "reviewed"
+  },
+  "tasks.detail.tabs.penalty": {
+    "status": "reviewed"
+  },
+  "tasks.dueDate": {
+    "status": "reviewed"
+  },
+  "tasks.edit": {
+    "status": "reviewed"
+  },
+  "tasks.elapsed.hint": {
+    "status": "reviewed"
+  },
+  "tasks.elapsed.hoursMinutes": {
+    "status": "reviewed"
+  },
+  "tasks.elapsed.notStarted": {
+    "status": "reviewed"
+  },
+  "tasks.elapsed.raw": {
+    "status": "reviewed"
+  },
+  "tasks.elapsed.working": {
+    "status": "reviewed"
+  },
+  "tasks.empty": {
+    "status": "reviewed"
+  },
+  "tasks.emptyAction": {
+    "status": "reviewed"
+  },
+  "tasks.errors.assigneeInactive": {
+    "status": "reviewed"
+  },
+  "tasks.errors.assigneeRequired": {
+    "status": "reviewed"
+  },
+  "tasks.errors.assigneeUnchanged": {
+    "status": "reviewed"
+  },
+  "tasks.errors.commentEmpty": {
+    "status": "reviewed"
+  },
+  "tasks.errors.duplicateDependency": {
+    "status": "reviewed"
+  },
+  "tasks.errors.illegalTransition": {
+    "status": "reviewed"
+  },
+  "tasks.errors.milestoneNotInProject": {
+    "status": "reviewed"
+  },
+  "tasks.errors.noPreviousStatus": {
+    "status": "reviewed"
+  },
+  "tasks.errors.notBlocked": {
+    "status": "reviewed"
+  },
+  "tasks.errors.partialAmountInvalid": {
+    "status": "reviewed"
+  },
+  "tasks.errors.partialAmountRequiresPreviousAssignee": {
+    "status": "reviewed"
+  },
+  "tasks.errors.partialAmountTooLarge": {
+    "status": "reviewed"
+  },
+  "tasks.errors.ratingRange": {
+    "status": "reviewed"
+  },
+  "tasks.errors.ratingRequired": {
+    "status": "reviewed"
+  },
+  "tasks.errors.reciprocalDependency": {
+    "status": "reviewed"
+  },
+  "tasks.errors.sameAssigneeAsWatcher": {
+    "status": "reviewed"
+  },
+  "tasks.errors.selfDependency": {
+    "status": "reviewed"
+  },
+  "tasks.errors.unknownCategory": {
+    "status": "reviewed"
+  },
+  "tasks.estimatedHours": {
+    "status": "reviewed"
+  },
+  "tasks.facets.assignee": {
+    "status": "reviewed"
+  },
+  "tasks.facets.category": {
+    "status": "reviewed"
+  },
+  "tasks.facets.dueSoon": {
+    "status": "reviewed"
+  },
+  "tasks.facets.overdueOnly": {
+    "status": "reviewed"
+  },
+  "tasks.facets.priority": {
+    "status": "reviewed"
+  },
+  "tasks.facets.project": {
+    "status": "reviewed"
+  },
+  "tasks.facets.status": {
+    "status": "reviewed"
+  },
+  "tasks.list.bulkApplied": {
+    "status": "reviewed"
+  },
+  "tasks.list.bulkAssign": {
+    "status": "reviewed"
+  },
+  "tasks.list.bulkDueDate": {
+    "status": "reviewed"
+  },
+  "tasks.list.bulkFailed": {
+    "status": "reviewed"
+  },
+  "tasks.list.bulkPartial": {
+    "status": "reviewed"
+  },
+  "tasks.list.bulkPriority": {
+    "status": "reviewed"
+  },
+  "tasks.list.selectAllPage": {
+    "status": "reviewed"
+  },
+  "tasks.list.selectRow": {
+    "status": "reviewed"
+  },
+  "tasks.milestone": {
+    "status": "reviewed"
+  },
+  "tasks.mine": {
+    "status": "reviewed"
+  },
+  "tasks.noAssignee": {
+    "status": "reviewed"
+  },
+  "tasks.noMilestone": {
+    "status": "reviewed"
+  },
+  "tasks.originalDueDate": {
+    "status": "reviewed"
+  },
+  "tasks.overdue": {
+    "status": "reviewed"
+  },
+  "tasks.priority": {
+    "status": "reviewed"
+  },
+  "tasks.project": {
+    "status": "reviewed"
+  },
+  "tasks.qualityRating": {
+    "status": "reviewed"
+  },
+  "tasks.quickCreate.selectCategory": {
+    "status": "reviewed"
+  },
+  "tasks.quickCreate.selectProject": {
+    "status": "reviewed"
+  },
+  "tasks.quickCreate.submit": {
+    "status": "reviewed"
+  },
+  "tasks.quickCreate.title": {
+    "status": "reviewed"
+  },
+  "tasks.searchPlaceholder": {
+    "status": "reviewed"
+  },
+  "tasks.status": {
+    "status": "reviewed"
+  },
+  "tasks.taskTitle": {
+    "status": "reviewed"
+  },
+  "tasks.taskValue": {
+    "status": "reviewed"
+  },
+  "tasks.taskValueHint": {
+    "status": "reviewed"
+  },
+  "tasks.title": {
+    "status": "reviewed"
+  },
+  "tasks.truncatedNotice": {
+    "status": "reviewed"
+  },
+  "tasks.unassigned": {
+    "status": "reviewed"
+  },
+  "tasks.updated": {
+    "status": "reviewed"
+  },
+  "tasks.views.board": {
+    "status": "reviewed"
+  },
+  "tasks.views.calendar": {
+    "status": "reviewed"
+  },
+  "tasks.views.list": {
+    "status": "reviewed"
+  },
+  "tasks.watcherPicker.empty": {
+    "status": "reviewed"
+  },
+  "tasks.watcherPicker.placeholder": {
+    "status": "reviewed"
+  },
+  "tasks.watcherPicker.title": {
+    "status": "reviewed"
+  },
+  "tasks.watchers": {
+    "status": "reviewed"
+  },
+  "time.ago": {
+    "status": "reviewed"
+  },
+  "time.and": {
+    "status": "reviewed"
+  },
+  "time.now": {
+    "status": "reviewed"
+  },
+  "time.units.day.few": {
+    "status": "reviewed"
+  },
+  "time.units.day.many": {
+    "status": "reviewed"
+  },
+  "time.units.day.one": {
+    "status": "reviewed"
+  },
+  "time.units.day.two": {
+    "status": "reviewed"
+  },
+  "time.units.hour.few": {
+    "status": "reviewed"
+  },
+  "time.units.hour.many": {
+    "status": "reviewed"
+  },
+  "time.units.hour.one": {
+    "status": "reviewed"
+  },
+  "time.units.hour.two": {
+    "status": "reviewed"
+  },
+  "time.units.minute.few": {
+    "status": "reviewed"
+  },
+  "time.units.minute.many": {
+    "status": "reviewed"
+  },
+  "time.units.minute.one": {
+    "status": "reviewed"
+  },
+  "time.units.minute.two": {
+    "status": "reviewed"
+  },
+  "time.units.month.few": {
+    "status": "reviewed"
+  },
+  "time.units.month.many": {
+    "status": "reviewed"
+  },
+  "time.units.month.one": {
+    "status": "reviewed"
+  },
+  "time.units.month.two": {
+    "status": "reviewed"
+  },
+  "time.units.week.few": {
+    "status": "reviewed"
+  },
+  "time.units.week.many": {
+    "status": "reviewed"
+  },
+  "time.units.week.one": {
+    "status": "reviewed"
+  },
+  "time.units.week.two": {
+    "status": "reviewed"
+  },
+  "time.units.year.few": {
+    "status": "reviewed"
+  },
+  "time.units.year.many": {
+    "status": "reviewed"
+  },
+  "time.units.year.one": {
+    "status": "reviewed"
+  },
+  "time.units.year.two": {
+    "status": "reviewed"
+  },
+  "time.within": {
+    "status": "reviewed"
+  },
+  "toast.dismiss": {
+    "status": "reviewed"
+  },
+  "toast.region": {
+    "status": "reviewed"
+  },
+  "units.day": {
+    "status": "reviewed"
+  },
+  "units.hour": {
+    "status": "reviewed"
+  },
+  "units.minute": {
+    "status": "reviewed"
+  },
+  "units.second": {
+    "status": "reviewed"
+  },
+  "units.task": {
+    "status": "reviewed"
+  },
+  "users.activate": {
+    "status": "reviewed"
+  },
+  "users.activated": {
+    "status": "reviewed"
+  },
+  "users.cannotDeactivateLastSuperAdmin": {
+    "status": "reviewed"
+  },
+  "users.cannotDeactivateSelf": {
+    "status": "reviewed"
+  },
+  "users.create": {
+    "status": "reviewed"
+  },
+  "users.created": {
+    "status": "reviewed"
+  },
+  "users.deactivate": {
+    "status": "reviewed"
+  },
+  "users.deactivated": {
+    "status": "reviewed"
+  },
+  "users.defaultTaskRate": {
+    "status": "reviewed"
+  },
+  "users.edit": {
+    "status": "reviewed"
+  },
+  "users.empty": {
+    "status": "reviewed"
+  },
+  "users.emptyAction": {
+    "status": "reviewed"
+  },
+  "users.fullName": {
+    "status": "reviewed"
+  },
+  "users.hasOpenTasks": {
+    "status": "reviewed"
+  },
+  "users.isWorker": {
+    "status": "reviewed"
+  },
+  "users.isWorkerHint": {
+    "status": "reviewed"
+  },
+  "users.monthlySalary": {
+    "status": "reviewed"
+  },
+  "users.noRoles": {
+    "status": "reviewed"
+  },
+  "users.openTasksLabel": {
+    "status": "reviewed"
+  },
+  "users.passwordReset": {
+    "status": "reviewed"
+  },
+  "users.payType": {
+    "status": "reviewed"
+  },
+  "users.penaltyProfile": {
+    "status": "reviewed"
+  },
+  "users.penaltyProfileDefault": {
+    "status": "reviewed"
+  },
+  "users.phone": {
+    "status": "reviewed"
+  },
+  "users.resetPassword": {
+    "status": "reviewed"
+  },
+  "users.resetPasswordHint": {
+    "status": "reviewed"
+  },
+  "users.roles": {
+    "status": "reviewed"
+  },
+  "users.searchPlaceholder": {
+    "status": "reviewed"
+  },
+  "users.status": {
+    "status": "reviewed"
+  },
+  "users.superAdminRoleRestricted": {
+    "status": "reviewed"
+  },
+  "users.title": {
+    "status": "reviewed"
+  },
+  "users.updated": {
+    "status": "reviewed"
+  },
+  "users.weeklyCapacityHours": {
+    "status": "reviewed"
+  },
+  "validation.amountFormat": {
+    "status": "reviewed"
+  },
+  "validation.amountNegative": {
+    "status": "reviewed"
+  },
+  "validation.capacityRange": {
+    "status": "reviewed"
+  },
+  "validation.dateRangeInvalid": {
+    "status": "reviewed"
+  },
+  "validation.fullNameRequired": {
+    "status": "reviewed"
+  },
+  "validation.passwordContainsUsername": {
+    "status": "reviewed"
+  },
+  "validation.passwordTooShort": {
+    "status": "reviewed"
+  },
+  "validation.phoneInvalid": {
+    "status": "reviewed"
+  },
+  "validation.rateRequiredForPayType": {
+    "status": "reviewed"
+  },
+  "validation.required": {
+    "status": "reviewed"
+  },
+  "validation.roleNameArRequired": {
+    "status": "reviewed"
+  },
+  "validation.roleNameEnFormat": {
+    "status": "reviewed"
+  },
+  "validation.roleNameEnTaken": {
+    "status": "reviewed"
+  },
+  "validation.salaryRequiredForPayType": {
+    "status": "reviewed"
+  },
+  "validation.unknownPermission": {
+    "status": "reviewed"
+  },
+  "validation.usernameFormat": {
+    "status": "reviewed"
+  },
+  "validation.usernameLength": {
+    "status": "reviewed"
+  },
+  "validation.usernameTaken": {
+    "status": "reviewed"
+  },
+  "weekdays.0": {
+    "status": "reviewed"
+  },
+  "weekdays.1": {
+    "status": "reviewed"
+  },
+  "weekdays.2": {
+    "status": "reviewed"
+  },
+  "weekdays.3": {
+    "status": "reviewed"
+  },
+  "weekdays.4": {
+    "status": "reviewed"
+  },
+  "weekdays.5": {
+    "status": "reviewed"
+  },
+  "weekdays.6": {
+    "status": "reviewed"
+  },
+  "weekdaysShort.0": {
+    "status": "reviewed"
+  },
+  "weekdaysShort.1": {
+    "status": "reviewed"
+  },
+  "weekdaysShort.2": {
+    "status": "reviewed"
+  },
+  "weekdaysShort.3": {
+    "status": "reviewed"
+  },
+  "weekdaysShort.4": {
+    "status": "reviewed"
+  },
+  "weekdaysShort.5": {
+    "status": "reviewed"
+  },
+  "weekdaysShort.6": {
+    "status": "reviewed"
+  },
+  "whatsapp.noPhone": {
+    "status": "reviewed"
+  },
+  "whatsapp.open": {
+    "status": "reviewed"
+  },
+  "whatsapp.openWith": {
+    "status": "reviewed"
+  },
+  "whatsapp.templateNames.payoutPaid": {
+    "status": "reviewed"
+  },
+  "whatsapp.templateNames.penaltyApplied": {
+    "status": "reviewed"
+  },
+  "whatsapp.templateNames.taskAssigned": {
+    "status": "reviewed"
+  },
+  "whatsapp.templateNames.taskOverdue": {
+    "status": "reviewed"
+  },
+  "whatsapp.variables.amount": {
+    "status": "reviewed"
+  },
+  "whatsapp.variables.due": {
+    "status": "reviewed"
+  },
+  "whatsapp.variables.name": {
+    "status": "reviewed"
+  },
+  "whatsapp.variables.task": {
+    "status": "reviewed"
+  },
+  "workload.activeHours": {
+    "status": "reviewed"
+  },
+  "workload.capacity": {
+    "status": "reviewed"
+  },
+  "workload.overCapacity": {
+    "status": "reviewed"
+  },
+  "workload.overCapacityWarning": {
+    "status": "reviewed"
+  },
+  "workload.title": {
+    "status": "reviewed"
+  },
+  "workload.utilisation": {
+    "status": "reviewed"
+  }
+}

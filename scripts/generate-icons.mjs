@@ -10,10 +10,15 @@
  * the palette moves. Everything here is `zlib` and arithmetic — no dependency,
  * no network, deterministic output.
  *
- * The mark: three descending bars — a ledger — in white on the violet accent.
+ * The mark: three descending bars — a ledger — on the Virallap green accent.
  * It is not a logo; it is a shape that reads at 32px in a tab strip and does
  * not pretend to be an illustration (SPEC §9 bans hero art, and a favicon is
  * the smallest possible place to break that rule).
+ *
+ * The bars are drawn in the accent's own dark ground, not white: white on
+ * this green clears only 2.47:1, which is why `--accent-on-solid` in
+ * globals.css isn't white either — the logo pairs the green with a dark
+ * ground at 6.48:1, and this favicon uses the same pairing.
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs'
@@ -23,9 +28,9 @@ import { deflateSync } from 'node:zlib'
 
 const OUT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons')
 
-/** `--accent-solid` in light mode: violet-600. */
-const ACCENT = [124, 58, 237, 255]
-const ON_ACCENT = [255, 255, 255, 255]
+/** `--accent-solid` / `--accent-on-solid` in light mode (globals.css). */
+const ACCENT = [122, 179, 12, 255]
+const ON_ACCENT = [7, 35, 36, 255]
 const TRANSPARENT = [0, 0, 0, 0]
 
 // ── PNG encoding ────────────────────────────────────────────────────────────

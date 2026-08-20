@@ -14,8 +14,8 @@
 
 export const ar = {
   app: {
-    name: 'Virallap',
-    shortName: 'Virallap',
+    name: 'Viral lap',
+    shortName: 'Viral lap',
     description: 'نظام تشغيل داخلي لإدارة المشاريع والمهام والمستحقات',
     tagline: 'الخصومات والمستحقات حساب، لا اجتهاد',
   },
@@ -34,8 +34,8 @@ export const ar = {
     back: 'رجوع',
     next: 'التالي',
     previous: 'السابق',
-    loading: 'جارٍ التحميل…',
-    saving: 'جارٍ الحفظ…',
+    loading: 'جاري التحميل…',
+    saving: 'جاري الحفظ…',
     saved: 'تم الحفظ',
     yes: 'نعم',
     no: 'لا',
@@ -134,9 +134,9 @@ export const ar = {
     units: {
       minute: { one: 'دقيقة', two: 'دقيقتين', few: '{n} دقائق', many: '{n} دقيقة' },
       hour: { one: 'ساعة', two: 'ساعتين', few: '{n} ساعات', many: '{n} ساعة' },
-      day: { one: 'يوم', two: 'يومين', few: '{n} أيام', many: '{n} يومًا' },
-      week: { one: 'أسبوع', two: 'أسبوعين', few: '{n} أسابيع', many: '{n} أسبوعًا' },
-      month: { one: 'شهر', two: 'شهرين', few: '{n} أشهر', many: '{n} شهرًا' },
+      day: { one: 'يوم', two: 'يومين', few: '{n} أيام', many: '{n} يوما' },
+      week: { one: 'أسبوع', two: 'أسبوعين', few: '{n} أسابيع', many: '{n} أسبوعا' },
+      month: { one: 'شهر', two: 'شهرين', few: '{n} أشهر', many: '{n} شهرا' },
       year: { one: 'سنة', two: 'سنتين', few: '{n} سنوات', many: '{n} سنة' },
     },
   },
@@ -154,10 +154,10 @@ export const ar = {
     installTitle: 'ثبِّت التطبيق',
     installHint: 'افتحه من الشاشة الرئيسية مباشرة، بنافذة مستقلة.',
     install: 'تثبيت',
-    later: 'لاحقًا',
+    later: 'لاحقا',
     offlineTitle: 'لا يوجد اتصال',
     offlineHint:
-      'هذا النظام يقرأ بياناته من الخادم لحظيًا، فلا تتوفّر الشاشات دون اتصال. أعد المحاولة بعد عودة الشبكة.',
+      'هذا النظام يقرأ بياناته من الخادم لحظيا، فلا تتوفّر الشاشات دون اتصال. أعد المحاولة بعد عودة الشبكة.',
   },
 
   units: {
@@ -197,14 +197,14 @@ export const ar = {
     invalidCredentials: 'اسم المستخدم أو كلمة المرور غير صحيحة',
     accountInactive: 'هذا الحساب معطّل. راجع مدير النظام.',
     tooManyAttempts: 'محاولات كثيرة. حاول مرة أخرى بعد قليل.',
-    signingIn: 'جارٍ تسجيل الدخول…',
-    welcome: 'أهلًا بك',
+    signingIn: 'جاري تسجيل الدخول…',
+    welcome: 'أهلا بك',
     signInHint: 'ادخل باسم المستخدم وكلمة المرور اللذين زوّدك بهما مدير النظام.',
     /** No self-signup and no self-service reset (SPEC §2). Say so plainly. */
     noSelfSignup: 'لا يوجد تسجيل ذاتي. الحسابات يُنشئها مدير النظام فقط.',
     forgotPassword: 'نسيت كلمة المرور؟ تواصل مع مدير النظام لإعادة تعيينها.',
     /** `{minutes}` is substituted at render time. */
-    lockedForMinutes: 'الحساب موقوف مؤقتًا. حاول بعد {minutes} دقيقة.',
+    lockedForMinutes: 'الحساب موقوف مؤقتا. حاول بعد {minutes} دقيقة.',
     changePassword: 'تغيير كلمة المرور',
     currentPassword: 'كلمة المرور الحالية',
     newPassword: 'كلمة المرور الجديدة',
@@ -223,7 +223,7 @@ export const ar = {
     required: 'هذا الحقل مطلوب',
     usernameFormat:
       'اسم المستخدم يبدأ وينتهي بحرف أو رقم لاتيني، ويسمح بالنقطة والشرطة بينهما',
-    usernameLength: 'اسم المستخدم بين ٣ و٣٢ خانة',
+    usernameLength: 'اسم المستخدم بين 3 و32 خانة',
     usernameTaken: 'اسم المستخدم مستخدم بالفعل',
     fullNameRequired: 'الاسم الكامل مطلوب',
     phoneInvalid: 'رقم موبايل مصري غير صحيح. الصيغة المقبولة: 01xxxxxxxxx',
@@ -234,7 +234,7 @@ export const ar = {
     rateRequiredForPayType: 'أجر المهمة الافتراضي مطلوب لهذا النوع من الأجر',
     amountNegative: 'القيمة لا يمكن أن تكون سالبة',
     amountFormat: 'المبلغ بالأرقام فقط، بحد أقصى خانتان عشريتان',
-    capacityRange: 'ساعات الطاقة الأسبوعية بين ١ و١٦٨',
+    capacityRange: 'ساعات الطاقة الأسبوعية بين 1 و168',
     roleNameArRequired: 'اسم الدور بالعربية مطلوب',
     roleNameEnFormat: 'المعرّف الإنجليزي بحروف لاتينية كبيرة وشرطة سفلية فقط',
     roleNameEnTaken: 'المعرّف الإنجليزي مستخدم بالفعل',
@@ -254,7 +254,7 @@ export const ar = {
     fullName: 'الاسم الكامل',
     phone: 'رقم الموبايل',
     isWorker: 'منفّذ',
-    isWorkerHint: 'يستلم مهامًا وتُحتسب له مستحقات. مستقل تمامًا عن الدور.',
+    isWorkerHint: 'يستلم مهاما وتُحتسب له مستحقات. مستقل تماما عن الدور.',
     payType: 'نوع الأجر',
     monthlySalary: 'الراتب الشهري',
     defaultTaskRate: 'أجر المهمة الافتراضي',
@@ -274,7 +274,7 @@ export const ar = {
     searchPlaceholder: 'ابحث بالاسم أو اسم المستخدم',
     /** Deactivation guard — `{tasks}` is the rendered list of open task titles. */
     hasOpenTasks:
-      'لا يمكن تعطيل هذا الحساب: لديه مهام مفتوحة يجب إعادة إسنادها أو إغلاقها أولًا.',
+      'لا يمكن تعطيل هذا الحساب: لديه مهام مفتوحة يجب إعادة إسنادها أو إغلاقها أولا.',
     openTasksLabel: 'المهام المفتوحة',
     cannotDeactivateSelf: 'لا يمكنك تعطيل حسابك الشخصي',
     cannotDeactivateLastSuperAdmin: 'لا يمكن تعطيل آخر مدير نظام',
@@ -284,7 +284,7 @@ export const ar = {
   roles: {
     superAdmin: 'مدير النظام',
     superAdminDescription:
-      'دور النظام الأعلى. يملك كل الصلاحيات ضمنيًا ولا يمكن تعديله أو حذفه.',
+      'دور النظام الأعلى. يملك كل الصلاحيات ضمنيا ولا يمكن تعديله أو حذفه.',
     title: 'الأدوار',
     create: 'دور جديد',
     edit: 'تعديل الدور',
@@ -303,8 +303,8 @@ export const ar = {
     emptyAction: 'أنشئ أول دور',
     systemRole: 'دور نظام',
     systemRoleLocked: 'دور نظام محمي: لا يمكن تعديله أو حذفه',
-    superAdminImplicit: 'يملك كل الصلاحيات ضمنيًا، بما فيها الصلاحيات التي تُضاف لاحقًا',
-    inUse: 'لا يمكن حذف دور مسنَد إلى مستخدمين. أزل الدور عنهم أولًا.',
+    superAdminImplicit: 'يملك كل الصلاحيات ضمنيا، بما فيها الصلاحيات اللي تُضاف لاحقا',
+    inUse: 'لا يمكن حذف دور مسنَد إلى مستخدمين. أزل الدور عنهم أولا.',
     assignedUsers: 'المستخدمون المسنَد إليهم هذا الدور',
   },
 
@@ -333,7 +333,7 @@ export const ar = {
     createFromTemplate: 'من قالب',
     edit: 'تعديل المشروع',
     code: 'كود المشروع',
-    codeHint: 'يُنشأ تلقائيًا، ويمكن تعديله.',
+    codeHint: 'يُنشأ تلقائيا، ويمكن تعديله.',
     name: 'اسم المشروع',
     client: 'العميل',
     noClient: 'بدون عميل',
@@ -372,18 +372,18 @@ export const ar = {
     },
     tasksPlaceholder: {
       title: 'المهام قادمة في مرحلة لاحقة',
-      description: 'إدارة المهام والإسناد والتسليم ستُضاف لاحقًا لهذا المشروع.',
+      description: 'إدارة المهام والإسناد والتسليم ستُضاف لاحقا لهذا المشروع.',
     },
     health: {
       title: 'صحة المشروع',
-      computed: 'المحتسب تلقائيًا',
+      computed: 'المحتسب تلقائيا',
       overrideBadge: 'تقدير يدوي',
-      overrideAction: 'ضبط الحالة يدويًا',
+      overrideAction: 'ضبط الحالة يدويا',
       clearOverride: 'العودة للاحتساب التلقائي',
       overrideReasonRequired: 'سبب التقدير اليدوي مطلوب',
-      overrideSet: 'تم ضبط صحة المشروع يدويًا',
+      overrideSet: 'تم ضبط صحة المشروع يدويا',
       overrideCleared: 'عاد المشروع للاحتساب التلقائي',
-      setOverrideTitle: 'ضبط صحة المشروع يدويًا',
+      setOverrideTitle: 'ضبط صحة المشروع يدويا',
       clearOverrideTitle: 'إلغاء التقدير اليدوي',
       selectHealth: 'الحالة',
     },
@@ -394,7 +394,7 @@ export const ar = {
       removeMember: 'إزالة من الفريق',
       empty: 'لا يوجد أعضاء في الفريق بعد',
       alreadyMember: 'هذا المستخدم عضو بالفعل',
-      selectUser: 'اختر مستخدمًا',
+      selectUser: 'اختر مستخدما',
     },
     milestones: {
       title: 'مراحل المشروع',
@@ -410,7 +410,7 @@ export const ar = {
       deleted: 'تم حذف المرحلة',
       reordered: 'تم إعادة ترتيب المراحل',
       deleteTitle: 'حذف المرحلة',
-      deleteDescription: 'سيُحذف هذا العنصر من الجدول الزمني للمشروع نهائيًا.',
+      deleteDescription: 'سيُحذف هذا العنصر من الجدول الزمني للمشروع نهائيا.',
       moveUp: 'نقل لأعلى',
       moveDown: 'نقل لأسفل',
       dragHandle: 'اسحب لإعادة الترتيب',
@@ -424,7 +424,7 @@ export const ar = {
       templateName: 'اسم القالب',
       saved: 'تم حفظ القالب',
       createFromTemplateTitle: 'مشروع جديد من قالب',
-      selectTemplate: 'اختر قالبًا',
+      selectTemplate: 'اختر قالبا',
       noTemplates: 'لا توجد قوالب محفوظة بعد',
       milestoneCount: 'عدد المراحل',
     },
@@ -447,7 +447,7 @@ export const ar = {
     category: 'التصنيف',
     estimatedHours: 'الساعات التقديرية',
     taskValue: 'قيمة المهمة',
-    taskValueHint: 'تُملأ تلقائيًا من أجر المهمة الافتراضي للمنفّذ، ويمكن تعديلها.',
+    taskValueHint: 'تُملأ تلقائيا من أجر المهمة الافتراضي للمنفّذ، ويمكن تعديلها.',
     dueDate: 'موعد التسليم',
     originalDueDate: 'الموعد الأصلي',
     qualityRating: 'تقييم الجودة',
@@ -498,7 +498,7 @@ export const ar = {
 
     approval: {
       title: 'اعتماد المهمة',
-      ratingLabel: 'تقييم الجودة (١–٥)',
+      ratingLabel: 'تقييم الجودة (1–5)',
       ratingHint: 'يدخل هذا التقييم في حساب مؤشر الأداء، ولا يؤثر على الخصومات.',
       approved: 'تم اعتماد المهمة',
       revisionTitle: 'طلب تعديل',
@@ -519,13 +519,13 @@ export const ar = {
       /** `{count}` is substituted at render time. */
       warningTitle: 'هذه المهمة تعتمد على {count} مهمة غير معتمدة',
       warningDescription:
-        'يمكنك المتابعة رغم ذلك — الاعتماديات تنبيه وليست قيدًا على البدء.',
+        'يمكنك المتابعة رغم ذلك — الاعتماديات تنبيه وليست قيدا على البدء.',
       warningDismiss: 'متابعة على أي حال',
     },
 
     comments: {
       title: 'التعليقات',
-      placeholder: 'اكتب تعليقًا… استخدم @ لذكر زميل',
+      placeholder: 'اكتب تعليقا… استخدم @ لذكر زميل',
       submit: 'إضافة تعليق',
       empty: 'لا توجد تعليقات بعد',
       added: 'تمت إضافة التعليق',
@@ -588,7 +588,7 @@ export const ar = {
        * operator may move it (Phase 12). A label that named a week would
        * become a lie the moment they did.
        */
-      dueSoon: 'مستحقة قريبًا',
+      dueSoon: 'مستحقة قريبا',
     },
 
     board: {
@@ -644,7 +644,7 @@ export const ar = {
 
     watcherPicker: {
       title: 'إضافة متابع',
-      placeholder: 'اختر مستخدمًا',
+      placeholder: 'اختر مستخدما',
       empty: 'لا يوجد مستخدمون آخرون لإضافتهم',
     },
 
@@ -661,16 +661,16 @@ export const ar = {
       assigneeRequired: 'يجب اختيار منفّذ للمهمة',
       assigneeInactive: 'لا يمكن إسناد مهمة لحساب معطّل أو محذوف',
       assigneeUnchanged: 'المهمة مُسندة بالفعل لهذا المنفّذ',
-      sameAssigneeAsWatcher: 'منفّذ المهمة متابع لها تلقائيًا',
+      sameAssigneeAsWatcher: 'منفّذ المهمة متابع لها تلقائيا',
       selfDependency: 'لا يمكن أن تعتمد المهمة على نفسها',
       reciprocalDependency: 'المهمتان لا يمكن أن تعتمد كل منهما على الأخرى',
       duplicateDependency: 'هذه الاعتمادية مضافة بالفعل',
-      ratingRange: 'تقييم الجودة بين ١ و٥',
+      ratingRange: 'تقييم الجودة بين 1 و5',
       ratingRequired: 'تقييم الجودة مطلوب عند الاعتماد',
       notBlocked: 'المهمة ليست معلَّقة',
       noPreviousStatus: 'لا توجد حالة سابقة لاستئناف المهمة إليها',
       partialAmountRequiresPreviousAssignee: 'لا يوجد منفّذ سابق لصرف مستحق له',
-      partialAmountInvalid: 'المبلغ الجزئي يجب أن يكون أكبر من صفر',
+      partialAmountInvalid: 'المبلغ الجزئي لازم يكون أكبر من صفر',
       partialAmountTooLarge: 'المبلغ الجزئي يتجاوز قيمة المهمة',
       commentEmpty: 'التعليق فارغ',
     },
@@ -698,7 +698,7 @@ export const ar = {
 
   holidays: {
     title: 'العطلات الرسمية',
-    subtitle: 'الأيام التي لا يُحتسب فيها تأخير ولا وقت عمل.',
+    subtitle: 'الأيام اللي لا يُحتسب فيها تأخير ولا وقت عمل.',
     create: 'عطلة جديدة',
     edit: 'تعديل العطلة',
     name: 'اسم العطلة',
@@ -774,10 +774,10 @@ export const ar = {
       REJECTED: 'مرفوض',
     },
     errors: {
-      notLater: 'موعد التسليم الجديد يجب أن يكون بعد الموعد الحالي',
+      notLater: 'موعد التسليم الجديد لازم يكون بعد الموعد الحالي',
       alreadyPending: 'يوجد طلب تمديد قيد المراجعة لهذه المهمة',
       alreadyDecided: 'تم البتّ في هذا الطلب بالفعل',
-      stale: 'تغيّر موعد تسليم المهمة بعد تقديم الطلب. قدّم طلبًا جديدًا.',
+      stale: 'تغيّر موعد تسليم المهمة بعد تقديم الطلب. قدّم طلبا جديدا.',
       notFound: 'طلب التمديد غير موجود',
       notAssignee: 'طلب التمديد يقدّمه منفّذ المهمة',
       taskDelivered: 'لا يمكن تمديد مهمة تم تسليمها أو إغلاقها',
@@ -840,18 +840,18 @@ export const ar = {
       amountZero: 'لا يُسجَّل قيد بمبلغ صفر',
       amountScale: 'المبلغ لا يقبل أكثر من خانتين عشريتين',
       amountOutOfRange: 'المبلغ خارج النطاق المسموح',
-      mustBeCredit: 'هذا النوع من الحركات يجب أن يكون مبلغه موجبًا',
-      mustBeDebit: 'هذا النوع من الحركات يجب أن يكون مبلغه سالبًا',
-      magnitudeMustBePositive: 'المبلغ يجب أن يكون أكبر من صفر',
-      signedAmountRequired: 'يجب تحديد اتجاه المبلغ لهذا النوع صراحةً',
+      mustBeCredit: 'هذا النوع من الحركات لازم يكون مبلغه موجبا',
+      mustBeDebit: 'هذا النوع من الحركات لازم يكون مبلغه سالبا',
+      magnitudeMustBePositive: 'المبلغ لازم يكون أكبر من صفر',
+      signedAmountRequired: 'يجب تحديد اتجاه المبلغ لهذا النوع صراحة',
       noteRequired: 'بيان الحركة مطلوب',
       reasonRequired: 'السبب مطلوب',
       alreadyReversed: 'هذا القيد معكوس بالفعل',
-      cannotReverseReversal: 'لا يمكن عكس قيد عكسي. سجّل قيد تسوية جديدًا.',
+      cannotReverseReversal: 'لا يمكن عكس قيد عكسي. سجّل قيد تسوية جديدا.',
       cycleAlreadyPaid: 'لا يمكن عكس قيد من دورة صُرفت بالفعل. استخدم قيد تسوية.',
       cannotReversePayout: 'لا يُعكس قيد صرف. سجّل قيد تسوية بالمبلغ المسترد.',
       notHumanReversible:
-        'هذا النوع من القيود لا يُعكس يدويًا. استخدم قيد تسوية مع ذكر السبب.',
+        'هذا النوع من القيود لا يُعكس يدويا. استخدم قيد تسوية مع ذكر السبب.',
     },
   },
 
@@ -868,8 +868,8 @@ export const ar = {
     closeCycle: 'إغلاق الدورة الآن',
     closeCycleConfirm:
       'سيتم إغلاق الدورة الحالية وتوليد مستحقات مسودة لكل منفّذ. لا يمكن التراجع.',
-    closeCycleDone: 'أُغلقت الدورة وتم توليد {count} مستحقًا.',
-    closeCycleLocked: 'هناك إغلاق جارٍ بالفعل. حاول بعد قليل.',
+    closeCycleDone: 'أُغلقت الدورة وتم توليد {count} مستحقا.',
+    closeCycleLocked: 'هناك إغلاق جاري بالفعل. حاول بعد قليل.',
     worker: 'المنفّذ',
     carriedForward: 'مرحّل من السابق',
     gross: 'الإجمالي',
@@ -886,12 +886,12 @@ export const ar = {
     reference: 'رقم المرجع',
     paymentNote: 'ملاحظة',
     amountToPay: 'المبلغ المصروف',
-    partialHint: 'يمكن صرف جزء من المستحق، والباقي يظل مستحقًا ويظهر في الدورة القادمة.',
+    partialHint: 'يمكن صرف جزء من المستحق، والباقي يظل مستحقا ويظهر في الدورة القادمة.',
     payoutCount: 'عدد المستحقات',
     totalNet: 'إجمالي الصافي',
     totalPaid: 'إجمالي المصروف',
     empty: 'لا توجد دورات صرف بعد',
-    emptyHint: 'تُفتح أول دورة تلقائيًا مع أول حركة مالية.',
+    emptyHint: 'تُفتح أول دورة تلقائيا مع أول حركة مالية.',
     noPayouts: 'لا توجد مستحقات في هذه الدورة',
     statement: 'كشف الحساب',
     breakdown: 'تفصيل الحساب',
@@ -919,7 +919,7 @@ export const ar = {
     create: 'تسجيل سلفة',
     amount: 'مبلغ السلفة',
     note: 'سبب السلفة',
-    hint: 'تُسجَّل السلفة كخصم فوري من الرصيد، وتُسدَّد تلقائيًا من المستحقات القادمة.',
+    hint: 'تُسجَّل السلفة كخصم فوري من الرصيد، وتُسدَّد تلقائيا من المستحقات القادمة.',
     created: 'سُجّلت السلفة',
   },
 
@@ -935,12 +935,12 @@ export const ar = {
   /** Phase 8 — the penalty engine (SPEC §5.4). */
   penalties: {
     title: 'الخصومات والمكافآت',
-    subtitle: 'كل خصم محسوب آليًا من موعد التسليم وأيام العمل المتأخرة، لا من تقدير أحد.',
+    subtitle: 'كل خصم محسوب آليا من موعد التسليم وأيام العمل المتأخرة، لا من تقدير أحد.',
     penalty: 'خصم',
     penalties: 'الخصومات',
     register: 'سجل الخصومات والمكافآت',
     breakdown: 'تفصيل الحساب',
-    breakdownHint: 'هذه حسبة النظام. الأرقام كلها ظاهرة، ويمكن إعادتها يدويًا.',
+    breakdownHint: 'هذه حسبة النظام. الأرقام كلها ظاهرة، ويمكن إعادتها يدويا.',
     automatic: 'خصم تلقائي',
     manual: 'خصم يدوي',
     worker: 'المنفّذ',
@@ -953,7 +953,7 @@ export const ar = {
     created: 'سُجّل الخصم',
     /** SPEC §5.4 / phase brief item 5: free text only, no reason taxonomy. */
     reasonLabel: 'سبب الخصم',
-    reasonPlaceholder: 'اكتب السبب كاملًا — يقرأه المنفّذ كما هو',
+    reasonPlaceholder: 'اكتب السبب كاملا — يقرأه المنفّذ كما هو',
     reasonOnlyOther: 'السبب نص حر. لا توجد قائمة أسباب جاهزة.',
     empty: 'لا توجد خصومات أو مكافآت',
     emptyHint: 'الخصومات التلقائية تظهر هنا فور تجاوز موعد التسليم ومهلة السماح.',
@@ -1041,11 +1041,11 @@ export const ar = {
     errors: {
       reasonRequired: 'سبب الخصم مطلوب',
       reverseReasonRequired: 'سبب العكس مطلوب',
-      amountRequired: 'مبلغ الخصم مطلوب ويجب أن يكون أكبر من صفر',
+      amountRequired: 'مبلغ الخصم مطلوب ولازم يكون أكبر من صفر',
       userRequired: 'يجب تحديد المنفّذ',
-      notPenalty: 'هذا القيد ليس خصمًا',
+      notPenalty: 'هذا القيد ليس خصما',
       taskNotFound: 'المهمة غير موجودة',
-      recomputeLocked: 'جارٍ إعادة احتساب خصم هذه المهمة الآن. حاول بعد قليل.',
+      recomputeLocked: 'جاري إعادة احتساب خصم هذه المهمة الآن. حاول بعد قليل.',
     },
   },
 
@@ -1058,10 +1058,10 @@ export const ar = {
     amount: 'مبلغ المكافأة',
     reason: 'سبب المكافأة',
     reasonHint: 'نص حر. يقرأه المنفّذ في كشف حسابه كما كُتب.',
-    hint: 'المكافآت يدوية دائمًا. لا يوجد حساب آلي يمنحها.',
+    hint: 'المكافآت يدوية دائما. لا يوجد حساب آلي يمنحها.',
     empty: 'لا توجد مكافآت',
     errors: {
-      amountRequired: 'مبلغ المكافأة مطلوب ويجب أن يكون أكبر من صفر',
+      amountRequired: 'مبلغ المكافأة مطلوب ولازم يكون أكبر من صفر',
       reasonRequired: 'سبب المكافأة مطلوب',
     },
   },
@@ -1071,7 +1071,7 @@ export const ar = {
     title: 'التقارير',
     subtitle: 'تقارير جاهزة للتصدير بصيغة Excel — لكل تقرير صلاحيته الخاصة.',
     export: 'تصدير Excel',
-    exporting: 'جارٍ التصدير…',
+    exporting: 'جاري التصدير…',
     exportFailed: 'تعذّر تصدير التقرير',
     /** `lib/xlsx`'s fallback when a sheet name is empty after stripping Excel's reserved characters. */
     defaultSheetName: 'ورقة',
@@ -1081,7 +1081,7 @@ export const ar = {
      * profit/margin math anywhere.**" The wording says what the number *is*,
      * and deliberately gives the reader nothing to divide it by.
      */
-    deductionsAsIncome: 'صافي الخصومات المحتجزة — يُحتسب إيرادًا للوكالة.',
+    deductionsAsIncome: 'صافي الخصومات المحتجزة — يُحتسب إيرادا للوكالة.',
     period: 'الفترة',
     from: 'من',
     to: 'إلى',
@@ -1110,7 +1110,7 @@ export const ar = {
       virallapSummaryHint:
         'المهام المكتملة، إجمالي المدفوع، الخصومات كإيراد، ونسبة الالتزام بالمواعيد.',
       deductions: 'الخصومات كإيراد',
-      deductionsHint: 'إجمالي الخصومات المحتجزة، مُحتسبة إيرادًا لـ Virallap.',
+      deductionsHint: 'إجمالي الخصومات المحتجزة، مُحتسبة إيرادا لـ Virallap.',
     },
 
     payoutStatement: {
@@ -1207,7 +1207,7 @@ export const ar = {
       startOver: 'البدء من جديد',
     },
     fileLabel: 'ملف Excel (.xlsx)',
-    noFileChosen: 'لم يتم اختيار ملف',
+    noFileChosen: 'لسه مفيش ملف مختار',
     rowStatus: {
       create: 'سيُنشأ',
       update: 'سيُحدَّث',
@@ -1232,25 +1232,25 @@ export const ar = {
       skipped: 'تم تجاهلها (غير صالحة)',
     },
     errors: {
-      fileRequired: 'يرجى اختيار ملف Excel أولًا',
+      fileRequired: 'من فضلك اختر ملف Excel أولا',
       invalidFile: 'تعذّرت قراءة الملف. تأكد أنه بصيغة xlsx صحيحة وغير تالف',
       wrongTemplate:
-        'هذا الملف لا يطابق قالب الاستيراد الحالي لهذا النوع من البيانات — نزّل قالبًا جديدًا',
+        'هذا الملف لا يطابق قالب الاستيراد الحالي لهذا النوع من البيانات — نزّل قالبا جديدا',
       emptyFile: 'الملف لا يحتوي على أي صف بيانات',
       /** `{maxMb}` substituted at render time. */
       fileTooLarge: 'حجم الملف أكبر من الحد المسموح ({maxMb} ميجابايت)',
       /** `{max}` substituted at render time. */
-      tooManyRows: 'عدد صفوف الملف أكبر من الحد المسموح ({max} صفًا)',
+      tooManyRows: 'عدد صفوف الملف أكبر من الحد المسموح ({max} صفا)',
       duplicateInFile: 'قيمة مكررة داخل الملف',
-      unresolvedProject: 'لم يتم العثور على مشروع بهذا الكود',
-      unresolvedUser: 'لم يتم العثور على مستخدم بهذا الاسم',
-      unresolvedClient: 'لم يتم العثور على عميل بهذا الاسم',
+      unresolvedProject: 'مفيش مشروع بالكود ده',
+      unresolvedUser: 'مفيش مستخدم بالاسم ده',
+      unresolvedClient: 'مفيش عميل بالاسم ده',
       ambiguousClient:
-        'يوجد أكثر من عميل بهذا الاسم — استخدم اسمًا فريدًا أو عدّله من شاشة العملاء',
+        'يوجد أكثر من عميل بهذا الاسم — استخدم اسما فريدا أو عدّله من شاشة العملاء',
       invalidOption: 'قيمة غير موجودة ضمن الخيارات المتاحة لهذا العمود',
       inactiveAssignee: 'حساب هذا المنفّذ معطّل',
       staleImport:
-        'تغيّرت البيانات منذ المعاينة الأخيرة، يرجى إعادة المعاينة قبل التأكيد',
+        'تغيّرت البيانات منذ المعاينة الأخيرة، من فضلك أعد المعاينة قبل التأكيد',
     },
     meta: {
       sheetName: 'معلومات القالب',
@@ -1284,7 +1284,7 @@ export const ar = {
         },
         password: {
           header: 'كلمة المرور',
-          hint: 'إلزامية عند إنشاء حساب جديد فقط — تُتجاهل تمامًا عند تحديث حساب موجود.',
+          hint: 'إلزامية عند إنشاء حساب جديد فقط — تُتجاهل تماما عند تحديث حساب موجود.',
           sample: 'Passw0rd123',
         },
         phone: {
@@ -1314,7 +1314,7 @@ export const ar = {
         },
         weeklyCapacityHours: {
           header: 'ساعات العمل الأسبوعية',
-          hint: 'اختياري، الافتراضي ٤٠.',
+          hint: 'اختياري، الافتراضي 40.',
           sample: '40',
         },
       },
@@ -1330,7 +1330,7 @@ export const ar = {
       projects: {
         code: {
           header: 'كود المشروع',
-          hint: 'اتركه فارغًا لإنشاء كود تلقائي. إن طابق كود مشروع موجود، يُحدَّث ذلك المشروع بدل إنشاء واحد جديد.',
+          hint: 'اتركه فارغا لإنشاء كود تلقائي. إن طابق كود مشروع موجود، يُحدَّث ذلك المشروع بدل إنشاء واحد جديد.',
           sample: '',
         },
         name: {
@@ -1340,7 +1340,7 @@ export const ar = {
         },
         clientName: {
           header: 'اسم العميل',
-          hint: 'اختياري. يجب أن يطابق اسم عميل موجود بالضبط.',
+          hint: 'اختياري. لازم يطابق اسم عميل موجود بالضبط.',
           sample: 'شركة النخبة',
         },
         ownerUsername: {
@@ -1368,7 +1368,7 @@ export const ar = {
       tasks: {
         projectCode: {
           header: 'كود المشروع',
-          hint: 'يجب أن يطابق كود مشروع موجود.',
+          hint: 'لازم يطابق كود مشروع موجود.',
           sample: 'PRJ-0001',
         },
         title: { header: 'عنوان المهمة', hint: '', sample: 'تصميم الشعار' },
@@ -1400,7 +1400,7 @@ export const ar = {
         },
         taskValue: {
           header: 'قيمة المهمة',
-          hint: 'اختياري — إن تُرك فارغًا ووُجد منفّذ، تُملأ تلقائيًا من سعر مهمته الافتراضي.',
+          hint: 'اختياري — إن تُرك فارغا ووُجد منفّذ، تُملأ تلقائيا من سعر مهمته الافتراضي.',
           sample: '',
         },
       },
@@ -1409,7 +1409,7 @@ export const ar = {
 
   /** Phase 10 — the manager and worker dashboards (phase brief §"Dashboards"). */
   dashboard: {
-    welcomeBack: 'أهلًا بعودتك،',
+    welcomeBack: 'أهلا بعودتك،',
     manager: {
       overdueTasks: 'المهام المتأخرة',
       overdueTasksEmpty: 'لا توجد مهام متأخرة',
@@ -1427,8 +1427,8 @@ export const ar = {
     },
     worker: {
       activeTasks: 'مهامي النشطة',
-      activeTasksEmpty: 'لا توجد مهام نشطة حاليًا',
-      dueNext: 'القادم استحقاقًا',
+      activeTasksEmpty: 'لا توجد مهام نشطة حاليا',
+      dueNext: 'القادم استحقاقا',
       dueNextEmpty: 'لا توجد مواعيد قادمة',
       awaitingMySubmission: 'بانتظار تسليمي',
       awaitingReview: 'بانتظار المراجعة',
@@ -1456,7 +1456,7 @@ export const ar = {
     activeHours: 'الساعات النشطة',
     capacity: 'الطاقة الأسبوعية',
     overCapacity: 'تجاوز الطاقة',
-    overCapacityWarning: 'هذا المنفّذ يتجاوز طاقته الأسبوعية المتاحة حاليًا.',
+    overCapacityWarning: 'هذا المنفّذ يتجاوز طاقته الأسبوعية المتاحة حاليا.',
   },
 
   /** Phase 10 — the global deadlines calendar (phase brief item 6). */
@@ -1488,7 +1488,7 @@ export const ar = {
     valueCurrency: 'المبلغ بالجنيه',
     valuePercent: 'النسبة المئوية',
     graceHours: 'مهلة السماح (ساعة)',
-    graceHoursHint: 'اتركه فارغًا لاستخدام مهلة Virallap. تجاوز المشروع يظل الأعلى.',
+    graceHoursHint: 'اتركه فارغا لاستخدام مهلة Virallap. تجاوز المشروع يظل الأعلى.',
     assignedUsers: 'المنفّذون المسندون',
     usersCount: '{count} منفّذ',
     delete: 'حذف الصيغة',
@@ -1560,7 +1560,7 @@ export const ar = {
     'project.updated': 'تعديل مشروع',
     'project.deleted': 'حذف مشروع',
     'project.membersChanged': 'تعديل أعضاء المشروع',
-    'project.healthOverrideSet': 'ضبط صحة المشروع يدويًا',
+    'project.healthOverrideSet': 'ضبط صحة المشروع يدويا',
     'project.healthOverrideCleared': 'إلغاء التقدير اليدوي لصحة المشروع',
     'project.createdFromTemplate': 'إنشاء مشروع من قالب',
     'milestone.created': 'إضافة مرحلة',
@@ -1631,7 +1631,7 @@ export const ar = {
     stop: 'إنهاء العرض',
     /** `{name}` is substituted at render time. */
     banner: 'أنت تعرض النظام بحساب {name}',
-    bannerHint: 'كل إجراء تنفّذه الآن يُسجَّل باسمك واسم الحساب المعروض معًا.',
+    bannerHint: 'كل إجراء تنفّذه الآن يُسجَّل باسمك واسم الحساب المعروض معا.',
     notAllowed: 'العرض كمستخدم آخر متاح لمدير النظام فقط',
     cannotImpersonateSelf: 'لا يمكنك العرض بحسابك الشخصي',
     cannotImpersonateInactive: 'لا يمكن العرض بحساب معطّل',
@@ -1770,7 +1770,7 @@ export const ar = {
       penalty:
         'الطريقة الافتراضية لاحتساب الخصم ومهلة السماح. تُطبَّق على كل منفّذ ليس له ملف خصم خاص.',
       calendar:
-        'أيام العطلة الأسبوعية وساعات العمل وعدد أيام العمل في الشهر — الأساس الذي يُقاس عليه كل تأخير.',
+        'أيام العطلة الأسبوعية وساعات العمل وعدد أيام العمل في الشهر — الأساس اللي يُقاس عليه كل تأخير.',
       payout: 'يوم إغلاق دورة الصرف وطرق الصرف المتاحة.',
       performance:
         'أوزان مؤشر الأداء. تُنسَب إلى مجموعها الفعلي، فلا يلزم أن يكون 100 بالضبط.',
@@ -1779,10 +1779,10 @@ export const ar = {
       tasks: 'تصنيفات المهام. المعرّف ثابت والاسم قابل للتعديل.',
       projects: 'أنواع التعاقد المتاحة عند إنشاء مشروع.',
       labels: 'الأسماء العربية للحالات والأولويات. القيم البرمجية ثابتة ولا تتغيّر.',
-      whatsapp: 'نص رسائل واتساب الجاهزة. المتغيّرات بين قوسين معقوفين تُستبدل تلقائيًا.',
+      whatsapp: 'نص رسائل واتساب الجاهزة. المتغيّرات بين قوسين معقوفين تُستبدل تلقائيا.',
       security:
         'حدود محاولات الدخول وطول كلمة المرور — قابلة للتشديد أو التخفيف دون إعادة نشر.',
-      holidays: 'الأيام التي لا يُحتسب فيها تأخير ولا وقت عمل.',
+      holidays: 'الأيام اللي لا يُحتسب فيها تأخير ولا وقت عمل.',
     },
     /** The taxonomy / list editors. */
     list: {
@@ -1836,7 +1836,7 @@ export const ar = {
       'notifications.pollingIntervalSeconds': 'فترة تحديث البيانات (ثانية)',
       'notifications.dueSoonHours': 'التذكير قبل الموعد النهائي (بالساعات)',
       'tasks.categories': 'تصنيفات المهام',
-      'tasks.dueSoonDays': 'مدى "مستحقة قريبًا" (بالأيام)',
+      'tasks.dueSoonDays': 'مدى "مستحقة قريبا" (بالأيام)',
       'projects.engagementTypes': 'أنواع التعاقد',
       'labels.taskStatus': 'مسميات حالات المهام',
       'labels.projectStatus': 'مسميات حالات المشاريع',
@@ -1884,7 +1884,7 @@ export const ar = {
       DRAFT: 'مسودة',
       PROPOSED: 'مقترح',
       ACTIVE: 'نشط',
-      ON_HOLD: 'متوقف مؤقتًا',
+      ON_HOLD: 'متوقف مؤقتا',
       IN_REVIEW: 'قيد المراجعة',
       COMPLETED: 'مكتمل',
       CANCELLED: 'ملغى',
@@ -1993,7 +1993,7 @@ export const ar = {
       { id: 'video', label: 'مونتاج' },
       { id: 'management', label: 'إدارة' },
     ],
-    paymentMethods: ['إنستاباي', 'فودافون كاش', 'تحويل بنكي', 'نقدًا'],
+    paymentMethods: ['إنستاباي', 'فودافون كاش', 'تحويل بنكي', 'نقدا'],
     whatsappTemplates: {
       taskAssigned:
         'السلام عليكم {name}، تم إسناد مهمة "{task}" إليك، موعد التسليم {due}.',
@@ -2028,8 +2028,8 @@ export const ar = {
     title: 'لوحة الأوامر',
     placeholder: 'ابحث عن صفحة أو مستخدم أو دور…',
     empty: 'لا توجد نتائج',
-    emptyHint: 'جرّب اسمًا أو كلمة أقصر.',
-    searching: 'جارٍ البحث…',
+    emptyHint: 'جرّب اسما أو كلمة أقصر.',
+    searching: 'جاري البحث…',
     groups: {
       navigation: 'التنقل',
       actions: 'إجراءات سريعة',
@@ -2191,11 +2191,11 @@ export const ar = {
       },
       taskEscalatedPm: {
         title: 'مهمة تحتاج متابعة',
-        body: 'مهمة "{task}" تجاوزت {days} يوم عمل تأخيرًا وتحتاج متابعتك.',
+        body: 'مهمة "{task}" تجاوزت {days} يوم عمل تأخيرا وتحتاج متابعتك.',
       },
       taskEscalatedAdmin: {
         title: 'مهمة متعثّرة',
-        body: 'مهمة "{task}" تجاوزت {days} يوم عمل تأخيرًا وصُعّدت للإدارة.',
+        body: 'مهمة "{task}" تجاوزت {days} يوم عمل تأخيرا وصُعّدت للإدارة.',
       },
       taskMentioned: {
         title: 'أشار إليك {name}',
@@ -2246,7 +2246,7 @@ export const ar = {
     /** The `/notifications/preferences` page. */
     preferences: {
       title: 'إعدادات الإشعارات',
-      subtitle: 'اختر الإشعارات التي تريد استقبالها داخل النظام.',
+      subtitle: 'اختر الإشعارات اللي تريد استقبالها داخل النظام.',
       mandatory: 'إلزامي',
       mandatoryHint: 'لا يمكن إيقاف هذا الإشعار — يخص إسناد أو تأخر مهامك مباشرة.',
       enabled: 'مفعّل',
@@ -2356,7 +2356,7 @@ export const ar = {
       emptyDescription: 'أنشئ أول مهمة وأسندها إلى منفّذ لتبدأ متابعة التسليم.',
       emptyAction: 'مهمة جديدة',
       formLabel: 'قيمة المهمة',
-      formHint: 'المبلغ الذي يستحقه المنفّذ عند اعتماد التسليم.',
+      formHint: 'المبلغ اللي يستحقه المنفّذ عند اعتماد التسليم.',
       formError: 'المبلغ بالأرقام فقط، بحد أقصى خانتان عشريتان',
       columnTask: 'المهمة',
       columnProject: 'المشروع',
@@ -2374,7 +2374,7 @@ export const ar = {
     skipToContent: 'تخطَّ إلى المحتوى',
     toggleTheme: 'تبديل المظهر',
     openMenu: 'فتح القائمة',
-    loading: 'جارٍ التحميل',
+    loading: 'جاري التحميل',
     /** Announced when a list of results changes under the search box. */
     resultsUpdated: 'تم تحديث النتائج',
   },

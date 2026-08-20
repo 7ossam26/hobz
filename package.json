@@ -13,6 +13,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "i18n:check": "node scripts/check-arabic.mjs",
+    "i18n:ledger": "tsx scripts/i18n-ledger.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",

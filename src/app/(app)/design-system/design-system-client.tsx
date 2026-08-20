@@ -339,8 +339,8 @@ function Gallery({ tableState }: { tableState: TableState }) {
               key={step}
               className="flex size-10 items-center justify-center rounded-md text-[0.625rem] tabular-nums"
               style={{
-                background: `var(--violet-${step})`,
-                color: step >= 500 ? 'var(--accent-on-solid)' : 'var(--violet-950)',
+                background: `var(--accent-${step})`,
+                color: step >= 500 ? 'var(--accent-on-solid)' : 'var(--accent-950)',
               }}
             >
               {step}

@@ -34,8 +34,8 @@ export default function manifest(): MetadataRoute.Manifest {
     // Matches the light `--surface` in globals.css; the dark equivalent is
     // handled by `themeColor` in the root layout's viewport export, which the
     // browser prefers when it has one.
-    background_color: '#f7f7f8',
-    theme_color: '#7047e9',
+    background_color: '#f6f7f7',
+    theme_color: '#7ab30c',
     categories: ['business', 'productivity'],
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

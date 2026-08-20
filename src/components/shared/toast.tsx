@@ -6,6 +6,9 @@ import { createPortal } from 'react-dom'
 
 import { ar } from '@/i18n/ar'
 import { cn } from '@/lib/utils'
+// Side effect: sets zod's global Arabic fallback message. `ToastProvider` is
+// mounted once, on every page, by the root layout — see `lib/zod-locale`.
+import '@/lib/zod-locale'
 
 /**
  * Toasts, and the conventions attached to them.

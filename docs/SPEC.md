@@ -798,7 +798,7 @@ Surfaces are neutral zinc. Every saturated color on screen must encode data —
 status, priority, health, category. Decoration never gets a color.
 
 - **Base:** zinc scale, not pure `#fff` / `#000`. Light default, full dark mode.
-- **Accent:** one violet primary for actions/focus.
+- **Accent:** one green primary for actions/focus, matched to the Virallap logo mark.
 - **Data palette:** distinct hues per task status and per project — the ClickUp
   feel comes from status chips, priority flags, category dots and avatar colors,
   not from gradients.
@@ -912,9 +912,10 @@ operator sees every row before confirming.
 **Tokens live in `src/app/globals.css`, not in a `tailwind.config`.** Tailwind v4
 has no JS config; `@theme` *is* the config. Three groups, and the separation is
 load-bearing: a **surface** ramp (zinc, chrome only, never a hue), one **accent**
-ramp (violet, actions and focus only), and ten **data** hues. The data hues avoid
-the 275–300° band the accent occupies, so a status chip can never be mistaken for
-a button.
+ramp (green, hue 129 — matched to the Virallap logo — actions and focus only),
+and ten **data** hues. The data hues avoid a 20° band around the accent hue, so a
+status chip can never be mistaken for a button. `--data-lime` sits at 104° rather
+than the 128° it would otherwise take, for exactly that reason.
 
 **The surface ramp names six steps, and every UI surface picks one.** The
 original four were not enough: `--card` and `--popover` both resolved to

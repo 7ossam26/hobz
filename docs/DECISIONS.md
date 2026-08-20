@@ -3245,3 +3245,230 @@ files duplicating it would have been noise.
   contrast suite passes and `/design-system` now renders the sidebar, header,
   input and popover panel it previously omitted — but a human should still look
   at it in both densities before this is called done.
+
+## Phase 14 — Virallap brand accent
+
+**Date:** 2026-08-20 · **Model:** Opus 5
+
+Not a feature phase. The app shipped with the Phase 2 placeholder accent
+(violet) while the actual Virallap logo (`public/logo.png`) is green. This
+phase retunes the token layer to the brand and touches no components — the
+token architecture from Phase 2 and the hardcoded-colour removal from Phase 13
+meant there was nothing else to touch.
+
+### Built
+
+- **The accent ramp recoloured**, hue 288 (violet) → 129 (green), and renamed
+  `--violet-*` → `--accent-*` to stop the ramp lying about its own colour. Values
+  extracted from the logo mark itself: `#79B30F` decodes to
+  `oklch(0.700 0.183 129)`.
+- **`--accent-on-solid` flips polarity in light mode** — the logo's own dark
+  ground (`oklch(0.236 0.033 198)`, from `#072324`) rather than near-white.
+  White text on the logo green clears only 2.47:1; the logo's own pairing
+  clears 6.48:1, so that is the pairing used.
+- **`--accent-ring` stops aliasing `--accent-solid`.** The logo green as a 1px
+  ring on the light page clears only 2.37:1, below the 3:1 floor. It is now its
+  own darker step (`--accent-700`, 4.13:1).
+- **`--data-lime` moved 128° → 104°.** The new accent hue (129°) landed 1° from
+  where lime sat, a direct collision with the >20°-from-accent rule the
+  contrast suite already enforced. Lightness and chroma are unchanged — only
+  the hue moved, so DONE and BONUS (lime's two meanings in `lib/palette.ts`)
+  keep a green-family identity and `lib/palette.ts` needed no edit.
+- **The whole chrome ramp retinted** 286° → 198° — the logo's own ground hue.
+  Chroma stays ≤0.006 throughout, so this is a whisper, not a tint; it is the
+  same move Phase 2 made when it picked 286 in the first place, just aimed at a
+  different logo.
+- **Brand assets brought into agreement**: `manifest.ts` `theme_color`/
+  `background_color`, `layout.tsx` `viewport.themeColor`, and
+  `scripts/generate-icons.mjs`'s `ACCENT`/`ON_ACCENT` constants all now read the
+  same two numbers the CSS does.
+- **A new guard test** (`palette-contrast.test.ts`, "لون العلامة التجارية")
+  pins `--accent-solid` to the logo's hue/lightness/chroma, so a future
+  "tidy-up" can't drift it the way `generate-icons.mjs` already had.
+
+### Decisions worth recording
+
+**`public/logo.png` is a JPEG.** Its magic bytes are `ff d8 ff e0`, not PNG's
+`89 50 4e 47`. The brand values in this phase were extracted by decoding it
+(dominant-colour sampling, `System.Drawing` on Windows) rather than trusted from
+any existing constant — the pre-existing `generate-icons.mjs` constant
+(`#7C3AED`, Tailwind's violet-600) and the manifest's (`#7047e9`, the project's
+actual former violet) already disagreed with each other, so neither was a safe
+source of truth for the new colour either. The mismatched extension is
+unchanged in this phase; flagged as a known limitation below.
+
+**Exactly one data hue collided, and the fix stayed local.** The alternative —
+re-solving the full 10-hue data palette around the new 129° accent — would have
+recoloured every status chip in the product for a problem that was really one
+hue sitting 1° away. `--data-lime` moving to 104° clears the accent by 25° and
+its nearest neighbour (amber, 85°) by 19°, both inside the suite's existing
+floors, so the fix is the same shape and size as the problem.
+
+**The rename (`--violet-*` → `--accent-*`) landed before the recolour, not with
+it.** A green ramp still named "violet" would have been a worse trap than the
+one this phase closes — the next person to touch it would trust the name over
+the value. Doing the rename with the *old* values first, running the suite, and
+only then changing the numbers meant a failure at either step pointed at
+exactly one cause.
+
+### The edge-case sweep
+
+- Grepped `src/`, `tests/`, `scripts/` for `--violet` after the rename: zero
+  hits. The two non-CSS references (`design-system-client.tsx`'s dynamic
+  `var(--violet-${step})`, and the contrast test's `--violet-600` hue lookup)
+  were both found and updated — a grep for the token name is what surfaces a
+  reference a component-level check would miss, since neither is a Tailwind
+  utility class.
+- Confirmed `--danger-*` and `--data-neutral-*` were left alone: both also sit
+  at hue 286/198 territory by coincidence of the old and new chrome hue, but
+  neither is chrome — `--danger-*` is deliberately decoupled from `--data-red-*`
+  so that recolouring "BLOCKED" can never recolour "Delete", and
+  `--data-neutral-*` is one of the eleven data hues, not part of the three-group
+  separation this phase touched.
+- Ran the full `tests/unit/design/` suite (86 tests, both themes) after every
+  step, not just at the end — the lime collision was verified to actually fail
+  before its fix, confirming the guard test does what it claims to.
+
+### Deferred
+
+| Item | Why |
+|---|---|
+| Re-exporting `public/logo.png` as a real PNG or SVG | Cosmetic; the JPEG artifacts are invisible at the sizes it's rendered (28–80px). Flagged, not required for the rebrand. |
+| A human look at `/design-system`, `/tasks` board, and `/payouts` in both themes | The contrast suite proves AA; it cannot judge whether lime and the green accent read as visually distinct in practice — they are 25° apart, the suite's stated floor, not a generous margin. |
+
+### Known limitations
+
+- **`public/logo.png`'s mismatched extension (JPEG content, `.png` name) is
+  unchanged.** Every consumer (`next/image` in the auth layout, `sharp`-free
+  decoding here) handles it correctly because both read magic bytes, not
+  extensions, but it will confuse the next person who opens it expecting a
+  losslessly-encoded mark.
+
+## Phase 15 — Egyptian Arabic register pass
+
+**Date:** 2026-08-20 · **Model:** Opus 5
+
+Not a feature phase. `src/i18n/ar.ts` shipped in a plain, correct Arabic that
+leaned Modern Standard in specific, identifiable ways. This phase moved the
+register to professional Egyptian business Arabic — what an Egyptian
+operations manager actually writes in a work tool — without touching the
+CLAUDE.md glossary, the DB-facing enum keys, or anything outside the string
+table itself.
+
+### Built
+
+- **Two new guard tests, built and proven red before any copy changed.**
+  `tests/unit/i18n/register.test.ts` — six regex-detectable MSA markers
+  (accusative tanween, `جارٍ`, `يجب أن`, `الذي/التي/الذين`, `لم/لن يتم`,
+  `يرجى/الرجاء`) plus the CLAUDE.md Western-numerals invariant, plus a pinned
+  allowlist of every `{placeholder}` token in the file (34 of them) so a
+  rename during the rewrite can't silently break
+  `lib/error-message.ts`'s interpolation with no type error to catch it.
+  `tests/unit/i18n/coverage.test.ts` — asserts `src/i18n/review-ledger.json`'s
+  key set matches `ar.ts` exactly and that every one of the 1,716 leaves is
+  marked `reviewed`, via `scripts/i18n-ledger.ts sync|review|status`. The
+  register test can only see the mechanical ~5% of what "reads as MSA" means;
+  the ledger is what makes "did the rewrite actually reach the other 95%?" a
+  question a test can answer instead of a claim a PR description makes.
+- **`scripts/check-arabic.mjs`** (`pnpm i18n:check`) — an independent,
+  TypeScript-AST-based re-implementation of the ESLint `no-restricted-syntax`
+  rule that bans Arabic outside `src/i18n/`. Needed because
+  `next.config.ts` sets `eslint.ignoreDuringBuilds: true` ("linting is a
+  separate, explicit step"), so a stray literal does not fail `next build` —
+  only a lint run somebody remembers to invoke. This is that check again,
+  dependency-light, so it can gate independently of the full `pnpm lint`.
+- **A global zod fallback** (`src/lib/zod-locale.ts`, `z.config({
+  customError })`). Every schema's own checks already carried an explicit
+  `ar.validation.*` message, but zod's *built-in* messages (a missing
+  required field, a bare type mismatch) had no Arabic fallback and rendered
+  in English — a real gap, unrelated to the register itself, found while
+  auditing the validation path. Wired into both runtimes plus Vitest: the
+  Next.js server (`instrumentation.ts`), the client bundle
+  (`components/shared/toast.tsx` — `ToastProvider` mounts on every page via
+  the root layout), and `tests/setup/{unit,integration}.ts`.
+- **The rewrite**: all 5 Arabic-Indic digit violations (CLAUDE.md: Western
+  numerals only) and all 86 MSA-marker occurrences fixed with a TypeScript
+  AST transform — walking `StringLiteral`/`NoSubstitutionTemplateLiteral`
+  nodes only, so the 240 Arabic lines in *comments* elsewhere in the file
+  were structurally untouched, not just spared by convention. Four strings
+  (`import.noFileChosen`, the three `import.errors.unresolved*` "not found"
+  messages) needed hand restructuring rather than substitution — the MSA
+  passive `لم يتم العثور على...` doesn't have a mechanical Egyptian
+  equivalent; it became `مفيش ... بالكود/بالاسم ده`.
+
+### Decisions worth recording
+
+**Egyptian, not colloquial.** The substitution table was deliberately narrow:
+drop the accusative tanween (`يومًا` → `يوم` — written Egyptian professional
+text essentially never marks it), `يجب أن` → `لازم`, `الذي/التي/الذين` →
+`اللي`, `يرجى/الرجاء` → `من فضلك`, `جارٍ` → `جاري` (the MSA nunated spelling
+corrected to the form Egyptian professional software actually uses — naively
+stripping the diacritic instead of adding the missing ي would have silently
+changed the word to "neighbour"). What was deliberately **not** touched:
+passive `تم` constructions (`تم الحفظ` reads as normal Egyptian professional
+copy, not distinctively MSA), `لا يوجد`/`ليس` negation (swapping these for
+`مفيش`/`مش` project-wide would have pushed toward spoken register, which the
+brief explicitly ruled out), and `قد` (modal "might," acceptable in both
+registers). The full file was read start to end after the mechanical pass
+specifically to catch anything the six markers couldn't — the finding was
+that the base copy was already close to this register; the markers were
+genuinely the tells, not a sample of a larger problem.
+
+**The register test almost shipped broken.** Its first version matched
+`\bالتي\b`, and JavaScript's `\b` is defined against `[A-Za-z0-9_]` — it does
+not fire around Arabic letters at all, so the check silently matched zero
+strings against a file that had six real hits. Caught by cross-referencing
+the test's own "0 offenders" result against a plain grep before trusting it.
+Rewritten as `(^|\s)(الذين|الذي|التي)(\s|$)`. Worth calling out because this
+is exactly the kind of bug generic tooling written for Latin scripts
+introduces silently into Arabic-string tests.
+
+**The two `يرجى` sites needed a human edit, not the mechanical rule.**
+`يرجى اختيار ملف` → `من فضلك اختيار ملف` is grammatically wrong: `يرجى` takes
+a verbal noun ("selection is requested"), `من فضلك` wants an imperative
+("please select"). The blanket substitution produced `من فضلك اختيار ملف`
+(reads as a sentence fragment); both of the file's two `يرجى` sites were
+fixed by hand to `من فضلك اختر`/`أعد` instead.
+
+**Digit fix landed ahead of, and independent from, the register test.** The 5
+Arabic-Indic violations (`٣`, `٣٢`, `١٦٨`, `١–٥`, `١`, `٥`, `٤٠`) were a
+pre-existing CLAUDE.md invariant breach, not new to this phase — fixed first,
+as its own small change, before the register work started, so the register
+test's baseline run demonstrated a real MSA-marker signal rather than mixing
+two unrelated defects into one diff.
+
+### The edge-case sweep
+
+- Scanned for six further MSA/Egyptian tells beyond the register test's own
+  markers (`لدى`, `كافة`, `سوف`, `بات/باتت`, `إذ`, `حيث`) — zero hits across
+  all 1,716 strings. `قد` (1 hit) and `ليس/ليست` (3 hits) were found and
+  deliberately left, per the register decision above.
+- Verified every one of the 86 AST-transformed diffs individually against the
+  printed before/after pairs rather than trusting the regex blind — this is
+  what caught the two `يرجى` sites needing hand correction.
+- Confirmed the transform never touched a comment: it walks only
+  `StringLiteral`/`NoSubstitutionTemplateLiteral` AST nodes, and a targeted
+  smoke test (a deliberate Arabic literal added to a scratch file, run
+  through `check-arabic.mjs`, then removed) proved the independent checker
+  actually flags a real violation, not just passes on a clean tree.
+- `pnpm i18n:check`, `pnpm lint`, `pnpm typecheck`, and the full unit suite
+  (92 files / 1,692 tests) all pass unchanged after the rewrite — every test
+  that touches product copy does it by importing `ar`, never by hardcoding
+  the string, so a wording change could not by itself break an assertion.
+
+### Deferred
+
+| Item | Why |
+|---|---|
+| Data migration for DB-persisted Arabic (`Setting` rows seeded from `ar.enums`/`ar.defaults`, `Notification.title`/`body`, `Role.nameAr`, `Holiday.nameAr`) | `prisma/seed.ts` never overwrites an existing `Setting` row, so a deployed database keeps the old wording until migrated separately. No production database confirmed to exist yet at time of writing — deliberately scoped out rather than guessed at. |
+| `ar.import.*` wording (124 strings) | Left in its already-professional form rather than rewritten — the sheet name and column headers are parsed back in on import (`modules/import/parse.ts`, `columns.ts`), so a wording change there invalidates every template a user has already downloaded. Out of scope for a register pass; would need its own template-version bump. |
+| Integration and e2e suites | Not run this phase — the local Prisma CLI (`prisma generate`'s postinstall) could not acquire the query-engine DLL because a long-running `next dev` process already had it loaded, which is an environment condition, not a defect in this change. `npx prisma migrate deploy` (bypassing pnpm's own dependency-status re-check) confirmed independently that the schema has no pending migrations. The full unit suite is green; nothing in this phase touches a service, a query, or the database schema. |
+
+### Known limitations
+
+- **The register decisions (tanween, `لازم`, `اللي`, `من فضلك`) are a
+  judgment call, not a rule handed down externally.** A native Egyptian
+  copywriter should still read the money-adjacent namespaces (`penalties`,
+  `payouts`, `ledger`) end to end before this is called done — that is the
+  copy a منفّذ reads when a deduction is explained to them, and it is the one
+  place in the product where "does this read naturally" matters most.

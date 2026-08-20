@@ -158,10 +158,10 @@ describe('ألوان البيانات', () => {
     })
   }
 
-  it('كل لون بيانات له درجة لون مختلفة عن اللون الأساسي البنفسجي', () => {
-    // SPEC §9 reserves violet for actions. A data hue drifting into the accent
-    // band would make a status chip read as a button.
-    const accentHue = parseOklch(resolveColor(LIGHT_VARS, '--violet-600')).h
+  it('كل لون بيانات له درجة لون مختلفة عن اللون الأساسي', () => {
+    // SPEC §9 reserves the accent (Virallap green) for actions. A data hue
+    // drifting into the accent band would make a status chip read as a button.
+    const accentHue = parseOklch(resolveColor(LIGHT_VARS, '--accent-600')).h
 
     for (const hue of HUES) {
       if (hue === 'neutral') continue
@@ -347,4 +347,22 @@ describe('ألوان الواجهة', () => {
       })
     })
   }
+})
+
+
+/**
+ * The brand accent, pinned to a value rather than left to "looks about
+ * right". `scripts/generate-icons.mjs` once drifted to Tailwind's own
+ * violet-600 while the manifest used the project's actual accent — a
+ * silent 2% hue split nobody caught because nothing compared them. This
+ * asserts the one number every brand surface (button, favicon, manifest,
+ * viewport meta) is supposed to agree on.
+ */
+describe('لون العلامة التجارية', () => {
+  it('اللون الأساسي يطابق أخضر Virallap من الشعار', () => {
+    const { l, c, h } = parseOklch(resolveColor(LIGHT_VARS, '--accent-solid'))
+    expect(h).toBeCloseTo(129, 0)
+    expect(l).toBeCloseTo(0.7, 2)
+    expect(c).toBeCloseTo(0.183, 2)
+  })
 })
