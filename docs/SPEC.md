@@ -165,6 +165,16 @@ ExtensionRequest id, taskId, requestedById, oldDueDate, newDueDate,
 ProjectTemplate  id, name, payload(json)              ← spawns milestones+tasks
 ```
 
+**Global calendar filtering (Phase 10, corrected 2026-08-21).** `/calendar`
+composes the existing RBAC-scoped task and project reads; its facets can only
+narrow those scopes and never widen them. The worker facet means
+`Task.assigneeId` for task deadlines and `Project.ownerId` for project
+deadlines — `ownerId` is the project's single accountable person. The project
+and worker facets combine by intersection (`projectId AND assigneeId` for
+tasks, `id AND ownerId` for projects). Project due dates are filtered in the
+database before pagination, and a project calendar event exposes its owner as
+the event's `workerId`/`workerName`.
+
 ### Calendar
 
 ```

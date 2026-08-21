@@ -139,9 +139,7 @@ export default async function GlobalCalendarPage({
       </div>
 
       {calendar.truncated ? (
-        <p className="text-fg-subtle text-xs">
-          {ar.tasks.truncatedNotice.replace('{count}', '1000')}
-        </p>
+        <p className="text-fg-subtle text-xs">{ar.globalCalendar.truncatedNotice}</p>
       ) : null}
 
       <div className="flex flex-col overflow-hidden rounded-lg border">

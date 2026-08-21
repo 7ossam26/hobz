@@ -1607,6 +1607,9 @@
   "globalCalendar.title": {
     "status": "reviewed"
   },
+  "globalCalendar.truncatedNotice": {
+    "status": "reviewed"
+  },
   "globalCalendar.types.MILESTONE": {
     "status": "reviewed"
   },

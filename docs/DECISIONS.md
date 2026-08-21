@@ -3516,3 +3516,22 @@ user memberships, or notification payloads are rewritten.
   must resolve those rows before migration; the migration refuses to guess.
 - Native picker chrome still varies by browser, but it no longer controls the
   value painted to the user. Keyboard and form semantics remain native.
+
+## Global-calendar accountability and project range filtering
+
+**Date:** 2026-08-21
+
+The Phase 10 global calendar skipped every project whenever its worker facet
+was present, on the rationale that a project had no single accountable person.
+That was wrong: `Project.ownerId` is required and is the UI's «مسؤول المشروع».
+The worker facet now intersects the viewer's existing RBAC scope and selects
+tasks by `assigneeId` plus projects by `ownerId`; the project facet intersects
+both sides rather than overriding either one. Project calendar events also
+carry their owner in `workerId`/`workerName`.
+
+The same fix moved the project due-date range into `listProjects` before its
+100-row page ceiling. The calendar orders that filtered page by `dueDate asc`,
+so a genuinely overfull range keeps the earliest deadlines, reports
+`truncated`, and is no longer displaced by recently created projects from
+unrelated months. The historical Phase 10 entry remains unchanged as a record
+of what originally shipped.

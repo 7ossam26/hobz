@@ -1471,6 +1471,7 @@ export const ar = {
     allProjects: 'كل المشاريع',
     allWorkers: 'كل المنفّذين',
     empty: 'لا توجد مواعيد في هذا الشهر',
+    truncatedNotice: 'في مواعيد مش ظاهرة — ضيّق التصفية عشان تشوف الباقي',
     types: {
       TASK: 'مهمة',
       PROJECT: 'مشروع',

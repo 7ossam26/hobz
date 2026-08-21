@@ -231,11 +231,22 @@ export async function listProjects(
   if (filters.status && filters.status.length > 0) {
     conditions.push({ status: { in: filters.status } })
   }
+  if (filters.id?.length) {
+    conditions.push({ id: { in: filters.id } })
+  }
   if (filters.ownerId && filters.ownerId.length > 0) {
     conditions.push({ ownerId: { in: filters.ownerId } })
   }
   if (filters.clientId && filters.clientId.length > 0) {
     conditions.push(clientFilterFragment(filters.clientId))
+  }
+  if (filters.dueFrom || filters.dueTo) {
+    conditions.push({
+      dueDate: {
+        ...(filters.dueFrom ? { gte: filters.dueFrom } : {}),
+        ...(filters.dueTo ? { lte: filters.dueTo } : {}),
+      },
+    })
   }
   const where: WhereFragment =
     conditions.length === 1 ? conditions[0]! : { AND: conditions }

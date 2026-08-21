@@ -120,11 +120,16 @@ export const projectIdSchema = z.object({ id: z.string().min(1) })
 
 export const listProjectsSchema = z.object({
   search: z.string().trim().optional(),
+  /** Narrow to specific projects by id — the calendar's project facet. */
+  id: z.array(z.string()).optional(),
   status: z.array(projectStatusSchema).optional(),
   health: z.array(computedHealthSchema).optional(),
   ownerId: z.array(z.string()).optional(),
   /** `'none'` is the sentinel for "no client" — an id can never collide with it. */
   clientId: z.array(z.string()).optional(),
+  /** A due-date window, inclusive at both ends. The calendar grid's real filter. */
+  dueFrom: z.date().optional(),
+  dueTo: z.date().optional(),
   sort: z.string().optional(),
   dir: z.enum(['asc', 'desc']).optional(),
   page: z.number().int().min(1).default(1),

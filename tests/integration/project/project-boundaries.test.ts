@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { scopeProjects } from '@/lib/rbac'
 import {
   createProjectSchema,
+  listProjectsSchema,
   setProjectHealthOverrideSchema,
 } from '@/modules/project/schema'
 import {
@@ -17,6 +18,7 @@ import {
   seedPermissionCatalog,
 } from '../../factories/db'
 import { actorFor } from '../../helpers/actor-from-db'
+import { cairo } from '../../helpers/time'
 import { testDb } from '../../setup/reset'
 
 const db = testDb()
@@ -228,5 +230,109 @@ describe('modules/project — حد صفحة الترقيم (pageSize) بالضب
     })
     expect(page2.items).toHaveLength(1)
     expect(page2.total).toBe(PAGE_SIZE + 1)
+  })
+})
+
+describe('modules/project — تصفية المعرّف ونطاق تاريخ الاستحقاق', () => {
+  async function filterFixture() {
+    await seedPermissionCatalog(db)
+    const viewer = await createUserWithPermissions(db, ['project.view.all'])
+    return { viewer, scope: scopeProjects(await actorFor(db, viewer.id)) }
+  }
+
+  it('يشمل تاريخي بداية ونهاية نطاق الاستحقاق ويستبعد ما خارجهما بمللي ثانية', async () => {
+    const { viewer, scope } = await filterFixture()
+    const from = cairo('2026-03-10T00:00')
+    const to = cairo('2026-03-20T23:59:59.999')
+    const atFrom = await createProjectRow(db, { ownerId: viewer.id, dueDate: from })
+    const atTo = await createProjectRow(db, { ownerId: viewer.id, dueDate: to })
+    await createProjectRow(db, {
+      ownerId: viewer.id,
+      dueDate: new Date(from.getTime() - 1),
+    })
+    await createProjectRow(db, {
+      ownerId: viewer.id,
+      dueDate: new Date(to.getTime() + 1),
+    })
+
+    const page = await listProjects(db, {
+      scope,
+      filters: listProjectsSchema.parse({ dueFrom: from, dueTo: to, sort: 'dueDate' }),
+      now: FAR_PAST_NOW,
+      thresholds: THRESHOLDS,
+    })
+
+    expect(page.items.map((project) => project.id)).toEqual([atFrom.id, atTo.id])
+    expect(page.total).toBe(2)
+  })
+
+  it('يطبق بداية نطاق الاستحقاق وحدها دون اشتراط نهاية', async () => {
+    const { viewer, scope } = await filterFixture()
+    const from = cairo('2026-03-10T00:00')
+    const atFrom = await createProjectRow(db, { ownerId: viewer.id, dueDate: from })
+    const after = await createProjectRow(db, {
+      ownerId: viewer.id,
+      dueDate: cairo('2026-03-11T00:00'),
+    })
+    await createProjectRow(db, {
+      ownerId: viewer.id,
+      dueDate: cairo('2026-03-09T23:59:59.999'),
+    })
+
+    const page = await listProjects(db, {
+      scope,
+      filters: listProjectsSchema.parse({ dueFrom: from, sort: 'dueDate' }),
+      now: FAR_PAST_NOW,
+      thresholds: THRESHOLDS,
+    })
+
+    expect(page.items.map((project) => project.id)).toEqual([atFrom.id, after.id])
+  })
+
+  it('يطبق نهاية نطاق الاستحقاق وحدها دون اشتراط بداية', async () => {
+    const { viewer, scope } = await filterFixture()
+    const to = cairo('2026-03-20T23:59:59.999')
+    const before = await createProjectRow(db, {
+      ownerId: viewer.id,
+      dueDate: cairo('2026-03-19T23:59:59.999'),
+    })
+    const atTo = await createProjectRow(db, { ownerId: viewer.id, dueDate: to })
+    await createProjectRow(db, {
+      ownerId: viewer.id,
+      dueDate: cairo('2026-03-21T00:00'),
+    })
+
+    const page = await listProjects(db, {
+      scope,
+      filters: listProjectsSchema.parse({ dueTo: to, sort: 'dueDate' }),
+      now: FAR_PAST_NOW,
+      thresholds: THRESHOLDS,
+    })
+
+    expect(page.items.map((project) => project.id)).toEqual([before.id, atTo.id])
+  })
+
+  it('يجمع تصفية معرّف المشروع والمالك بالتقاطع', async () => {
+    const { viewer, scope } = await filterFixture()
+    const otherOwner = await createUserWithPermissions(db, [])
+    const selected = await createProjectRow(db, { ownerId: viewer.id })
+    await createProjectRow(db, { ownerId: viewer.id })
+
+    const matching = await listProjects(db, {
+      scope,
+      filters: listProjectsSchema.parse({ id: [selected.id], ownerId: [viewer.id] }),
+      now: FAR_PAST_NOW,
+      thresholds: THRESHOLDS,
+    })
+    const mismatching = await listProjects(db, {
+      scope,
+      filters: listProjectsSchema.parse({ id: [selected.id], ownerId: [otherOwner.id] }),
+      now: FAR_PAST_NOW,
+      thresholds: THRESHOLDS,
+    })
+
+    expect(matching.items.map((project) => project.id)).toEqual([selected.id])
+    expect(mismatching.items).toEqual([])
+    expect(mismatching.total).toBe(0)
   })
 })
