@@ -62,6 +62,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Migrations run on deploy (see README). The schema, the migration SQL and the
 # Prisma CLI must therefore exist in the runtime image.
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+# pnpm's Prisma binaries and packages point into .pnpm. Keep their targets too;
+# copying only the top-level links leaves `prisma migrate deploy` unusable.
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.pnpm ./node_modules/.pnpm
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
